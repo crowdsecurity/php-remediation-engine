@@ -1,0 +1,9 @@
+# Composer
+vendor
+composer.lock
+
+.cache
+
+*.log
+
+*.json
