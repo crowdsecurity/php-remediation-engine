@@ -45,7 +45,7 @@ First, install CrowdSec PHP remediation engine via the [composer](https://getcom
 composer require crowdsec/remediation-engine
 ```
 
-Please see the [Installation Guide](./INSTALLATION_GUIDE.md) for mor details.
+Please see the [Installation Guide](./INSTALLATION_GUIDE.md) for more details.
 
 ### Capi Remediation
 
