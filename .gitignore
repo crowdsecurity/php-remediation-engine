@@ -6,4 +6,4 @@ composer.lock
 
 *.log
 
-*.json
+tests/**/*.json

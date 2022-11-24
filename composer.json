@@ -1,0 +1,60 @@
+{
+    "name": "crowdsec/remediation-engine",
+    "description": "The official PHP remediation engine for the CrowdSec CAPI",
+    "type": "library",
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "keywords": [
+        "security",
+        "crowdsec",
+        "rest",
+        "client",
+        "curl",
+        "capi",
+        "lapi",
+        "watcher",
+        "bouncer",
+        "remediation",
+        "decision",
+        "ban",
+        "captcha"
+    ],
+    "authors": [
+        {
+            "name": "CrowdSec",
+            "email": "info@crowdsec.net"
+        },
+        {
+            "name": "Julien Loizelet",
+            "homepage": "https://github.com/julienloizelet/",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "CrowdSec\\RemediationEngine\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "CrowdSec\\RemediationEngine\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": "^7.2.5 || ^8.0",
+        "ext-json": "*",
+        "symfony/config": "^4.4.27 || ^5.2 || ^6.0",
+        "symfony/cache": "^5.4.11 || ^6.0.11",
+        "crowdsec/capi-client": "0.3.0",
+        "monolog/monolog": "^1.17 || ^2.1",
+        "mlocati/ip-lib": "^1.18"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.5.30 || ^9.3",
+        "mikey179/vfsstream": "^1.6.11",
+        "ext-curl": "*"
+    },
+    "suggest": {
+        "ext-curl": "*"
+    }
+}
