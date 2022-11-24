@@ -6,6 +6,27 @@
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [Description](#description)
+- [Features](#features)
+- [Quick start](#quick-start)
+  - [Installation](#installation)
+  - [Capi Remediation](#capi-remediation)
+    - [Instantiation](#instantiation)
+    - [Features](#features-1)
+      - [Retrieve fresh decisions from CAPI](#retrieve-fresh-decisions-from-capi)
+      - [Get remediation for an IP](#get-remediation-for-an-ip)
+      - [Clear cache](#clear-cache)
+      - [Prune cache](#prune-cache)
+    - [Stream mode and example scripts](#stream-mode-and-example-scripts)
+- [Remediation engine configurations](#remediation-engine-configurations)
+  - [Remediation priorities](#remediation-priorities)
+  - [Remediation fallback](#remediation-fallback)
+- [Cache configurations](#cache-configurations)
+  - [PhpFiles cache files directory](#phpfiles-cache-files-directory)
+  - [Redis cache DSN](#redis-cache-dsn)
+  - [Memcached cache DSN](#memcached-cache-dsn)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
