@@ -1,6 +1,6 @@
 {
     "name": "crowdsec/remediation-engine",
-    "description": "The official PHP remediation engine for the CrowdSec CAPI",
+    "description": "The official PHP remediation engine for CrowdSec",
     "type": "library",
     "license": "MIT",
     "minimum-stability": "stable",
