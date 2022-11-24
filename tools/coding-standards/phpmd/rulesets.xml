@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<ruleset name="CrowdSec PHP remediation engine rule set"
+         xmlns="http://pmd.sf.net/ruleset/1.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sf.net/ruleset/1.0.0
+                       http://pmd.sf.net/ruleset_xml_schema.xsd"
+         xsi:noNamespaceSchemaLocation="
+                       http://pmd.sf.net/ruleset_xml_schema.xsd">
+    <description>
+        Rule set that checks CrowdSec CAPI PHP client
+    </description>
+
+    <rule ref="rulesets/codesize.xml" >
+        <exclude name="ExcessiveClassComplexity"/>
+    </rule>
+    <rule ref="rulesets/unusedcode.xml" />
+    <rule ref="rulesets/cleancode.xml">
+        <exclude name="StaticAccess"/>
+    </rule>
+    <!-- Allow more complexity -->
+    <rule ref="rulesets/codesize.xml/ExcessiveClassComplexity">
+        <properties>
+            <property name="maximum" value="100" />
+        </properties>
+    </rule>
+    <!--The only case when static access is acceptable is when used for factory methods.-->
+    <rule ref="rulesets/cleancode.xml/StaticAccess">
+        <properties>
+            <property name="exceptions" >
+                <value><![CDATA[\IPLib\Factory]]></value>
+            </property>
+        </properties>
+    </rule>
+</ruleset>
