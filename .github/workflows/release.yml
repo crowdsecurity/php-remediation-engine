@@ -74,26 +74,26 @@ jobs:
           # Check top [_Compare with previous release_](GITHUB_URL/compare/vLAST_TAG...vVERSION_NUMBER) in CHANGELOG.md
           if [[ ${{ github.event.inputs.first-release }} != "true" ]]
           then
-          echo "VERSION COMPARISON START"
-          COMPARISON=$(grep -oP "\/compare\/\K(.*)$" CHANGELOG.md | head -1)
-          LAST_TAG=$(curl -Ls -o /dev/null -w %{url_effective} $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/latest | grep -oP "\/tag\/\K(.*)$")
-          if [[ $COMPARISON == "$LAST_TAG...v${{ env.VERSION_NUMBER }})" ]]
-          then
-            echo "VERSION COMPARISON OK"
-          else
-            echo "VERSION COMPARISON KO"
-            echo $COMPARISON
-            echo "$LAST_TAG...v${{ env.VERSION_NUMBER }})"
-            exit 1
-          fi
+            echo "VERSION COMPARISON START"
+            COMPARISON=$(grep -oP "\/compare\/\K(.*)$" CHANGELOG.md | head -1)
+            LAST_TAG=$(curl -Ls -o /dev/null -w %{url_effective} $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/latest | grep -oP "\/tag\/\K(.*)$")
+            if [[ $COMPARISON == "$LAST_TAG...v${{ env.VERSION_NUMBER }})" ]]
+            then
+              echo "VERSION COMPARISON OK"
+            else
+              echo "VERSION COMPARISON KO"
+              echo $COMPARISON
+              echo "$LAST_TAG...v${{ env.VERSION_NUMBER }})"
+              exit 1
+            fi
           fi
 
       - name: Create Tag ${{ github.event.inputs.tag_name }}
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         with:
           github-token: ${{ github.token }}
           script: |
-            github.git.createRef({
+            github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: "refs/tags/${{ github.event.inputs.tag_name }}",

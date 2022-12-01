@@ -22,7 +22,7 @@ use Symfony\Component\Cache\PruneableInterface;
 abstract class AbstractCache
 {
     /** @var string Cache symbol */
-    public const CACHE_SEP = '_';
+    public const SEP = '_';
     /** @var string Internal name for deferred cache item */
     public const DEFER = 'deferred';
     /** @var string Internal name for effective saved cache item (not deferred) */
@@ -113,7 +113,7 @@ abstract class AbstractCache
                 case Constants::SCOPE_IP:
                 case Constants::SCOPE_RANGE:
                 case self::IPV4_BUCKET_KEY:
-                    $result = $scope . self::CACHE_SEP . $value;
+                    $result = $scope . self::SEP . $value;
                     break;
                 default:
                     throw new CacheException('Unknown scope:' . $scope);
@@ -124,7 +124,7 @@ abstract class AbstractCache
              *
              * @see https://symfony.com/doc/current/components/cache/cache_items.html#cache-item-keys-and-values
              */
-            $this->cacheKeys[$scope][$value] = preg_replace('/[^A-Za-z0-9_.]/', self::CACHE_SEP, $result);
+            $this->cacheKeys[$scope][$value] = preg_replace('/[^A-Za-z0-9_.]/', self::SEP, $result);
         }
 
         return $this->cacheKeys[$scope][$value];

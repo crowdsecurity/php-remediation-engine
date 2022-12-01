@@ -132,14 +132,6 @@ ddev composer update --working-dir ./my-own-modules/remediation-engine
 ddev php ./my-own-modules/remediation-engine/vendor/bin/phpunit  ./my-own-modules/remediation-engine/tests/Unit --testdox
 ```
 
-#### Integration test
-
-In order to launch integration tests, we have to set some environment variables:
-
-```bash
-ddev php ./my-own-modules/remediation-engine/vendor/bin/phpunit  ./my-own-modules/remediation-engine/tests/Integration --testdox     
-```
-
 
 #### Coding standards
 
