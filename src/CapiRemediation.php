@@ -42,27 +42,14 @@ class CapiRemediation extends AbstractRemediation
      */
     public function getIpRemediation(string $ip): string
     {
-        // Ask cache for Ip scoped decision
-        $ipDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_IP, $ip);
-        // Ask cache for Range scoped decision
-        $rangeDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip);
-
-        $allDecisions = array_merge(
-            !empty($ipDecisions[AbstractCache::STORED]) ? $ipDecisions[AbstractCache::STORED] : [],
-            !empty($rangeDecisions[AbstractCache::STORED]) ? $rangeDecisions[AbstractCache::STORED] : []
-        );
+        $allDecisions = $this->getAllCachedDecisions($ip);
 
         if (!$allDecisions) {
             // As CAPI is always in stream_mode, we do not store this bypass
             return Constants::REMEDIATION_BYPASS;
         }
 
-        $allDecisions = $this->cacheStorage->cleanCachedValues($allDecisions);
-
-        $allDecisions = $this->sortDecisionsByRemediationPriority($allDecisions);
-
-        // Return only a remediation with the highest priority
-        return $allDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS;
+        return $this->getRemediationFromDecisions($allDecisions);
     }
 
     /**

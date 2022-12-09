@@ -97,6 +97,8 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::pruneCache
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::prune
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::getDefaultOrderedRemediations
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getAllCachedDecisions
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getRemediationFromDecisions
  */
 final class LapiRemediationTest extends AbstractRemediation
 {

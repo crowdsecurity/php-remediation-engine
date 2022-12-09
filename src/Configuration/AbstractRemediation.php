@@ -23,16 +23,11 @@ abstract class AbstractRemediation implements ConfigurationInterface
 {
     private function getDefaultOrderedRemediations(): array
     {
-        switch (get_class($this)) {
-            case Capi::class:
-                $result = array_merge(CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]);
-                break;
-            default:
-                $result = array_merge(LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]);
-                break;
+        if (get_class($this) === Capi::class) {
+            return array_merge(CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]);
         }
 
-        return $result;
+        return array_merge(LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]);
     }
 
     /**

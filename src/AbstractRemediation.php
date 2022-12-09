@@ -82,6 +82,30 @@ abstract class AbstractRemediation
      */
     abstract public function refreshDecisions(): array;
 
+
+    protected function getAllCachedDecisions(string $ip): array
+    {
+        // Ask cache for Ip scoped decision
+        $ipDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_IP, $ip);
+        // Ask cache for Range scoped decision
+        $rangeDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip);
+
+        return array_merge(
+            !empty($ipDecisions[AbstractCache::STORED]) ? $ipDecisions[AbstractCache::STORED] : [],
+            !empty($rangeDecisions[AbstractCache::STORED]) ? $rangeDecisions[AbstractCache::STORED] : []
+        );
+    }
+
+    protected function getRemediationFromDecisions(array $decisions): string
+    {
+        $cleanDecisions = $this->cacheStorage->cleanCachedValues($decisions);
+
+        $sortedDecisions = $this->sortDecisionsByRemediationPriority($cleanDecisions);
+
+        // Return only a remediation with the highest priority
+        return $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS;
+    }
+
     /**
      * Remove decisions from cache.
      *
