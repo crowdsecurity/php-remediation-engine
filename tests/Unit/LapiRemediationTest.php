@@ -372,7 +372,7 @@ final class LapiRemediationTest extends AbstractRemediation
                 ]]], // Test 2 : retrieve cached bypass
                 [AbstractCache::STORED => []],  // Test 2 : retrieve empty range*/
                 [AbstractCache::STORED => []],  // Test 3 : retrieve empty IP decisions
-                [AbstractCache::STORED => []],  // Test 3 : retrieve empty range decisions
+                [AbstractCache::STORED => []]  // Test 3 : retrieve empty range decisions
             )
         );
         $this->bouncer->method('getFilteredDecisions')->will(
@@ -393,7 +393,7 @@ final class LapiRemediationTest extends AbstractRemediation
                         'origin' => 'lapi',
                         'duration' => '1h',
                     ],
-                ], // Test 3
+                ] // Test 3
             )
         );
 
