@@ -43,18 +43,20 @@ This kind of action is called a remediation and can be:
 
 ## Features
 
-- CrowdSec CAPI remediations
-  - Retrieve and cache decisions from CAPI
+- CrowdSec remediations
+  - Retrieve and cache decisions from CAPI or LAPI
     - Handle IP scoped decisions for Ipv4 and IPv6
     - Handle Range scoped decisions for IPv4
-  - Determine remediation for a given IP using the cached decisions and customizable remediation priorities.
+  - Determine remediation for a given IP
+    - Use the cached decisions for CAPI and for LAPI in stream mode
+    - For LAPI in live mode, call LAPI if there is no cached decision
+    - Use customizable remediation priorities
   
 
 - Overridable cache handler (built-in support for `Redis`, `Memcached` and `PhpFiles` caches)
 
 
 - Large PHP matrix compatibility: 7.2.x, 7.3.x, 7.4.x, 8.0.x and 8.1.x
-
 
 
 ## Quick start
@@ -78,7 +80,7 @@ To retrieve decisions from CAPI and determine which remediation should apply to 
 To instantiate a `CapiRemediation` object, you have to:
 
 - Pass its `configs` array as a first parameter. You will find below [the list of other available
-  settings](#remediation-engine-configurations).
+  settings](#capi-remediation-engine-configurations).
 
 
 - Pass a CrowdSec CAPI Watcher client as a second parameter. Please see [CrowdSec CAPI PHP client](https://github.com/crowdsecurity/php-capi-client) for details.
@@ -192,8 +194,178 @@ As we recommend to ask CAPI every 2 hours for fresh decisions, you may have to u
 example scripts for that : `tests/scripts/clear-cache-capi.php` and `tests/scripts/prune-cache-capi.php`.
 
 
+### Lapi Remediation
 
-## Remediation engine configurations
+To retrieve decisions from LAPI and determine which remediation should apply to an IP, we use the
+`LapiRemediation` class.
+
+#### Instantiation
+
+To instantiate a `LapiRemediation` object, you have to:
+
+- Pass its `configs` array as a first parameter. You will find below [the list of other available
+  settings](#lapi-remediation-engine-configurations).
+
+
+- Pass a CrowdSec LAPI Bouncer client as a second parameter. Please see [CrowdSec LAPI PHP client](https://github.com/crowdsecurity/php-lapi-client) for details.
+
+
+- Pass an implementation of the provided `CacheStorage\AbstractCache` in the third parameter.  You will find
+  examples of such implementation with the `CacheStorage\PhpFiles`,  `CacheStorage\Memcached` and `CacheStorage\Redis`
+  class.
+
+
+- Optionally, to log some information, you can pass an implementation of the `Psr\Log\LoggerInterface` as a fourth
+  parameter. You will find an example of such implementation with the provided `Logger\FileLog` class.
+
+
+```php
+use CrowdSec\CapiClient\Storage\FileStorage;
+use CrowdSec\LapiClient\Bouncer;
+use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
+use CrowdSec\RemediationEngine\LapiRemediation;
+use CrowdSec\RemediationEngine\Logger\FileLog;
+
+// Init logger
+$logger = new FileLog(['debug_mode' => true]);
+// Init client
+$clientConfigs = [
+    'auth_type' => 'api_key',
+    'api_url' => 'http://your-lapi-url:8080',
+    'api_key' => '****************',
+];
+$lapiClient = new Bouncer($clientConfigs, null, $logger);
+// Init PhpFiles cache storage
+$cacheConfigs = [
+    'fs_cache_path' => __DIR__ . '/.cache',
+];
+$phpFileCache = new PhpFiles($cacheConfigs, $logger);
+// Init LAPI remediation
+$remediationConfigs = [];
+$remediationEngine = new LapiRemediation($remediationConfigs, $lapiClient, $phpFileCache, $logger);
+```
+
+#### Features
+
+Once your LAPI remediation engine is instantiated, you can perform the following calls:
+
+
+##### Get Decisions stream list from LAPI
+
+
+```php
+$remediationEngine->refreshDecisions($startup, $filter);
+```
+
+- The first parameter `$startup` is a boolean:
+  - When the `$startup` flag is true, all the decisions are returned.
+  - When the `$startup` flag is false, only the decisions updates (add or remove) from the last stream call are returned.
+
+- The second parameter `$filter` is an array. Please see the [CrowdSec LAPI documentation](https://crowdsecurity.github.io/api_doc/index.html?urls.primaryName=LAPI#/bouncers/getDecisionsStream) for more details about available
+  filters (scopes, origins, scenarios, etc.).
+
+##### Get remediation for an IP
+
+```php
+$ip = ...;// Could be the current user IP
+$remediationEngine->getIpRemediation($ip);
+```
+
+This method will ask the `CacheStorage` to know if there are any decisions matching the IP in cache. 
+
+Then, process depends on the `stream_mode` configuration: 
+
+- In stream mode, if there is no cached decision, a `bypass` will be returned.
+- In live mode, if there is no cached decision, direct call to LAPI will be done to retrieve and cache decisions 
+  related to the IP.
+
+
+Finally, if there are one or more decisions, the decision type with the highest priority will be returned.
+
+
+##### Clear cache
+
+```php
+$remediationEngine->clearCache();
+```
+
+This method will delete all the cached items.
+
+##### Prune cache
+
+```php
+$remediationEngine->pruneCache();
+```
+
+Unlike Memcached and Redis, there is no PhpFiles pruning mechanism that automatically removes expired items.
+Thus, if you are using the PhpFiles cache, you should use this method.
+
+#### Example scripts
+
+You will find some ready-to-use php scripts in the `tests/scripts` folder. These scripts could be useful to better
+understand what you can do with this remediation engine.
+
+As LAPI remediation methods need sometimes an array as parameter, we use a json format in command line.
+
+
+##### Get decisions stream
+
+###### Command usage
+
+```php
+php tests/scripts/refresh-decisions-lapi.php <STARTUP> <FILTER_JSON> <BOUNCER_KEY> <LAPI_URL>
+```
+
+###### Example usage
+
+```bash
+php tests/scripts/refresh-decisions-lapi.php 1 '{"scopes":"Ip,Range"}' 68c2b479830c89bfd48926f9d764da39  https://crowdsec:8080 
+```
+
+##### Get remediation for an IP
+
+###### Command usage
+
+```php
+php tests/scripts/get-remediation-lapi.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM_MODE>
+```
+
+###### Example usage
+
+```bash
+php tests/scripts/get-remediation-lapi.php 1.2.3.4 0b85479f39a8152af8b27b316ad0a80c  https://crowdsec:8080 0
+```
+
+##### Clear cache
+
+###### Command usage
+
+```php
+php tests/scripts/clear-cache-lapi.php <BOUNCER_KEY> <LAPI_URL>
+```
+
+###### Example usage
+
+```bash
+php tests/scripts/clear-cache-lapi.php c580ebdff45da6e01415ed0e9bc9c06b  https://crowdsec:8080
+```
+
+##### Prune cache
+
+###### Command usage
+
+```php
+php tests/scripts/prune-cache-lapi.php <BOUNCER_KEY> <LAPI_URL>
+```
+
+###### Example usage
+
+```bash
+php tests/scripts/prune-cache-lapi.php c580ebdff45da6e01415ed0e9bc9c06b  https://crowdsec:8080
+```
+
+
+## CAPI remediation engine configurations
 
 The first parameter `$configs` of the `CapiRemediation` constructor can be used to pass the following settings:
 
@@ -238,6 +410,57 @@ This setting is not required. If you don't set any value, `'bypass'` will be use
 If you set some value, be aware to include this value in the `ordered_remediations` setting too.
 
 In the example above, if a retrieved decision has the unknown `mfa` type, the `ban` fallback will be use instead.
+
+
+
+## LAPI remediation engine configurations
+
+The first parameter `$configs` of the `LapiRemediation` constructor can be used to pass some settings.
+
+As for the CAPI remediation engine above, you can pass `ordered_remediations` and `fallback_remediation` settings.
+
+In addition, LAPI remediation engine handle the following settings:
+
+### Stream mode
+
+```php
+$configs = [
+        ... 
+        'stream_mode' => false
+        ...
+];
+```
+
+`true` to enable stream mode, `false` to enable the live mode. Default to `true`. 
+
+The stream mode allows you to constantly feed the cache with the 
+malicious IP list via a background task (CRON), making it to be even faster when checking the IP of your visitors. Besides, if your site has a lot of unique visitors at the same time, this will not influence the traffic to the API of your CrowdSec instance.
+
+
+In live mode, the first time you try to get remediation for an IP, a direct call to the CrowdSec LAPI will be done. 
+Decisions will be cached with a lifetime depending on the `clean_ip_cache_duration` and `bad_ip_cache_duration` 
+settings below.
+
+
+### Clean IP cache duration
+
+If there is no decision for an IP, this IP will be considered as "clean" and this setting will be used to set the 
+cache lifetime of the `bypass` remediation to store. 
+
+This is only useful in live mode. In stream mode, a "clean" IP is considered as "clean" until the next resynchronisation.
+
+In seconds. Must be greater or equal than 1. Default to 60 seconds if not set.
+
+### Bad IP cache duration
+
+If there is an active decision for an IP, this IP will be considered as "bad" and this setting will be used to set the
+cache lifetime of the remediation to store (`ban`, `captcha`, etc.). More specifically, the lifetime will be the 
+minimum between this setting and the decision duration.
+
+This is only useful in live mode. In stream mode, the cache duration depends only on the decision duration. 
+
+In seconds. Must be greater or equal than 1. Default to 120 seconds if not set.
+
 
 ## Cache configurations
 

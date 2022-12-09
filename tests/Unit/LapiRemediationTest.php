@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace CrowdSec\RemediationEngine\Tests\Unit;
 
 /**
- * Test for capi remediation.
+ * Test for lapi remediation.
  *
  * @author    CrowdSec team
  *
@@ -15,14 +15,13 @@ namespace CrowdSec\RemediationEngine\Tests\Unit;
  * @license   MIT License
  */
 
-use CrowdSec\CapiClient\Watcher;
-use CrowdSec\RemediationEngine\AbstractRemediation as LibAbstractRemediation;
+use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
-use CrowdSec\RemediationEngine\CapiRemediation;
 use CrowdSec\RemediationEngine\Constants;
+use CrowdSec\RemediationEngine\LapiRemediation;
 use CrowdSec\RemediationEngine\Logger\FileLog;
 use CrowdSec\RemediationEngine\Tests\Constants as TestConstants;
 use CrowdSec\RemediationEngine\Tests\MockedData;
@@ -51,6 +50,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\Decision::getOrigin
  * @uses \CrowdSec\RemediationEngine\Decision::toArray
  * @uses \CrowdSec\RemediationEngine\Logger\FileLog::__construct
+ * @uses \CrowdSec\RemediationEngine\Configuration\Lapi::getConfigTreeBuilder
  *
  * @covers \CrowdSec\RemediationEngine\Decision::getExpiresAt
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::__construct
@@ -58,13 +58,13 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionIdentifier
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::parseDurationToSeconds
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionExpiresAt
- * @covers \CrowdSec\RemediationEngine\CapiRemediation::__construct
- * @covers \CrowdSec\RemediationEngine\CapiRemediation::configure
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::__construct
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::configure
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getConfig
- * @covers \CrowdSec\RemediationEngine\CapiRemediation::getIpRemediation
- * @covers \CrowdSec\RemediationEngine\CapiRemediation::storeDecisions
- * @covers \CrowdSec\RemediationEngine\CapiRemediation::sortDecisionsByRemediationPriority
- * @covers \CrowdSec\RemediationEngine\CapiRemediation::refreshDecisions
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::getIpRemediation
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::storeDecisions
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::sortDecisionsByRemediationPriority
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::refreshDecisions
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::removeDecisions
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::clear
@@ -100,7 +100,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getAllCachedDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getRemediationFromDecisions
  */
-final class CapiRemediationTest extends AbstractRemediation
+final class LapiRemediationTest extends AbstractRemediation
 {
     /**
      * @var AbstractCache
@@ -135,9 +135,9 @@ final class CapiRemediationTest extends AbstractRemediation
      */
     private $root;
     /**
-     * @var Watcher
+     * @var Bouncer
      */
-    private $watcher;
+    private $bouncer;
 
     public function cacheTypeProvider(): array
     {
@@ -158,7 +158,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $this->debugFile = 'debug-' . $currentDate . '.log';
         $this->prodFile = 'prod-' . $currentDate . '.log';
         $this->logger = new FileLog(['log_directory_path' => $this->root->url(), 'debug_mode' => true]);
-        $this->watcher = $this->getWatcherMock();
+        $this->bouncer = $this->getBouncerMock();
 
         $cachePhpfilesConfigs = ['fs_cache_path' => $this->root->url()];
         $mockedMethods = ['retrieveDecisionsForIp'];
@@ -180,7 +180,7 @@ final class CapiRemediationTest extends AbstractRemediation
     {
         $this->setCache($cacheType);
         $remediationConfigs = [];
-        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, null);
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
         $result = $remediation->clearCache();
         $this->assertEquals(
             true,
@@ -201,7 +201,7 @@ final class CapiRemediationTest extends AbstractRemediation
     public function testFailedDeferred()
     {
         // Test failed deferred
-        $this->watcher->method('getStreamDecisions')->will(
+        $this->bouncer->method('getStreamDecisions')->will(
             $this->onConsecutiveCalls(
                 MockedData::DECISIONS['new_ip_v4_double'], // Test 1 : new IP decision (ban) (save ok)
                 MockedData::DECISIONS['new_ip_v4_other'],  // Test 2 : new IP decision (ban) (failed deferred)
@@ -212,7 +212,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $mockedMethods = [];
         $this->cacheStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $remediationConfigs = [];
-        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
 
         $result = $remediation->refreshDecisions();
         $this->assertEquals(
@@ -225,7 +225,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $mockedMethods = ['saveDeferred'];
         $this->cacheStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $remediationConfigs = [];
-        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
 
         $this->cacheStorage->method('saveDeferred')->will(
             $this->onConsecutiveCalls(
@@ -242,7 +242,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $mockedMethods = ['saveDeferred'];
         $this->cacheStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $remediationConfigs = [];
-        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
         $this->cacheStorage->method('saveDeferred')->will(
             $this->onConsecutiveCalls(
                 false
@@ -259,19 +259,19 @@ final class CapiRemediationTest extends AbstractRemediation
     /**
      * @dataProvider cacheTypeProvider
      */
-    public function testGetIpRemediation($cacheType)
+    public function testGetIpRemediationInStreamMode($cacheType)
     {
         $this->setCache($cacheType);
 
-        $remediationConfigs = ['stream_mode' => false];
+        $remediationConfigs = ['stream_mode' => true];
 
         // Test with null logger
-        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, null);
-        // Test is forced to stream mode
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
+        // Test stream mode value
         $this->assertEquals(
             true,
             $remediation->getConfig('stream_mode'),
-            'Stream mode must be true'
+            'Stream mode should be true'
         );
         // Test default configs
         $this->assertEquals(
@@ -280,7 +280,7 @@ final class CapiRemediationTest extends AbstractRemediation
             'Default fallback should be bypass'
         );
         $this->assertEquals(
-            [Constants::REMEDIATION_BAN, Constants::REMEDIATION_BYPASS],
+            [Constants::REMEDIATION_BAN, Constants::REMEDIATION_CAPTCHA, Constants::REMEDIATION_BYPASS],
             $remediation->getConfig('ordered_remediations'),
             'Default ordered remediation should be as expected'
         );
@@ -352,333 +352,125 @@ final class CapiRemediationTest extends AbstractRemediation
         );
     }
 
-    public function testPrivateOrProtectedMethods()
+    /**
+     * @dataProvider cacheTypeProvider
+     */
+    public function testGetIpRemediationInLiveMode($cacheType)
     {
-        $cachePhpfilesConfigs = ['fs_cache_path' => $this->root->url()];
-        $mockedMethods = [];
-        $this->cacheStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
-        $remediationConfigs = [];
-        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
-        // convertRawDecisionsToDecisions
-        // Test 1 : ok
-        $rawDecisions = [
-            [
-                'scope' => 'IP',
-                'value' => '1.2.3.4',
-                'type' => 'ban',
-                'origin' => 'unit',
-                'duration' => '147h',
-            ],
-        ];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'convertRawDecisionsToDecisions',
-            [$rawDecisions]
+        $this->setCache($cacheType);
+
+        $remediationConfigs = ['stream_mode' => false];
+        // Prepare next tests
+        $currentTime = time();
+        $expectedCleanTime = $currentTime + Constants::CACHE_EXPIRATION_FOR_CLEAN_IP;
+        $this->cacheStorage->method('retrieveDecisionsForIp')->will(
+            $this->onConsecutiveCalls(
+                [AbstractCache::STORED => []],  // Test 1 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 1 : retrieve empty range decisions
+                [AbstractCache::STORED => [[
+                    'bypass',
+                    $expectedCleanTime,
+                    'lapi-remediation-engine-bypass-ip-1.2.3.4',
+                ]]], // Test 2 : retrieve cached bypass
+                [AbstractCache::STORED => []],  // Test 2 : retrieve empty range*/
+                [AbstractCache::STORED => []],  // Test 3 : retrieve empty IP decisions
+                [AbstractCache::STORED => []]  // Test 3 : retrieve empty range decisions
+            )
+        );
+        $this->bouncer->method('getFilteredDecisions')->will(
+            $this->onConsecutiveCalls(
+                [],  // Test 1 : retrieve empty IP decisions
+                [
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4,
+                        'type' => 'captcha',
+                        'origin' => 'lapi',
+                        'duration' => '1h',
+                    ],
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4,
+                        'type' => 'ban',
+                        'origin' => 'lapi',
+                        'duration' => '1h',
+                    ],
+                ] // Test 3
+            )
         );
 
-        $this->assertCount(
-            1,
+        // Test with null logger
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
+        // Test stream mode value
+        $this->assertEquals(
+            false,
+            $remediation->getConfig('stream_mode'),
+            'Stream mode should be true'
+        );
+        // Test default configs
+        $this->assertEquals(
+            Constants::REMEDIATION_BYPASS,
+            $remediation->getConfig('fallback_remediation'),
+            'Default fallback should be bypass'
+        );
+        $this->assertEquals(
+            [Constants::REMEDIATION_BAN, Constants::REMEDIATION_CAPTCHA, Constants::REMEDIATION_BYPASS],
+            $remediation->getConfig('ordered_remediations'),
+            'Default ordered remediation should be as expected'
+        );
+
+        // Direct LAPI call will be done only if there is no cached decisions (Test1, Test 3)
+        $this->bouncer->expects($this->exactly(2))->method('getFilteredDecisions');
+
+        // Test 1 (No cached items and no active decision)
+        $result = $remediation->getIpRemediation(TestConstants::IP_V4);
+
+        $this->assertEquals(
+            Constants::REMEDIATION_BYPASS,
             $result,
-            'Should return array'
+            'Uncached (clean) and with no active decision should return a bypass remediation'
         );
 
-        $decision = $result[0];
+        $adapter = $this->cacheStorage->getAdapter();
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
         $this->assertEquals(
-            'ban',
-            $decision->getType(),
-            'Should have created a correct decision'
+            true,
+            $item->isHit(),
+            'Remediation should have been cached'
         );
+        $cachedItem = $item->get();
         $this->assertEquals(
-            'ip',
-            $decision->getScope(),
-            'Should have created a normalized scope'
-        );
-        // Test 2: bad raw decision
-        $rawDecisions = [
-            [
-                'value' => '1.2.3.4',
-                'origin' => 'unit',
-                'duration' => '147h',
-            ],
-        ];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'convertRawDecisionsToDecisions',
-            [$rawDecisions]
-        );
-        $this->assertCount(
-            0,
-            $result,
-            'Should return empty array'
-        );
-
-        PHPUnitUtil::assertRegExp(
-            $this,
-            '/.*300.*"type":"RAW_DECISION_NOT_AS_EXPECTED"/',
-            file_get_contents($this->root->url() . '/' . $this->prodFile),
-            'Prod log content should be correct'
-        );
-        // Test 3 : with id
-        $rawDecisions = [
-            [
-                'scope' => 'IP',
-                'value' => '1.2.3.4',
-                'type' => 'ban',
-                'origin' => 'unit',
-                'duration' => '147h',
-                'id' => 42,
-            ],
-        ];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'convertRawDecisionsToDecisions',
-            [$rawDecisions]
-        );
-
-        $this->assertCount(
-            1,
-            $result,
-            'Should return array'
-        );
-
-        $decision = $result[0];
-        $this->assertEquals(
-            'unit-ban-ip-1.2.3.4',
-            $decision->getIdentifier(),
-            'Should have created a correct decision even with id'
-        );
-
-        // comparePriorities
-        $a = [
-            'ban',
-            1668577960,
-            'CAPI-ban-range-52.3.230.0/24',
-            LibAbstractRemediation::INDEX_PRIO => 0,
-        ];
-
-        $b = [
-            'ban',
-            1668577960,
-            'CAPI-ban-range-52.3.230.0/24',
-            LibAbstractRemediation::INDEX_PRIO => 0,
-        ];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'comparePriorities',
-            [$a, $b]
-        );
-
-        $this->assertEquals(
-            0,
-            $result,
-            'Should return 0 if same priority'
-        );
-
-        $a = [
-            'ban',
-            1668577960,
-            'CAPI-ban-range-52.3.230.0/24',
-            LibAbstractRemediation::INDEX_PRIO => 0,
-        ];
-
-        $b = [
-            'bypass',
-            1668577960,
-            'CAPI-ban-range-52.3.230.0/24',
-            LibAbstractRemediation::INDEX_PRIO => 1,
-        ];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'comparePriorities',
-            [$a, $b]
-        );
-
-        $this->assertEquals(
-            -1,
-            $result,
-            'Should return -1'
-        );
-
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'comparePriorities',
-            [$b, $a]
-        );
-
-        $this->assertEquals(
-            1,
-            $result,
-            'Should return 1'
-        );
-        // sortDecisionsByRemediationPriority
-        // Test 1 : default
-        $decisions = [
-            [
-                'bypass',
-                1668577960,
-                'CAPI-bypass-range-52.3.230.0/24',
-            ],
-            [
-                'ban',
-                1668577960,
-                'CAPI-ban-range-52.3.230.0/24',
-            ],
-        ];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'sortDecisionsByRemediationPriority',
-            [$decisions]
-        );
-        $this->assertEquals(
-            'ban',
-            $result[0][0],
-            'Should return highest priority (ban > bypass)'
-        );
-        // Test 2 : custom ordered priorities
-        $remediationConfigs = [
-            'ordered_remediations' => ['captcha', Constants::REMEDIATION_BAN],
-            'fallback_remediation' => 'captcha',
-        ];
-        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
-        $decisions = [
-            [
-                'captcha',
-                1668577960,
-                'CAPI-captcha-range-52.3.230.0/24',
-            ],
-            [
-                'ban',
-                1668577960,
-                'CAPI-ban-range-52.3.230.0/24',
-            ],
-        ];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'sortDecisionsByRemediationPriority',
-            [$decisions]
-        );
-        $this->assertEquals(
-            'captcha',
-            $result[0][0],
-            'Should return highest priority (captcha > ban)'
-        );
-        // Test 3 : fallback
-        $decisions = [
-            [
-                'unknown',
-                1668577960,
-                'CAPI-unknown-range-52.3.230.0/24',
-            ],
-            [
-                'ban',
-                1668577960,
-                'CAPI-ban-range-52.3.230.0/24',
-            ],
-        ];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'sortDecisionsByRemediationPriority',
-            [$decisions]
-        );
-        $this->assertEquals(
-            'captcha',
-            $result[0][0],
-            'Should return highest priority (fallback captcha > ban)'
-        );
-        // Test 4 : empty
-        $decisions = [];
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'sortDecisionsByRemediationPriority',
-            [$decisions]
-        );
-        $this->assertCount(
-            0,
-            $result,
-            'Should return empty'
-        );
-        // handleDecisionExpiresAt
-        $remediation = $this->getMockBuilder('CrowdSec\RemediationEngine\CapiRemediation')
-            ->setConstructorArgs([
-                'configs' => $remediationConfigs,
-                'client' => $this->watcher,
-                'cacheStorage' => $this->cacheStorage,
-                'logger' => $this->logger, ])
-            ->onlyMethods(['getConfig'])
-            ->getMock();
-
-        $remediation->method('getConfig')
-            ->will($this->returnValueMap([
-                ['stream_mode', true],
-                ['clean_ip_cache_duration', Constants::CACHE_EXPIRATION_FOR_CLEAN_IP],
-                ['bad_ip_cache_duration', Constants::CACHE_EXPIRATION_FOR_BAD_IP],
-            ]));
-        // Test 1: bypass
-        $type = Constants::REMEDIATION_BYPASS;
-        $duration = '147h';
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'handleDecisionExpiresAt',
-            [$type, $duration]
+            Constants::REMEDIATION_BYPASS,
+            $cachedItem[0][AbstractCache::INDEX_MAIN],
+            'Bypass should have been cached'
         );
         $this->assertTrue(
-            (time() + Constants::CACHE_EXPIRATION_FOR_CLEAN_IP) === $result,
+            $expectedCleanTime === $cachedItem[0][AbstractCache::INDEX_EXP],
             'Should return current time + clean ip duration config'
         );
-
-        // Test 2 : ban in stream mode
-        $type = Constants::REMEDIATION_BAN;
-        $duration = '147h';
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'handleDecisionExpiresAt',
-            [$type, $duration]
+        $this->assertEquals(
+            'lapi-remediation-engine-bypass-ip-1.2.3.4',
+            $cachedItem[0][AbstractCache::INDEX_ID],
+            'Should return correct indentifier'
         );
-        $this->assertTrue(
-            (time() + 147 * 60 * 60) === $result,
-            'Should return current time + decision duration'
+        // Test 2 (cached decisions)
+        $result = $remediation->getIpRemediation(TestConstants::IP_V4);
+        $this->assertEquals(
+            Constants::REMEDIATION_BYPASS,
+            $result,
+            'Cached (clean) should return a bypass remediation'
         );
-
-        // Test 3: ban in live mode
-        $remediation = $this->getMockBuilder('CrowdSec\RemediationEngine\CapiRemediation')
-            ->setConstructorArgs([
-                'configs' => $remediationConfigs,
-                'client' => $this->watcher,
-                'cacheStorage' => $this->cacheStorage,
-                'logger' => $this->logger, ])
-            ->onlyMethods(['getConfig'])
-            ->getMock();
-
-        $remediation->method('getConfig')
-            ->will($this->returnValueMap([
-                ['stream_mode', false],
-                ['clean_ip_cache_duration', Constants::CACHE_EXPIRATION_FOR_CLEAN_IP],
-                ['bad_ip_cache_duration', Constants::CACHE_EXPIRATION_FOR_BAD_IP],
-            ]));
-        $type = Constants::REMEDIATION_BAN;
-        $duration = '147h';
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'handleDecisionExpiresAt',
-            [$type, $duration]
+        // Test 3 (no cached decision and 2 actives IP decisions)
+        $this->cacheStorage->clear();
+        $result = $remediation->getIpRemediation(TestConstants::IP_V4);
+        $this->assertEquals(
+            Constants::REMEDIATION_BAN,
+            $result,
+            'Should return a ban remediation'
         );
-        $this->assertTrue(
-            (time() + Constants::CACHE_EXPIRATION_FOR_BAD_IP) === $result,
-            'Should return current time + bad ip duration config'
-        );
-
-        // Test 4: ban in live mode with duration < bad ip duration config
-        $type = Constants::REMEDIATION_BAN;
-        $duration = '15s';
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'handleDecisionExpiresAt',
-            [$type, $duration]
-        );
-        $this->assertTrue(
-            (time() + 15) === $result,
-            'Should return current time + decision duration'
-        );
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
+        $cachedItem = $item->get();
+        $this->assertCount(2, $cachedItem, 'Should have cache 2 decisions for IP');
     }
 
     /**
@@ -690,10 +482,10 @@ final class CapiRemediationTest extends AbstractRemediation
 
         $remediationConfigs = [];
 
-        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
 
         // Prepare next tests
-        $this->watcher->method('getStreamDecisions')->will(
+        $this->bouncer->method('getStreamDecisions')->will(
             $this->onConsecutiveCalls(
                 MockedData::DECISIONS['new_ip_v4'],          // Test 1 : new IP decision (ban)
                 MockedData::DECISIONS['new_ip_v4'],          // Test 2 : same IP decision (ban)

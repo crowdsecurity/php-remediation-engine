@@ -20,7 +20,7 @@ $capiClient = new Watcher($clientConfigs, new FileStorage(__DIR__), null, $logge
 
 // Init PhpFiles cache storage
 $cacheFileConfigs = [
-    'fs_cache_path' => __DIR__ . '/.cache',
+    'fs_cache_path' => __DIR__ . '/.cache/capi',
 ];
 $phpFileCache = new PhpFiles($cacheFileConfigs, $logger);
 // Init CAPI remediation

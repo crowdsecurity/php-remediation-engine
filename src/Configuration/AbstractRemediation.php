@@ -6,6 +6,7 @@ namespace CrowdSec\RemediationEngine\Configuration;
 
 use CrowdSec\RemediationEngine\CapiRemediation;
 use CrowdSec\RemediationEngine\Constants;
+use CrowdSec\RemediationEngine\LapiRemediation;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
@@ -20,6 +21,15 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 abstract class AbstractRemediation implements ConfigurationInterface
 {
+    private function getDefaultOrderedRemediations(): array
+    {
+        if (get_class($this) === Capi::class) {
+            return array_merge(CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]);
+        }
+
+        return array_merge(LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]);
+    }
+
     /**
      * Common remediation settings.
      *
@@ -48,7 +58,7 @@ abstract class AbstractRemediation implements ConfigurationInterface
                 })
                 ->end()
                 ->scalarPrototype()->cannotBeEmpty()->end()
-                ->defaultValue(array_merge(CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]))
+                ->defaultValue($this->getDefaultOrderedRemediations())
             ->end()
             ->booleanNode('stream_mode')->defaultTrue()->end()
             ->integerNode('clean_ip_cache_duration')
