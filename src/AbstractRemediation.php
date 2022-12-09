@@ -10,6 +10,8 @@ use Monolog\Handler\NullHandler;
 use Monolog\Logger;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
+use GeoIp2\Database\Reader;
+use GeoIp2\Exception\AddressNotFoundException;
 
 abstract class AbstractRemediation
 {
@@ -31,6 +33,11 @@ abstract class AbstractRemediation
      * @var LoggerInterface
      */
     protected $logger;
+
+    /**
+     * @var string[]
+     */
+    private $geolocTemplate = ['country' => '', 'not_found' => '', 'error' => ''];
 
     public function __construct(array $configs, AbstractCache $cacheStorage, LoggerInterface $logger = null)
     {
@@ -82,6 +89,18 @@ abstract class AbstractRemediation
      */
     abstract public function refreshDecisions(): array;
 
+    protected function convertRawDecisionsToDecisions(array $rawDecisions): array
+    {
+        $decisions = [];
+        foreach ($rawDecisions as $rawDecision) {
+            $decision = $this->convertRawDecision($rawDecision);
+            if ($decision) {
+                $decisions[] = $decision;
+            }
+        }
+
+        return $decisions;
+    }
 
     protected function getAllCachedDecisions(string $ip): array
     {
@@ -89,10 +108,29 @@ abstract class AbstractRemediation
         $ipDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_IP, $ip);
         // Ask cache for Range scoped decision
         $rangeDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip);
+        // Ask cache for Country scoped decision
+        // @TODO : depends on configs
+                // @TODO
+                /**
+                 * Check if IP geolocalized country is cached
+                 * If not : - get related country from Maxmind (depends on config)
+                 *          - if config, store related country
+                 * If yes : keep this country
+                 * Then : check if there is cached item for this country
+                 */
+        $geolocConfig = $this->getConfig('geolocation')??[];
+        $countryDecisions = [];
+        if(!empty($geolocConfig['enabled'])){
+            $countryResult = $this->handleCountryResultForIp($geolocConfig, $ip);
+            if(!empty($countryResult['country'])){
+                $countryDecisions = $this->cacheStorage->retrieveDecisionsForCountry($countryResult['country']);
+            }
+        }
 
         return array_merge(
             !empty($ipDecisions[AbstractCache::STORED]) ? $ipDecisions[AbstractCache::STORED] : [],
-            !empty($rangeDecisions[AbstractCache::STORED]) ? $rangeDecisions[AbstractCache::STORED] : []
+            !empty($rangeDecisions[AbstractCache::STORED]) ? $rangeDecisions[AbstractCache::STORED] : [],
+            !empty($countryDecisions[AbstractCache::STORED]) ? $countryDecisions[AbstractCache::STORED] : []
         );
     }
 
@@ -136,48 +174,6 @@ abstract class AbstractRemediation
     }
 
     /**
-     * Add decisions in cache.
-     *
-     * @throws CacheException
-     * @throws InvalidArgumentException|\Psr\Cache\CacheException
-     */
-    protected function storeDecisions(array $decisions): array
-    {
-        if (!$decisions) {
-            return [AbstractCache::DONE => 0, AbstractCache::STORED => []];
-        }
-        $deferCount = 0;
-        $doneCount = 0;
-        $stored = [];
-        foreach ($decisions as $decision) {
-            $storeResult = $this->cacheStorage->storeDecision($decision);
-            $deferCount += $storeResult[AbstractCache::DEFER];
-            $doneCount += $storeResult[AbstractCache::DONE];
-            if (!empty($storeResult[AbstractCache::STORED])) {
-                $stored[] =  $storeResult[AbstractCache::STORED];
-            }
-        }
-
-        return [
-            AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
-            AbstractCache::STORED => $stored,
-        ];
-    }
-
-    protected function convertRawDecisionsToDecisions(array $rawDecisions): array
-    {
-        $decisions = [];
-        foreach ($rawDecisions as $rawDecision) {
-            $decision = $this->convertRawDecision($rawDecision);
-            if ($decision) {
-                $decisions[] = $decision;
-            }
-        }
-
-        return $decisions;
-    }
-
-    /**
      * Sort the decision array of a cache item, by remediation priorities.
      */
     protected function sortDecisionsByRemediationPriority(array $decisions): array
@@ -205,6 +201,35 @@ abstract class AbstractRemediation
         usort($decisionsWithPriority, $compareFunction);
 
         return $decisionsWithPriority;
+    }
+
+    /**
+     * Add decisions in cache.
+     *
+     * @throws CacheException
+     * @throws InvalidArgumentException|\Psr\Cache\CacheException
+     */
+    protected function storeDecisions(array $decisions): array
+    {
+        if (!$decisions) {
+            return [AbstractCache::DONE => 0, AbstractCache::STORED => []];
+        }
+        $deferCount = 0;
+        $doneCount = 0;
+        $stored = [];
+        foreach ($decisions as $decision) {
+            $storeResult = $this->cacheStorage->storeDecision($decision);
+            $deferCount += $storeResult[AbstractCache::DEFER];
+            $doneCount += $storeResult[AbstractCache::DONE];
+            if (!empty($storeResult[AbstractCache::STORED])) {
+                $stored[] =  $storeResult[AbstractCache::STORED];
+            }
+        }
+
+        return [
+            AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
+            AbstractCache::STORED => $stored,
+        ];
     }
 
     /**
@@ -245,6 +270,92 @@ abstract class AbstractRemediation
             $origin,
             $this->handleDecisionExpiresAt($type, $duration)
         );
+    }
+
+    /**
+     * Retrieve a country from a MaxMind database.
+     *
+     * @throws Exception
+     */
+    private function getMaxMindCountry(string $ip, string $databaseType, string $databasePath): array
+    {
+        if (!isset($this->maxmindCountry[$ip][$databaseType][$databasePath])) {
+            $result = $this->geolocTemplate;
+            try {
+                $reader = new Reader($databasePath);
+                switch ($databaseType) {
+                    case Constants::MAXMIND_COUNTRY:
+                        $record = $reader->country($ip);
+                        break;
+                    case Constants::MAXMIND_CITY:
+                        $record = $reader->city($ip);
+                        break;
+                    default:
+                        throw new RemediationException("Unknown MaxMind database type:$databaseType");
+                }
+                $result['country'] = $record->country->isoCode;
+            } catch (AddressNotFoundException $e) {
+                $result['not_found'] = $e->getMessage();
+            } catch (\Exception $e) {
+                $result['error'] = $e->getMessage();
+            }
+
+            $this->maxmindCountry[$ip][$databaseType][$databasePath] = $result;
+        }
+
+        return $this->maxmindCountry[$ip][$databaseType][$databasePath];
+    }
+
+    private function handleCountryResultForIp(array $geolocConfig, string $ip): array
+    {
+        $result = $this->geolocTemplate;
+        $saveInCache = !empty($geolocConfig['save_result']);
+        if ($saveInCache) {
+            $cachedVariables = $this->cacheStorage->getIpVariables(
+                AbstractCache::GEOLOCATION,
+                ['crowdsec_geolocation_country', 'crowdsec_geolocation_not_found'],
+                $ip
+            );
+            $country = $cachedVariables['crowdsec_geolocation_country'] ?? null;
+            $notFoundError = $cachedVariables['crowdsec_geolocation_not_found'] ?? null;
+            if ($country) {
+                $result['country'] = $country;
+
+                return $result;
+            } elseif ($notFoundError) {
+                $result['not_found'] = $notFoundError;
+
+                return $result;
+            }
+        }
+        if (Constants::GEOLOCATION_TYPE_MAXMIND !== $geolocConfig['type']) {
+            throw new RemediationException('Unknown Geolocation type:' . $geolocConfig['type']);
+        }
+        $configPath = $geolocConfig[Constants::GEOLOCATION_TYPE_MAXMIND];
+        $result = $this->getMaxMindCountry($ip, $configPath['database_type'], $configPath['database_path']);
+
+        if ($saveInCache) {
+            if (!empty($result['country'])) {
+                $this->cacheStorage->setIpVariables(
+                    AbstractCache::GEOLOCATION,
+                    ['crowdsec_geolocation_country' => $result['country']],
+                    $ip,
+                    (int) $this->getConfig('geolocation_cache_duration'),
+                    AbstractCache::GEOLOCATION
+                );
+            } elseif (!empty($result['not_found'])) {
+                $this->cacheStorage->setIpVariables(
+                    AbstractCache::GEOLOCATION,
+                    ['crowdsec_geolocation_not_found' => $result['not_found']],
+                    $ip,
+                    (int) $this->getConfig('geolocation_cache_duration'),
+                    AbstractCache::GEOLOCATION
+                );
+            }
+        }
+
+        return $result;
+
     }
 
     private function handleDecisionExpiresAt(string $type, string $duration): int

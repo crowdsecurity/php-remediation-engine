@@ -55,10 +55,19 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => array_merge(
                     CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should set default config'
@@ -71,8 +80,17 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'bypass'],
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -84,8 +102,17 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'rem3', 'rem4', 'bypass'],
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -98,8 +125,17 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['ban', 'captcha', 'bypass'],
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should normalize config'
@@ -149,10 +185,19 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => array_merge(
                     LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should set default config'
@@ -165,10 +210,19 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => false,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => array_merge(
                     LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should set stream mode false'
@@ -182,8 +236,17 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'bypass'],
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -195,8 +258,17 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'rem3', 'rem4', 'bypass'],
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -209,8 +281,17 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['ban', 'captcha', 'bypass'],
+                'geolocation' => [
+                    'save_result' => true,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY
+                    ]
+                ]
             ],
             $result,
             'Should normalize config'

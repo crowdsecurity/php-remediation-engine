@@ -7,6 +7,8 @@ namespace CrowdSec\RemediationEngine\Configuration;
 use CrowdSec\RemediationEngine\CapiRemediation;
 use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\LapiRemediation;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
@@ -66,6 +68,50 @@ abstract class AbstractRemediation implements ConfigurationInterface
             ->end()
             ->integerNode('bad_ip_cache_duration')
                 ->min(1)->defaultValue(Constants::CACHE_EXPIRATION_FOR_BAD_IP)
+            ->end()
+            ->integerNode('geolocation_cache_duration')
+                ->min(1)->defaultValue(Constants::CACHE_EXPIRATION_FOR_GEO)
+            ->end()
+        ->end();
+        $this->addGeolocationNodes($rootNode);
+    }
+
+    /**
+     * Geolocation settings
+     *
+     * @param NodeDefinition|ArrayNodeDefinition $rootNode
+     * @return void
+     * @throws InvalidArgumentException
+     */
+    private function addGeolocationNodes($rootNode)
+    {
+        $rootNode->children()
+            ->arrayNode('geolocation')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->booleanNode('save_result')
+                        ->defaultTrue()
+                    ->end()
+                    ->booleanNode('enabled')
+                        ->defaultFalse()
+                    ->end()
+                    ->enumNode('type')
+                        ->defaultValue(Constants::GEOLOCATION_TYPE_MAXMIND)
+                        ->values([Constants::GEOLOCATION_TYPE_MAXMIND])
+                    ->end()
+                    ->arrayNode(Constants::GEOLOCATION_TYPE_MAXMIND)
+                        ->addDefaultsIfNotSet()
+                        ->children()
+                            ->enumNode('database_type')
+                                ->defaultValue(Constants::MAXMIND_COUNTRY)
+                                ->values([Constants::MAXMIND_COUNTRY, Constants::MAXMIND_CITY])
+                            ->end()
+                            ->scalarNode('database_path')
+                                ->cannotBeEmpty()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ->end();
     }

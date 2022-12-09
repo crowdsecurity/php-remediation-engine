@@ -266,7 +266,7 @@ final class CacheTest extends TestCase
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/Unknown scope/',
+            '/Unknown cache key prefix/',
             $error,
             'Should throw error if unknown scope'
         );
