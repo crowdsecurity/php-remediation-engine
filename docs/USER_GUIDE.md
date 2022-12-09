@@ -435,7 +435,7 @@ The first parameter `$configs` of the `LapiRemediation` constructor can be used 
 
 As for the CAPI remediation engine above, you can pass `ordered_remediations` and `fallback_remediation` settings.
 
-In addition, LAPI remediation engine handle the following settings:
+In addition, LAPI remediation engine handles the following settings:
 
 ### Stream mode
 
