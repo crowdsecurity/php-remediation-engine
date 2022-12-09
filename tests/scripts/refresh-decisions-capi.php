@@ -20,7 +20,7 @@ $clientConfigs = [
 $capiClient = new Watcher($clientConfigs, new FileStorage(__DIR__), null, $logger);
 // Init PhpFiles cache storage
 $cacheFileConfigs = [
-    'fs_cache_path' => __DIR__ . '/.cache',
+    'fs_cache_path' => __DIR__ . '/.cache/capi',
 ];
 $phpFileCache = new PhpFiles($cacheFileConfigs, $logger);
 // Init Memcached cache storage

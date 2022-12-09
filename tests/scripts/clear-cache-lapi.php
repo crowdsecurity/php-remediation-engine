@@ -2,36 +2,33 @@
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-use CrowdSec\CapiClient\Storage\FileStorage;
-use CrowdSec\CapiClient\Watcher;
+use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
-use CrowdSec\RemediationEngine\CapiRemediation;
+use CrowdSec\RemediationEngine\LapiRemediation;
 use CrowdSec\RemediationEngine\Logger\FileLog;
 
-$ip = $argv[1] ?? null;
-
-if (!$ip) {
-    exit(
-        'Usage: php get-remediation-capi.php <IP>' . \PHP_EOL .
-        'Example: php get-remediation-capi.php 172.0.0.24' .
-        \PHP_EOL
-    );
+$bouncerKey = $argv[1] ?? false;
+$lapiUrl = $argv[2] ?? false;
+if (!$bouncerKey || !$lapiUrl) {
+    exit('Params <BOUNCER_KEY> and <LAPI_URL> are required' . \PHP_EOL
+         . 'Usage: php clear-cache-lapi.php <BOUNCER_KEY> <LAPI_URL>'
+         . \PHP_EOL);
 }
-
 // Init  logger
 $logger = new FileLog(['debug_mode' => true]);
 // Init client
 $clientConfigs = [
-    'machine_id_prefix' => 'remediationtest',
-    'scenarios' => ['crowdsecurity/http-sensitive-files'],
+    'auth_type' => 'api_key',
+    'api_url' => $lapiUrl,
+    'api_key' => $bouncerKey,
 ];
-$capiClient = new Watcher($clientConfigs, new FileStorage(__DIR__), null, $logger);
+$lapiClient = new Bouncer($clientConfigs, null, $logger);
 
 // Init PhpFiles cache storage
 $cacheFileConfigs = [
-    'fs_cache_path' => __DIR__ . '/.cache/capi',
+    'fs_cache_path' => __DIR__ . '/.cache/lapi',
 ];
 $phpFileCache = new PhpFiles($cacheFileConfigs, $logger);
 // Init Memcached cache storage
@@ -46,6 +43,6 @@ $cacheRedisConfigs = [
 $redisCache = new Redis($cacheRedisConfigs, $logger);
 // Init CAPI remediation
 $remediationConfigs = [];
-$remediationEngine = new CapiRemediation($remediationConfigs, $capiClient, $phpFileCache, $logger);
-// Determine the remediation for the given IP
-echo $remediationEngine->getIpRemediation($ip) . \PHP_EOL;
+$remediationEngine = new LapiRemediation($remediationConfigs, $lapiClient, $phpFileCache, $logger);
+// Clear the cache
+echo $remediationEngine->clearCache() . \PHP_EOL;

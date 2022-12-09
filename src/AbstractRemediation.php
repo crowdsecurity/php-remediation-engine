@@ -88,20 +88,27 @@ abstract class AbstractRemediation
      * @throws CacheException
      * @throws InvalidArgumentException|\Psr\Cache\CacheException
      */
-    public function removeDecisions(array $decisions): int
+    protected function removeDecisions(array $decisions): array
     {
         if (!$decisions) {
-            return 0;
+            return [AbstractCache::DONE => 0, AbstractCache::REMOVED => []];
         }
         $deferCount = 0;
         $doneCount = 0;
+        $removed = [];
         foreach ($decisions as $decision) {
             $removeResult = $this->cacheStorage->removeDecision($decision);
             $deferCount += $removeResult[AbstractCache::DEFER];
             $doneCount += $removeResult[AbstractCache::DONE];
+            if (!empty($removeResult[AbstractCache::REMOVED])) {
+                $removed[] = $removeResult[AbstractCache::REMOVED];
+            }
         }
 
-        return $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0);
+        return [
+            AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
+            AbstractCache::REMOVED => $removed,
+        ];
     }
 
     /**
@@ -110,21 +117,27 @@ abstract class AbstractRemediation
      * @throws CacheException
      * @throws InvalidArgumentException|\Psr\Cache\CacheException
      */
-    public function storeDecisions(array $decisions): int
+    protected function storeDecisions(array $decisions): array
     {
-        $result = 0;
         if (!$decisions) {
-            return $result;
+            return [AbstractCache::DONE => 0, AbstractCache::STORED => []];
         }
         $deferCount = 0;
         $doneCount = 0;
+        $stored = [];
         foreach ($decisions as $decision) {
             $storeResult = $this->cacheStorage->storeDecision($decision);
             $deferCount += $storeResult[AbstractCache::DEFER];
             $doneCount += $storeResult[AbstractCache::DONE];
+            if (!empty($storeResult[AbstractCache::STORED])) {
+                $stored[] =  $storeResult[AbstractCache::STORED];
+            }
         }
 
-        return $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0);
+        return [
+            AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
+            AbstractCache::STORED => $stored,
+        ];
     }
 
     protected function convertRawDecisionsToDecisions(array $rawDecisions): array
@@ -199,11 +212,9 @@ abstract class AbstractRemediation
         $origin = $rawDecision['origin'];
         $duration = $rawDecision['duration'];
         $scope = $this->handleDecisionScope($rawDecision['scope']);
-        // The id index exists for raw LAPI decisions but not for CAPI ones
-        $id = $rawDecision['id'] ?? 0;
 
         return new Decision(
-            $this->handleDecisionIdentifier($origin, $type, $scope, $value, $id),
+            $this->handleDecisionIdentifier($origin, $type, $scope, $value),
             $scope,
             $value,
             $type,
@@ -233,13 +244,8 @@ abstract class AbstractRemediation
         string $origin,
         string $type,
         string $scope,
-        string $value,
-        int $id
+        string $value
     ): string {
-        if ($id > 0) {
-            return (string) $id;
-        }
-
         return
             $origin . Decision::ID_SEP .
             $type . Decision::ID_SEP .

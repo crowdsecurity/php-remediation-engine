@@ -2,36 +2,44 @@
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-use CrowdSec\CapiClient\Storage\FileStorage;
-use CrowdSec\CapiClient\Watcher;
+use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
-use CrowdSec\RemediationEngine\CapiRemediation;
+use CrowdSec\RemediationEngine\LapiRemediation;
 use CrowdSec\RemediationEngine\Logger\FileLog;
 
 $ip = $argv[1] ?? null;
 
 if (!$ip) {
     exit(
-        'Usage: php get-remediation-capi.php <IP>' . \PHP_EOL .
-        'Example: php get-remediation-capi.php 172.0.0.24' .
+        'Usage: php get-remediation-lapi.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM_MODE>' . \PHP_EOL .
+        'Example: php get-remediation-lapi.php 172.0.0.24 c580ebdff45da6e01415ed0e9bc9c06b  https://crowdsec:8080 0' .
         \PHP_EOL
     );
+}
+$bouncerKey = $argv[2] ?? false;
+$lapiUrl = $argv[3] ?? false;
+$streamMode = isset($argv[4]) ? (bool) $argv[4] : true;
+if (!$bouncerKey || !$lapiUrl) {
+    exit('Params <BOUNCER_KEY> and <LAPI_URL> are required' . \PHP_EOL
+         . 'Usage: php get-remediation-lapi.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM_MODE>'
+         . \PHP_EOL);
 }
 
 // Init  logger
 $logger = new FileLog(['debug_mode' => true]);
 // Init client
 $clientConfigs = [
-    'machine_id_prefix' => 'remediationtest',
-    'scenarios' => ['crowdsecurity/http-sensitive-files'],
+    'auth_type' => 'api_key',
+    'api_url' => $lapiUrl,
+    'api_key' => $bouncerKey,
 ];
-$capiClient = new Watcher($clientConfigs, new FileStorage(__DIR__), null, $logger);
+$lapiClient = new Bouncer($clientConfigs, null, $logger);
 
 // Init PhpFiles cache storage
 $cacheFileConfigs = [
-    'fs_cache_path' => __DIR__ . '/.cache/capi',
+    'fs_cache_path' => __DIR__ . '/.cache/lapi',
 ];
 $phpFileCache = new PhpFiles($cacheFileConfigs, $logger);
 // Init Memcached cache storage
@@ -45,7 +53,9 @@ $cacheRedisConfigs = [
 ];
 $redisCache = new Redis($cacheRedisConfigs, $logger);
 // Init CAPI remediation
-$remediationConfigs = [];
-$remediationEngine = new CapiRemediation($remediationConfigs, $capiClient, $phpFileCache, $logger);
+$remediationConfigs = [
+    'stream_mode' => $streamMode,
+];
+$remediationEngine = new LapiRemediation($remediationConfigs, $lapiClient, $phpFileCache, $logger);
 // Determine the remediation for the given IP
 echo $remediationEngine->getIpRemediation($ip) . \PHP_EOL;

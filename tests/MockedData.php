@@ -16,7 +16,7 @@ namespace CrowdSec\RemediationEngine\Tests;
  */
 class MockedData
 {
-    public const CAPI_DECISIONS = [
+    public const DECISIONS = [
         'new_ip_v4' => [
             'new' => [
                 ['duration' => '147h',

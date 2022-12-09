@@ -81,7 +81,7 @@ class Memcached extends AbstractCache
     private function setCustomErrorHandler(): void
     {
         set_error_handler(function ($errno, $errstr) {
-            $message = "Memcached error. (Error level: $errno) " . "Original error was: $errstr";
+            $message = "Memcached error. (Error level: $errno) Original error was: $errstr";
             throw new CacheException($message);
         });
     }

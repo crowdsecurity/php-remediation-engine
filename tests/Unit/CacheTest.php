@@ -223,25 +223,22 @@ final class CacheTest extends TestCase
                 'ban',
                 911125444, //  Sunday 15 November 1998 10:24:04 (expired)
                 'CAPI-ban-range-52.3.230.0/24',
-                0,
             ],
             [
                 'ban',
                 5897183044, //  Monday 15 November 2156 10:24:04 (not expired)
                 'CAPI-ban-range-52.3.230.0/24',
-                0,
             ],
         ];
         $result = $this->cacheStorage->cleanCachedValues($cachedValues);
         $this->assertEquals(
-            ['1' => [
+            ['0' => [
                 'ban',
                 5897183044,
                 'CAPI-ban-range-52.3.230.0/24',
-                0,
             ]],
             $result,
-            'Should return correct maximum'
+            'Should return correct maximum in a re-indexed array'
         );
     }
 
@@ -383,7 +380,7 @@ final class CacheTest extends TestCase
         $result = $this->cacheStorage->retrieveDecisionsForIp('UNDEFINED', TestConstants::IP_V4);
         $this->assertCount(
             0,
-            $result,
+            $result[AbstractCache::STORED],
             'Should return empty array'
         );
         PHPUnitUtil::assertRegExp(
@@ -433,12 +430,12 @@ final class CacheTest extends TestCase
         $result = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_IP, TestConstants::IP_V4);
         $this->assertCount(
             1,
-            $result[0],
+            $result[AbstractCache::STORED],
             'Should get stored decisions'
         );
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result[0][0][0],
+            $result[AbstractCache::STORED][0][0],
             'Should get stored decisions'
         );
 
@@ -447,7 +444,7 @@ final class CacheTest extends TestCase
         $result = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_IP, TestConstants::IP_V4);
         $this->assertCount(
             0,
-            $result,
+            $result[AbstractCache::STORED],
             'Should get unstored decisions'
         );
     }
@@ -491,12 +488,12 @@ final class CacheTest extends TestCase
         $result = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, TestConstants::IP_V4);
         $this->assertCount(
             1,
-            $result[0],
+            $result[AbstractCache::STORED],
             'Should get stored decisions'
         );
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result[0][0][0],
+            $result[AbstractCache::STORED][0][0],
             'Should get stored decisions'
         );
 
@@ -505,7 +502,7 @@ final class CacheTest extends TestCase
         $result = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, TestConstants::IP_V4);
         $this->assertCount(
             0,
-            $result,
+            $result[AbstractCache::STORED],
             'Should get unstored decisions'
         );
     }
