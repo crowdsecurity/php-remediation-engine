@@ -31,5 +31,5 @@ class Constants
     /** @var string The CrowdSec Range scope for decisions */
     public const SCOPE_RANGE = 'range';
     /** @var string The current version of this library */
-    public const VERSION = 'v0.1.0';
+    public const VERSION = 'v0.1.1';
 }
