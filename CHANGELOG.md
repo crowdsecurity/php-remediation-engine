@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update `crowdsec/capi-client` dependency to `v0.6.0`
-- Add PHP `8.2` compatibility
+- Add PHP `8.2` in supported versions
 
 --- 
 
