@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+
+## [0.1.1](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v0.1.1) - 2022-12-16
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v0.1.0...v0.1.1)
+
+### Changed
+- Update `crowdsec/capi-client` dependency to `v0.6.0`
+- Add PHP `8.2` in supported versions
+
+--- 
+
 ## [0.1.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v0.1.0) - 2022-12-09
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v0.0.2...v0.1.0)
 

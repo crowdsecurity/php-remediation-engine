@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['7.4', '8.0', '8.1']
+        php-version: ['7.4', '8.0', '8.1', '8.2']
 
     name: Coding standards test
     runs-on: ubuntu-latest
@@ -38,7 +38,7 @@ jobs:
 
       - name: Install DDEV
         env:
-          DDEV_VERSION: v1.21.3
+          DDEV_VERSION: v1.21.4
         run: |
           # @see https://ddev.readthedocs.io/en/stable/#installationupgrade-script-linux-and-macos-armarm64-and-amd64-architectures
           sudo apt-get -qq update
