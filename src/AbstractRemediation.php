@@ -10,8 +10,6 @@ use Monolog\Handler\NullHandler;
 use Monolog\Logger;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
-use GeoIp2\Database\Reader;
-use GeoIp2\Exception\AddressNotFoundException;
 
 abstract class AbstractRemediation
 {
@@ -33,11 +31,6 @@ abstract class AbstractRemediation
      * @var LoggerInterface
      */
     protected $logger;
-
-    /**
-     * @var string[]
-     */
-    private $geolocTemplate = ['country' => '', 'not_found' => '', 'error' => ''];
 
     public function __construct(array $configs, AbstractCache $cacheStorage, LoggerInterface $logger = null)
     {
@@ -102,30 +95,32 @@ abstract class AbstractRemediation
         return $decisions;
     }
 
-    protected function getAllCachedDecisions(string $ip): array
+    protected function getCountryForIp(string $ip): string
+    {
+        $geolocConfigs = $this->getConfig('geolocation');
+        if (!empty($geolocConfigs['enabled'])) {
+            $geolocation = new Geolocation($geolocConfigs, $this->cacheStorage, $this->logger);
+            $countryResult = $geolocation->handleCountryResultForIp(
+                $ip, (int) $this->getConfig('geolocation_cache_duration')
+            );
+
+            return !empty($countryResult['country']) ? $countryResult['country'] : '';
+        }
+
+        return '';
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    protected function getAllCachedDecisions(string $ip, string $country): array
     {
         // Ask cache for Ip scoped decision
         $ipDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_IP, $ip);
         // Ask cache for Range scoped decision
         $rangeDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip);
         // Ask cache for Country scoped decision
-        // @TODO : depends on configs
-                // @TODO
-                /**
-                 * Check if IP geolocalized country is cached
-                 * If not : - get related country from Maxmind (depends on config)
-                 *          - if config, store related country
-                 * If yes : keep this country
-                 * Then : check if there is cached item for this country
-                 */
-        $geolocConfig = $this->getConfig('geolocation')??[];
-        $countryDecisions = [];
-        if(!empty($geolocConfig['enabled'])){
-            $countryResult = $this->handleCountryResultForIp($geolocConfig, $ip);
-            if(!empty($countryResult['country'])){
-                $countryDecisions = $this->cacheStorage->retrieveDecisionsForCountry($countryResult['country']);
-            }
-        }
+        $countryDecisions = $country ? $this->cacheStorage->retrieveDecisionsForCountry($country) : [];
 
         return array_merge(
             !empty($ipDecisions[AbstractCache::STORED]) ? $ipDecisions[AbstractCache::STORED] : [],
@@ -272,107 +267,16 @@ abstract class AbstractRemediation
         );
     }
 
-    /**
-     * Retrieve a country from a MaxMind database.
-     *
-     * @throws Exception
-     */
-    private function getMaxMindCountry(string $ip, string $databaseType, string $databasePath): array
-    {
-        if (!isset($this->maxmindCountry[$ip][$databaseType][$databasePath])) {
-            $result = $this->geolocTemplate;
-            try {
-                $reader = new Reader($databasePath);
-                switch ($databaseType) {
-                    case Constants::MAXMIND_COUNTRY:
-                        $record = $reader->country($ip);
-                        break;
-                    case Constants::MAXMIND_CITY:
-                        $record = $reader->city($ip);
-                        break;
-                    default:
-                        throw new RemediationException("Unknown MaxMind database type:$databaseType");
-                }
-                $result['country'] = $record->country->isoCode;
-            } catch (AddressNotFoundException $e) {
-                $result['not_found'] = $e->getMessage();
-            } catch (\Exception $e) {
-                $result['error'] = $e->getMessage();
-            }
 
-            $this->maxmindCountry[$ip][$databaseType][$databasePath] = $result;
-        }
-
-        return $this->maxmindCountry[$ip][$databaseType][$databasePath];
-    }
-
-    private function handleCountryResultForIp(array $geolocConfig, string $ip): array
-    {
-        $result = $this->geolocTemplate;
-        $saveInCache = !empty($geolocConfig['save_result']);
-        if ($saveInCache) {
-            $cachedVariables = $this->cacheStorage->getIpVariables(
-                AbstractCache::GEOLOCATION,
-                ['crowdsec_geolocation_country', 'crowdsec_geolocation_not_found'],
-                $ip
-            );
-            $country = $cachedVariables['crowdsec_geolocation_country'] ?? null;
-            $notFoundError = $cachedVariables['crowdsec_geolocation_not_found'] ?? null;
-            if ($country) {
-                $result['country'] = $country;
-
-                return $result;
-            } elseif ($notFoundError) {
-                $result['not_found'] = $notFoundError;
-
-                return $result;
-            }
-        }
-        if (Constants::GEOLOCATION_TYPE_MAXMIND !== $geolocConfig['type']) {
-            throw new RemediationException('Unknown Geolocation type:' . $geolocConfig['type']);
-        }
-        $configPath = $geolocConfig[Constants::GEOLOCATION_TYPE_MAXMIND];
-        $result = $this->getMaxMindCountry($ip, $configPath['database_type'], $configPath['database_path']);
-
-        if ($saveInCache) {
-            if (!empty($result['country'])) {
-                $this->cacheStorage->setIpVariables(
-                    AbstractCache::GEOLOCATION,
-                    ['crowdsec_geolocation_country' => $result['country']],
-                    $ip,
-                    (int) $this->getConfig('geolocation_cache_duration'),
-                    AbstractCache::GEOLOCATION
-                );
-            } elseif (!empty($result['not_found'])) {
-                $this->cacheStorage->setIpVariables(
-                    AbstractCache::GEOLOCATION,
-                    ['crowdsec_geolocation_not_found' => $result['not_found']],
-                    $ip,
-                    (int) $this->getConfig('geolocation_cache_duration'),
-                    AbstractCache::GEOLOCATION
-                );
-            }
-        }
-
-        return $result;
-
-    }
 
     private function handleDecisionExpiresAt(string $type, string $duration): int
     {
-        switch ($type) {
-            case Constants::REMEDIATION_BYPASS:
-                $duration = $this->getConfig('clean_ip_cache_duration');
-                break;
-            default:
-                $duration = $this->parseDurationToSeconds($duration);
-                if (!$this->getConfig('stream_mode')) {
-                    $duration = min((int) $this->getConfig('bad_ip_cache_duration'), $duration);
-                }
-                break;
+        $duration = $this->parseDurationToSeconds($duration);
+        if ($type !== Constants::REMEDIATION_BYPASS && !$this->getConfig('stream_mode')) {
+            $duration = min((int)$this->getConfig('bad_ip_cache_duration'), $duration);
         }
 
-        return time() + (int) $duration;
+        return time() + (int)$duration;
     }
 
     private function handleDecisionIdentifier(

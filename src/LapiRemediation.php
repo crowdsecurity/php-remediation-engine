@@ -43,30 +43,42 @@ class LapiRemediation extends AbstractRemediation
      */
     public function getIpRemediation(string $ip): string
     {
-        $allDecisions = $this->getAllCachedDecisions($ip);
+        $country = $this->getCountryForIp($ip);
+        $cachedDecisions = $this->getAllCachedDecisions($ip, $country);
 
-        if (!$allDecisions) {
-            // In stream_mode, we do not store this bypass
+        if (!$cachedDecisions) {
+            // In stream_mode, we do not store this bypass, and we do not call LAPI directly
             if ($this->getConfig('stream_mode')) {
                 return Constants::REMEDIATION_BYPASS;
             }
             // In live mode, ask LAPI (Retrieve Ip AND Range scoped decisions)
             $rawIpDecisions = $this->client->getFilteredDecisions(['ip' => $ip]);
-            $ipDecisions = $rawIpDecisions ? $this->convertRawDecisionsToDecisions($rawIpDecisions) :
+            $ipDecisions = $this->convertRawDecisionsToDecisions($rawIpDecisions);
+            $countryDecisions = [];
+            if($country){
+                // Retrieve country scoped decisions
+                $rawCountryDecisions =  $this->client->getFilteredDecisions(
+                    ['scope' => Constants::SCOPE_COUNTRY, 'value' => $country]
+                );
+                $countryDecisions = $this->convertRawDecisionsToDecisions($rawCountryDecisions);
+            }
+            $liveDecisions = array_merge($ipDecisions, $countryDecisions);
+
+            $finalDecisions = $liveDecisions ?:
                 $this->convertRawDecisionsToDecisions([[
                     'scope' => Constants::SCOPE_IP,
                     'value' => $ip,
                     'type' => Constants::REMEDIATION_BYPASS,
                     'origin' => self::SELF_ORIGIN,
-                    'duration' => '',
+                    'duration' => sprintf('%ss', (int) $this->getConfig('clean_ip_cache_duration')),
                 ]]);
             // Store decision(s) even if bypass
-            $stored = $this->storeDecisions($ipDecisions);
+            $stored = $this->storeDecisions($finalDecisions);
 
-            $allDecisions = !empty($stored[AbstractCache::STORED]) ? $stored[AbstractCache::STORED] : [];
+            $cachedDecisions = !empty($stored[AbstractCache::STORED]) ? $stored[AbstractCache::STORED] : [];
         }
 
-        return $this->getRemediationFromDecisions($allDecisions);
+        return $this->getRemediationFromDecisions($cachedDecisions);
     }
 
     /**

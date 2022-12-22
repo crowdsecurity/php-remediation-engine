@@ -8,6 +8,7 @@ use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
 use CrowdSec\RemediationEngine\LapiRemediation;
 use CrowdSec\RemediationEngine\Logger\FileLog;
+use CrowdSec\RemediationEngine\Constants;
 
 $ip = $argv[1] ?? null;
 
@@ -52,9 +53,19 @@ $cacheRedisConfigs = [
     'redis_dsn' => 'redis://redis:6379',
 ];
 $redisCache = new Redis($cacheRedisConfigs, $logger);
-// Init LAPI remediation
+// Init LAPI remediation with geolocation
 $remediationConfigs = [
     'stream_mode' => $streamMode,
+    'geolocation' => [
+        'enabled' => true,
+        'save_result' => true,
+        'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+        'maxmind' => [
+            'database_type' => Constants::MAXMIND_COUNTRY,
+            'database_path' => '/var/www/html/geolocation/GeoLite2-Country.mmdb',
+        ],
+
+    ]
 ];
 $remediationEngine = new LapiRemediation($remediationConfigs, $lapiClient, $phpFileCache, $logger);
 // Determine the remediation for the given IP

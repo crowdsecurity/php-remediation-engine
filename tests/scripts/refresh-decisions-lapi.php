@@ -16,8 +16,9 @@ $bouncerKey = $argv[3] ?? false;
 $lapiUrl = $argv[4] ?? false;
 if (!$bouncerKey || !$lapiUrl) {
     exit('Params <BOUNCER_KEY> and <LAPI_URL> are required' . \PHP_EOL
-         . 'Usage: php refresh-decisions-lapi.php <STARTUP> <FILTER_JSON> <BOUNCER_KEY> <LAPI_URL>'
-         . \PHP_EOL);
+         . 'Usage: php refresh-decisions-lapi.php <STARTUP> <FILTER_JSON> <BOUNCER_KEY> <LAPI_URL>' . \PHP_EOL
+         . 'Example: php refresh-decisions-lapi.php 1 \'{"scopes":"Ip,Range,Country"}\' 68c2b479830c89bfd48926f9d764da39 https://crowdsec:8080' . \PHP_EOL
+    );
 }
 
 if (is_null($filter)) {

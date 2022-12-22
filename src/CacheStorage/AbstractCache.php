@@ -322,7 +322,7 @@ abstract class AbstractCache
     {
         $item = $this->adapter->getItem(base64_encode($cacheKey));
         $item->set($cachedVariables);
-        $item->expiresAt(new DateTime("+$duration seconds"));
+        $item->expiresAt(new \DateTime("+$duration seconds"));
         if (!empty($cacheTag) && $this->adapter instanceof TagAwareAdapterInterface) {
             $item->tag($cacheTag);
         }
