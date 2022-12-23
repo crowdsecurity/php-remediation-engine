@@ -209,5 +209,18 @@ class MockedData
             ],
             'deleted' => [],
         ],
+        'country_ban' => [
+            'new' => [
+                [
+                    'duration' => '147h',
+                    'origin' => 'CAPI',
+                    'scenario' => 'manual',
+                    'scope' => 'Country',
+                    'type' => 'ban',
+                    'value' => 'FR',
+                ],
+            ],
+            'deleted' => [],
+        ],
     ];
 }

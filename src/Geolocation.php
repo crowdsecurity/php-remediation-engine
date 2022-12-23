@@ -42,7 +42,6 @@ class Geolocation
         $this->logger = $logger;
     }
 
-
     public function handleCountryResultForIp(string $ip, int $cacheDuration): array
     {
         $result = $this->geolocTemplate;
@@ -92,7 +91,6 @@ class Geolocation
         }
 
         return $result;
-
     }
 
     /**

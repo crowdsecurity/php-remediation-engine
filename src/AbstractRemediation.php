@@ -101,7 +101,8 @@ abstract class AbstractRemediation
         if (!empty($geolocConfigs['enabled'])) {
             $geolocation = new Geolocation($geolocConfigs, $this->cacheStorage, $this->logger);
             $countryResult = $geolocation->handleCountryResultForIp(
-                $ip, (int) $this->getConfig('geolocation_cache_duration')
+                $ip,
+                (int) $this->getConfig('geolocation_cache_duration')
             );
 
             return !empty($countryResult['country']) ? $countryResult['country'] : '';
@@ -217,7 +218,7 @@ abstract class AbstractRemediation
             $deferCount += $storeResult[AbstractCache::DEFER];
             $doneCount += $storeResult[AbstractCache::DONE];
             if (!empty($storeResult[AbstractCache::STORED])) {
-                $stored[] =  $storeResult[AbstractCache::STORED];
+                $stored[] = $storeResult[AbstractCache::STORED];
             }
         }
 
@@ -267,16 +268,14 @@ abstract class AbstractRemediation
         );
     }
 
-
-
     private function handleDecisionExpiresAt(string $type, string $duration): int
     {
         $duration = $this->parseDurationToSeconds($duration);
-        if ($type !== Constants::REMEDIATION_BYPASS && !$this->getConfig('stream_mode')) {
-            $duration = min((int)$this->getConfig('bad_ip_cache_duration'), $duration);
+        if (Constants::REMEDIATION_BYPASS !== $type && !$this->getConfig('stream_mode')) {
+            $duration = min((int) $this->getConfig('bad_ip_cache_duration'), $duration);
         }
 
-        return time() + (int)$duration;
+        return time() + (int) $duration;
     }
 
     private function handleDecisionIdentifier(

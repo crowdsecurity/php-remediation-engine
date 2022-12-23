@@ -55,9 +55,9 @@ class LapiRemediation extends AbstractRemediation
             $rawIpDecisions = $this->client->getFilteredDecisions(['ip' => $ip]);
             $ipDecisions = $this->convertRawDecisionsToDecisions($rawIpDecisions);
             $countryDecisions = [];
-            if($country){
+            if ($country) {
                 // Retrieve country scoped decisions
-                $rawCountryDecisions =  $this->client->getFilteredDecisions(
+                $rawCountryDecisions = $this->client->getFilteredDecisions(
                     ['scope' => Constants::SCOPE_COUNTRY, 'value' => $country]
                 );
                 $countryDecisions = $this->convertRawDecisionsToDecisions($rawCountryDecisions);

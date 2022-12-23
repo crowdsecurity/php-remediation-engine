@@ -7,8 +7,6 @@ namespace CrowdSec\RemediationEngine\Configuration;
 use CrowdSec\RemediationEngine\CapiRemediation;
 use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\LapiRemediation;
-use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
-use Symfony\Component\Config\Definition\Builder\NodeDefinition;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
@@ -25,7 +23,7 @@ abstract class AbstractRemediation implements ConfigurationInterface
 {
     private function getDefaultOrderedRemediations(): array
     {
-        if (get_class($this) === Capi::class) {
+        if (Capi::class === get_class($this)) {
             return array_merge(CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]);
         }
 
@@ -77,11 +75,10 @@ abstract class AbstractRemediation implements ConfigurationInterface
     }
 
     /**
-     * Geolocation settings
+     * Geolocation settings.
      *
-     * @param NodeDefinition|ArrayNodeDefinition $rootNode
+     * @param $rootNode
      * @return void
-     * @throws InvalidArgumentException
      */
     private function addGeolocationNodes($rootNode)
     {

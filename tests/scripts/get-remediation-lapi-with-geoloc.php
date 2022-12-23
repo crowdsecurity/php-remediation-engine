@@ -6,9 +6,9 @@ use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
+use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\LapiRemediation;
 use CrowdSec\RemediationEngine\Logger\FileLog;
-use CrowdSec\RemediationEngine\Constants;
 
 $ip = $argv[1] ?? null;
 
@@ -62,10 +62,9 @@ $remediationConfigs = [
         'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
         'maxmind' => [
             'database_type' => Constants::MAXMIND_COUNTRY,
-            'database_path' => '/var/www/html/geolocation/GeoLite2-Country.mmdb',
+            'database_path' => __DIR__ . '/../geolocation/GeoLite2-Country.mmdb',
         ],
-
-    ]
+    ],
 ];
 $remediationEngine = new LapiRemediation($remediationConfigs, $lapiClient, $phpFileCache, $logger);
 // Determine the remediation for the given IP

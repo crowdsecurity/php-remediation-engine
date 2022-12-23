@@ -62,4 +62,12 @@ abstract class AbstractRemediation extends TestCase
             ->onlyMethods(['getStreamDecisions', 'getFilteredDecisions'])
             ->getMock();
     }
+
+    protected function getMaxmindReaderMock(array $methods = [])
+    {
+        return $this->getMockBuilder('GeoIp2\Database\Reader')
+            ->disableOriginalConstructor()
+            ->onlyMethods($methods)
+            ->getMock();
+    }
 }

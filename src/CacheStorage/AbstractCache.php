@@ -6,6 +6,7 @@ namespace CrowdSec\RemediationEngine\CacheStorage;
 
 use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\Decision;
+use DateTime;
 use IPLib\Address\Type;
 use IPLib\Factory;
 use IPLib\Range\RangeInterface;
@@ -285,7 +286,6 @@ abstract class AbstractCache
     /**
      * Retrieved prepared cached variables associated to an Ip
      * Set null if not already in cache.
-     *
      */
     public function getIpVariables(string $prefix, array $names, string $ip): array
     {
@@ -305,7 +305,6 @@ abstract class AbstractCache
      * Store variables in cache for some IP and cache tag.
      *
      * @return void
-     *
      */
     public function setIpVariables(string $cacheScope, array $pairs, string $ip, int $duration, string $cacheTag = '')
     {
@@ -317,16 +316,20 @@ abstract class AbstractCache
         $this->saveCacheItem($cacheKey, $cachedVariables, $duration, $cacheTag);
     }
 
-    private function saveCacheItem(string $cacheKey, array $cachedVariables, int $duration, string $cacheTag = '' ):
-    array
-    {
+    private function saveCacheItem(
+        string $cacheKey,
+        array $cachedVariables,
+        int $duration,
+        string $cacheTag = ''
+    ): array {
         $item = $this->adapter->getItem(base64_encode($cacheKey));
         $item->set($cachedVariables);
-        $item->expiresAt(new \DateTime("+$duration seconds"));
+        $item->expiresAt(new DateTime("+$duration seconds"));
         if (!empty($cacheTag) && $this->adapter instanceof TagAwareAdapterInterface) {
             $item->tag($cacheTag);
         }
         $this->adapter->save($item);
+
         return $cachedVariables;
     }
 
@@ -334,9 +337,8 @@ abstract class AbstractCache
      * Retrieve raw cache item for some IP and cache scope.
      *
      * @return array|mixed
-     *
      */
-    private function getIpCachedVariables(string $prefix, string $ip):array
+    private function getIpCachedVariables(string $prefix, string $ip): array
     {
         $cacheKey = $this->getCacheKey($prefix, $ip);
         $cachedVariables = [];
@@ -411,8 +413,6 @@ abstract class AbstractCache
     }
 
     /**
-     * @return array
-     *
      * @throws CacheException
      */
     private function handleRangeScoped(Decision $decision, string $cachedIndex, callable $method): array
@@ -558,7 +558,7 @@ abstract class AbstractCache
     {
         $maxExpiration = $this->getMaxExpiration($valuesToCache);
         $item->set($valuesToCache);
-        $item->expiresAt(new \DateTime('@' . $maxExpiration));
+        $item->expiresAt(new DateTime('@' . $maxExpiration));
         if ($this->adapter instanceof TagAwareAdapterInterface) {
             $item->tag($tags);
         }

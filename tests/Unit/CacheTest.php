@@ -64,6 +64,11 @@ use PHPUnit\Framework\TestCase;
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::removeDecision
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getRangeIntForIp
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::handleRangeScoped
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getIpCachedVariables
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getIpVariables
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::saveCacheItem
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::setIpVariables
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::retrieveDecisionsForCountry
  */
 final class CacheTest extends TestCase
 {
@@ -391,6 +396,39 @@ final class CacheTest extends TestCase
         );
     }
 
+    public function testIpVariableSetterAndGetter()
+    {
+        $this->setCache('PhpFilesAdapter');
+        $this->cacheStorage->setIpVariables(AbstractCache::GEOLOCATION,
+            ['crowdsec_geolocation_country' => 'FR'],
+            TestConstants::IP_FRANCE,
+            TestConstants::CACHE_DURATION,
+            AbstractCache::GEOLOCATION
+        );
+
+        $adapter = $this->cacheStorage->getAdapter();
+        $item = $adapter->getItem(base64_encode(AbstractCache::GEOLOCATION . AbstractCache::SEP . TestConstants::IP_FRANCE));
+        $this->assertEquals(
+            true,
+            $item->isHit(),
+            'IP variable for geolocation should have not been cached'
+        );
+        $this->assertEquals(
+            ['crowdsec_geolocation_country' => 'FR'],
+            $item->get(),
+            'Cached item content should be correct'
+        );
+
+        $ipVariables = $this->cacheStorage->getIpVariables(AbstractCache::GEOLOCATION,
+            ['crowdsec_geolocation_country', 'unknown_variable'], TestConstants::IP_FRANCE);
+
+        $this->assertEquals(
+            ['crowdsec_geolocation_country' => 'FR', 'unknown_variable' => null],
+            $ipVariables,
+            'Get ip variable should return cached value or null'
+        );
+    }
+
     public function testStoreAndRemoveAndRetrieveDecisionsForIpScope()
     {
         $this->setCache('PhpFilesAdapter');
@@ -500,6 +538,64 @@ final class CacheTest extends TestCase
         // Test 2 : retrieve unstored Range
         $this->cacheStorage->removeDecision($decision);
         $result = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, TestConstants::IP_V4);
+        $this->assertCount(
+            0,
+            $result[AbstractCache::STORED],
+            'Should get unstored decisions'
+        );
+    }
+
+    public function testStoreAndRemoveAndRetrieveDecisionsForCountryScope()
+    {
+        $this->setCache('PhpFilesAdapter');
+
+        $decision = $this->getMockBuilder('CrowdSec\RemediationEngine\Decision')
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getValue', 'getType', 'getExpiresAt', 'getScope', 'getIdentifier'])
+            ->getMock();
+        $decision->method('getValue')->will(
+            $this->returnValue(
+                'FR'
+            )
+        );
+        $decision->method('getType')->will(
+            $this->returnValue(
+                Constants::REMEDIATION_BAN
+            )
+        );
+        $decision->method('getExpiresAt')->will(
+            $this->returnValue(
+                4824410199
+            )
+        );
+        $decision->method('getScope')->will(
+            $this->returnValue(
+                Constants::SCOPE_COUNTRY
+            )
+        );
+        $decision->method('getIdentifier')->will(
+            $this->returnValue(
+                'test-country'
+            )
+        );
+        // Test 1 : retrieve stored country
+        $this->cacheStorage->storeDecision($decision);
+
+        $result = $this->cacheStorage->retrieveDecisionsForCountry('FR');
+        $this->assertCount(
+            1,
+            $result[AbstractCache::STORED],
+            'Should get stored decisions'
+        );
+        $this->assertEquals(
+            Constants::REMEDIATION_BAN,
+            $result[AbstractCache::STORED][0][0],
+            'Should get stored decisions'
+        );
+
+        // Test 2 : retrieve unstored IP
+        $this->cacheStorage->removeDecision($decision);
+        $result = $this->cacheStorage->retrieveDecisionsForCountry('FR');
         $this->assertCount(
             0,
             $result[AbstractCache::STORED],

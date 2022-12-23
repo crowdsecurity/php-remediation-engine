@@ -31,6 +31,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 
 /**
+ * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::validateCommon
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addCommonNodes
@@ -65,9 +66,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should set default config'
@@ -88,9 +89,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -110,9 +111,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -133,9 +134,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should normalize config'
@@ -195,9 +196,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should set default config'
@@ -220,9 +221,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should set stream mode false'
@@ -244,9 +245,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -266,9 +267,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -289,9 +290,9 @@ final class ConfigurationTest extends TestCase
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
-                        'database_type' => Constants::MAXMIND_COUNTRY
-                    ]
-                ]
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should normalize config'

@@ -30,27 +30,35 @@ use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 
 /**
- * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::__construct
- * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::cleanCachedValues
- * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getAdapter
- * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getMaxExpiration
- * @uses \CrowdSec\RemediationEngine\CacheStorage\Memcached::__construct
- * @uses \CrowdSec\RemediationEngine\CacheStorage\Memcached::clear
- * @uses \CrowdSec\RemediationEngine\CacheStorage\Memcached::commit
- * @uses \CrowdSec\RemediationEngine\CacheStorage\Memcached::configure
- * @uses \CrowdSec\RemediationEngine\CacheStorage\PhpFiles::__construct
- * @uses \CrowdSec\RemediationEngine\CacheStorage\PhpFiles::configure
- * @uses \CrowdSec\RemediationEngine\CacheStorage\Redis::__construct
- * @uses \CrowdSec\RemediationEngine\CacheStorage\Redis::configure
- * @uses \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addCommonNodes
- * @uses \CrowdSec\RemediationEngine\Configuration\Cache\Memcached::getConfigTreeBuilder
- * @uses \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
- * @uses \CrowdSec\RemediationEngine\Configuration\Cache\Redis::getConfigTreeBuilder
- * @uses \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::validateCommon
- * @uses \CrowdSec\RemediationEngine\Decision::getOrigin
- * @uses \CrowdSec\RemediationEngine\Decision::toArray
- * @uses \CrowdSec\RemediationEngine\Logger\FileLog::__construct
- * @uses \CrowdSec\RemediationEngine\Configuration\Lapi::getConfigTreeBuilder
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::__construct
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::cleanCachedValues
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getAdapter
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getMaxExpiration
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\Memcached::__construct
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\Memcached::clear
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\Memcached::commit
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\Memcached::configure
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\PhpFiles::__construct
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\PhpFiles::configure
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\Redis::__construct
+ * @uses   \CrowdSec\RemediationEngine\CacheStorage\Redis::configure
+ * @uses   \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addCommonNodes
+ * @uses   \CrowdSec\RemediationEngine\Configuration\Cache\Memcached::getConfigTreeBuilder
+ * @uses   \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
+ * @uses   \CrowdSec\RemediationEngine\Configuration\Cache\Redis::getConfigTreeBuilder
+ * @uses   \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::validateCommon
+ * @uses   \CrowdSec\RemediationEngine\Decision::getOrigin
+ * @uses   \CrowdSec\RemediationEngine\Decision::toArray
+ * @uses   \CrowdSec\RemediationEngine\Logger\FileLog::__construct
+ * @uses   \CrowdSec\RemediationEngine\Configuration\Lapi::getConfigTreeBuilder
+ * @uses   \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
+ * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getIpCachedVariables
+ * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getIpVariables
+ * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::saveCacheItem
+ * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::setIpVariables
+ * @uses \CrowdSec\RemediationEngine\Geolocation::__construct
+ * @uses \CrowdSec\RemediationEngine\Geolocation::getMaxMindCountryResult
+ * @uses \CrowdSec\RemediationEngine\Geolocation::handleCountryResultForIp
  *
  * @covers \CrowdSec\RemediationEngine\Decision::getExpiresAt
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::__construct
@@ -99,6 +107,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::getDefaultOrderedRemediations
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getAllCachedDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getRemediationFromDecisions
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
  */
 final class LapiRemediationTest extends AbstractRemediation
 {
@@ -161,12 +170,14 @@ final class LapiRemediationTest extends AbstractRemediation
         $this->bouncer = $this->getBouncerMock();
 
         $cachePhpfilesConfigs = ['fs_cache_path' => $this->root->url()];
-        $mockedMethods = ['retrieveDecisionsForIp'];
-        $this->phpFileStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
+        $mockedMethods = ['retrieveDecisionsForIp', 'retrieveDecisionsForCountry'];
+        $this->phpFileStorage =
+            $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $cacheMemcachedConfigs = [
             'memcached_dsn' => getenv('memcached_dsn') ?: 'memcached://memcached:11211',
         ];
-        $this->memcachedStorage = $this->getCacheMock('MemcachedAdapter', $cacheMemcachedConfigs, $this->logger, $mockedMethods);
+        $this->memcachedStorage =
+            $this->getCacheMock('MemcachedAdapter', $cacheMemcachedConfigs, $this->logger, $mockedMethods);
         $cacheRedisConfigs = [
             'redis_dsn' => getenv('redis_dsn') ?: 'redis://redis:6379',
         ];
@@ -205,12 +216,13 @@ final class LapiRemediationTest extends AbstractRemediation
             $this->onConsecutiveCalls(
                 MockedData::DECISIONS['new_ip_v4_double'], // Test 1 : new IP decision (ban) (save ok)
                 MockedData::DECISIONS['new_ip_v4_other'],  // Test 2 : new IP decision (ban) (failed deferred)
-                MockedData::DECISIONS['deleted_ip_v4'] // Test 3 : deleted IP decision (failed deferred)
+                MockedData::DECISIONS['deleted_ip_v4']     // Test 3 : deleted IP decision (failed deferred)
             )
         );
         $cachePhpfilesConfigs = ['fs_cache_path' => $this->root->url()];
         $mockedMethods = [];
-        $this->cacheStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
+        $this->cacheStorage =
+            $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $remediationConfigs = [];
         $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
 
@@ -223,7 +235,8 @@ final class LapiRemediationTest extends AbstractRemediation
 
         // Test 2
         $mockedMethods = ['saveDeferred'];
-        $this->cacheStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
+        $this->cacheStorage =
+            $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $remediationConfigs = [];
         $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
 
@@ -240,7 +253,8 @@ final class LapiRemediationTest extends AbstractRemediation
         );
         // Test 3
         $mockedMethods = ['saveDeferred'];
-        $this->cacheStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
+        $this->cacheStorage =
+            $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $remediationConfigs = [];
         $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
         $this->cacheStorage->method('saveDeferred')->will(
@@ -293,24 +307,24 @@ final class LapiRemediationTest extends AbstractRemediation
                     'bypass',
                     999999999999,
                     'remediation-engine-bypass-ip-1.2.3.4',
-                ]]], // Test 2 : retrieve cached bypass
+                ]]],                            // Test 2 : retrieve cached bypass
                 [AbstractCache::STORED => []],  // Test 2 : retrieve empty range
                 [AbstractCache::STORED => [[
                     'bypass',
                     999999999999,
                     'remediation-engine-bypass-ip-1.2.3.4',
-                ]]], // Test 3 : retrieve bypass for ip
+                ]]],                            // Test 3 : retrieve bypass for ip
                 [AbstractCache::STORED => [[
                     'ban',
                     999999999999,
                     'remediation-engine-ban-ip-1.2.3.4',
-                ]]],  // Test 3 : retrieve ban for range
+                ]]],                            // Test 3 : retrieve ban for range
                 [AbstractCache::STORED => [[
                     'ban',
                     311738199, //  Sunday 18 November 1979
                     'remediation-engine-ban-ip-1.2.3.4',
-                ]]], // Test 4 : retrieve expired ban ip
-                [AbstractCache::STORED => []]  // Test 4 : retrieve empty range
+                ]]],                            // Test 4 : retrieve expired ban ip
+                [AbstractCache::STORED => []]   // Test 4 : retrieve empty range
             )
         );
         // Test 1
@@ -371,10 +385,10 @@ final class LapiRemediationTest extends AbstractRemediation
                     'bypass',
                     $expectedCleanTime,
                     'lapi-remediation-engine-bypass-ip-1.2.3.4',
-                ]]], // Test 2 : retrieve cached bypass
-                [AbstractCache::STORED => []],  // Test 2 : retrieve empty range*/
+                ]]],                            // Test 2 : retrieve cached bypass
+                [AbstractCache::STORED => []],  // Test 2 : retrieve empty range
                 [AbstractCache::STORED => []],  // Test 3 : retrieve empty IP decisions
-                [AbstractCache::STORED => []]  // Test 3 : retrieve empty range decisions
+                [AbstractCache::STORED => []]   // Test 3 : retrieve empty range decisions
             )
         );
         $this->bouncer->method('getFilteredDecisions')->will(
@@ -395,7 +409,7 @@ final class LapiRemediationTest extends AbstractRemediation
                         'origin' => 'lapi',
                         'duration' => '1h',
                     ],
-                ] // Test 3
+                ]    // Test 3
             )
         );
 
@@ -405,7 +419,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $this->assertEquals(
             false,
             $remediation->getConfig('stream_mode'),
-            'Stream mode should be true'
+            'Stream mode should be false'
         );
         // Test default configs
         $this->assertEquals(
@@ -476,6 +490,204 @@ final class LapiRemediationTest extends AbstractRemediation
     /**
      * @dataProvider cacheTypeProvider
      */
+    public function testGetIpRemediationInLiveModeWithGeolocation($cacheType)
+    {
+        $databasePath = __DIR__ . '/../geolocation/GeoLite2-Country.mmdb';
+        if (!file_exists($databasePath)) {
+            $this->fail('For this test, there must be a MaxMind Database here: ' . $databasePath);
+        }
+        $this->setCache($cacheType);
+
+        $remediationConfigs = [
+            'stream_mode' => false,
+            'geolocation' => [
+                'save_result' => true,
+                'enabled' => true,
+                'type' => 'maxmind',
+                'maxmind' => [
+                    'database_type' => Constants::MAXMIND_COUNTRY,
+                    'database_path' => $databasePath,
+                ],
+            ],
+        ];
+        // Prepare next tests
+        $currentTime = time();
+        $expectedBadTime = $currentTime + Constants::CACHE_EXPIRATION_FOR_BAD_IP;
+        $this->cacheStorage->method('retrieveDecisionsForIp')->will(
+            $this->onConsecutiveCalls(
+                [AbstractCache::STORED => []],  // Test 1 : retrieve empty IP decisions
+                [AbstractCache::STORED => []]  // Test 1 : retrieve empty range decisions
+            )
+        );
+        $this->cacheStorage->method('retrieveDecisionsForCountry')->will(
+            $this->onConsecutiveCalls(
+                [AbstractCache::STORED => []]  // Test 1 : retrieve empty country decisions
+            )
+        );
+        $this->bouncer->method('getFilteredDecisions')->will(
+            $this->onConsecutiveCalls(
+                [],  // Test 1 : retrieve empty IP decisions
+                [
+                    [
+                        'scope' => 'country',
+                        'value' => 'AU', // 1.2.3.4 is localized in AU
+                        'type' => 'captcha',
+                        'origin' => 'lapi',
+                        'duration' => '1h',
+                    ],
+                ]    // Test 1 : retrieve captcha decision for country
+            )
+        );
+
+        // Test with null logger
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
+        // Test stream mode value
+        $this->assertEquals(
+            false,
+            $remediation->getConfig('stream_mode'),
+            'Stream mode should be false'
+        );
+
+        // Direct LAPI call will be done only if there is no cached decisions (Test1 for ip, Test 1 for country)
+        $this->bouncer->expects($this->exactly(2))->method('getFilteredDecisions');
+
+        // Test 1 (No cached items and 1 active country decision)
+        $result = $remediation->getIpRemediation(TestConstants::IP_V4);
+
+        $this->assertEquals(
+            Constants::REMEDIATION_CAPTCHA,
+            $result,
+            'Should return a captcha'
+        );
+
+        $adapter = $this->cacheStorage->getAdapter();
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
+        $this->assertEquals(
+            false,
+            $item->isHit(),
+            'Remediation for IP should have not been cached'
+        );
+        $item = $adapter->getItem(base64_encode(Constants::SCOPE_COUNTRY . AbstractCache::SEP . 'AU'));
+        $this->assertEquals(
+            true,
+            $item->isHit(),
+            'Remediation for country should have not been cached'
+        );
+
+        $cachedItem = $item->get();
+        $this->assertEquals(
+            Constants::REMEDIATION_CAPTCHA,
+            $cachedItem[0][AbstractCache::INDEX_MAIN],
+            'captcha should have been cached'
+        );
+        $this->assertTrue(
+            $expectedBadTime === $cachedItem[0][AbstractCache::INDEX_EXP],
+            'Should return current time + bad ip duration config'
+        );
+        $this->assertEquals(
+            'lapi-captcha-country-AU',
+            $cachedItem[0][AbstractCache::INDEX_ID],
+            'Should return correct indentifier'
+        );
+    }
+
+    /**
+     * @dataProvider cacheTypeProvider
+     */
+    public function testGetIpRemediationInStreamModeWithGeolocation($cacheType)
+    {
+        $databasePath = __DIR__ . '/../geolocation/GeoLite2-Country.mmdb';
+        if (!file_exists($databasePath)) {
+            $this->fail('For this test, there must be a MaxMind Database here: ' . $databasePath);
+        }
+        $this->setCache($cacheType);
+
+        $remediationConfigs = [
+            'stream_mode' => true,
+            'geolocation' => [
+                'save_result' => true,
+                'enabled' => true,
+                'type' => 'maxmind',
+                'maxmind' => [
+                    'database_type' => Constants::MAXMIND_COUNTRY,
+                    'database_path' => $databasePath,
+                ],
+            ],
+        ];
+        // Prepare next tests
+        $currentTime = time();
+        $expectedCleanTime = $currentTime + Constants::CACHE_EXPIRATION_FOR_CLEAN_IP;
+        $this->cacheStorage->method('retrieveDecisionsForIp')->will(
+            $this->onConsecutiveCalls(
+                [AbstractCache::STORED => []],  // Test 1 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 1 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 2 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 2 : retrieve empty range decisions
+                [AbstractCache::STORED => [[
+                    'ban',
+                    999999999999,
+                    'lapi-ban-ip-1.2.3.4',
+                ]]],                            // Test 3 retrieve IP ban
+                [AbstractCache::STORED => []]   // Test 3 : retrieve empty range decisions
+            )
+        );
+        $this->cacheStorage->method('retrieveDecisionsForCountry')->will(
+            $this->onConsecutiveCalls(
+                [AbstractCache::STORED => []],  // Test 1 : retrieve empty Country
+                [AbstractCache::STORED => [[
+                    'ban',
+                    999999999999,
+                    'lapi-ban-country-AU',
+                ]]],                            // Test 2 : retrieve ban for country
+                [AbstractCache::STORED => [[
+                    'captcha',
+                    999999999999,
+                    'lapi-captcha-country-AU',
+                ]]]                             // Test 2 : retrieve ban for country
+            )
+        );
+
+        // Test with null logger
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
+
+        // Test 1 (No cached items and no active decision)
+        $result = $remediation->getIpRemediation(TestConstants::IP_V4);
+
+        $this->assertEquals(
+            Constants::REMEDIATION_BYPASS,
+            $result,
+            'Uncached (clean) and with no active decision should return a bypass remediation'
+        );
+
+        $adapter = $this->cacheStorage->getAdapter();
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
+        $this->assertEquals(
+            false,
+            $item->isHit(),
+            'Remediation should have not been cached'
+        );
+        // Test 2 (1 active decision for country)
+        $result = $remediation->getIpRemediation(TestConstants::IP_V4);
+
+        $this->assertEquals(
+            Constants::REMEDIATION_BAN,
+            $result,
+            'Cached country ban should return ban'
+        );
+
+        // Test 3 (1 active decision for country (captcha) and 1 for ip (ban))
+        $result = $remediation->getIpRemediation(TestConstants::IP_V4);
+
+        $this->assertEquals(
+            Constants::REMEDIATION_BAN,
+            $result,
+            'Should return higshest priority'
+        );
+    }
+
+    /**
+     * @dataProvider cacheTypeProvider
+     */
     public function testRefreshDecisions($cacheType)
     {
         $this->setCache($cacheType);
@@ -487,16 +699,17 @@ final class LapiRemediationTest extends AbstractRemediation
         // Prepare next tests
         $this->bouncer->method('getStreamDecisions')->will(
             $this->onConsecutiveCalls(
-                MockedData::DECISIONS['new_ip_v4'],          // Test 1 : new IP decision (ban)
-                MockedData::DECISIONS['new_ip_v4'],          // Test 2 : same IP decision (ban)
-                MockedData::DECISIONS['deleted_ip_v4'],      // Test 3 : deleted IP decision (existing one and not)
-                MockedData::DECISIONS['new_ip_v4_range'],    // Test 4 : new RANGE decision (ban)
-                MockedData::DECISIONS['delete_ip_v4_range'], // Test 5 : deleted RANGE decision
-                MockedData::DECISIONS['ip_v4_multiple'],     // Test 6 : retrieve multiple RANGE and IP decision
-                MockedData::DECISIONS['ip_v4_multiple_bis'],  // Test 7 : retrieve multiple new and delete
+                MockedData::DECISIONS['new_ip_v4'],            // Test 1 : new IP decision (ban)
+                MockedData::DECISIONS['new_ip_v4'],            // Test 2 : same IP decision (ban)
+                MockedData::DECISIONS['deleted_ip_v4'],        // Test 3 : deleted IP decision (existing one and not)
+                MockedData::DECISIONS['new_ip_v4_range'],      // Test 4 : new RANGE decision (ban)
+                MockedData::DECISIONS['delete_ip_v4_range'],   // Test 5 : deleted RANGE decision
+                MockedData::DECISIONS['ip_v4_multiple'],       // Test 6 : retrieve multiple RANGE and IP decision
+                MockedData::DECISIONS['ip_v4_multiple_bis'],   // Test 7 : retrieve multiple new and delete
                 MockedData::DECISIONS['ip_v4_remove_unknown'], // Test 8 : delete unknown scope
-                MockedData::DECISIONS['ip_v4_store_unknown'], // Test 9 : store unknown scope
-                MockedData::DECISIONS['new_ip_v6_range'] // Test 10 : store IP V6 range
+                MockedData::DECISIONS['ip_v4_store_unknown'],  // Test 9 : store unknown scope
+                MockedData::DECISIONS['new_ip_v6_range'],  // Test 10 : store IP V6 range
+                MockedData::DECISIONS['country_ban']       // Test 11 : store country decision
             )
         );
         // Test 1
@@ -688,6 +901,21 @@ final class LapiRemediationTest extends AbstractRemediation
             '/.*300.*"type":"IPV6_RANGE_NOT_IMPLEMENTED"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
+        );
+        // Test 11
+        $result = $remediation->refreshDecisions();
+        $this->assertEquals(
+            ['new' => 1, 'deleted' => 0],
+            $result,
+            'Refresh count should be correct'
+        );
+        $item = $adapter->getItem(
+            base64_encode(Constants::SCOPE_COUNTRY . AbstractCache::SEP . 'FR')
+        );
+        $this->assertEquals(
+            true,
+            $item->isHit(),
+            'Remediation should have been cached for country'
         );
         // parseDurationToSeconds
         $result = PHPUnitUtil::callMethod(

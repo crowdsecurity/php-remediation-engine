@@ -42,7 +42,7 @@ class CapiRemediation extends AbstractRemediation
      */
     public function getIpRemediation(string $ip): string
     {
-        $cachedDecisions = $this->getAllCachedDecisions($ip);
+        $cachedDecisions = $this->getAllCachedDecisions($ip, $this->getCountryForIp($ip));
 
         if (!$cachedDecisions) {
             // As CAPI is always in stream_mode, we do not store this bypass
