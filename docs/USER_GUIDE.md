@@ -441,7 +441,7 @@ $configs = [
 The `fallback_remediation` setting will be used to determine which remediation to use in case a decision has a 
 type that does not belong to the `ordered_remediations` setting.
 
-This setting is not required. If you don't set any value, `'bypass'` will be used by default.
+This setting is not required. If you don't set any value, `bypass` will be used by default.
 
 If you set some value, be aware to include this value in the `ordered_remediations` setting too.
 
@@ -466,17 +466,21 @@ $configs = [
 ];
 ```
 
+This setting is not required.
+
 - `geolocation[enabled]`: `true` to enable remediation based on country. Default to `false`.
+
 
 - `geolocation[type]`:  Geolocation system. Only `maxmind` is available for the moment. Default to `maxmind`.
 
-- `geolocation[cache_duration]`: This setting will be used to set the lifetime of a cached country associated to an 
-  IP. The purpose is to avoid multiple call to the geolocalized system (e.g. maxmind database). Default to 86400.
-  Set 0 to disable caching.
 
-- `geolocation[maxmind]`: MaxMind settings.
+- `geolocation[cache_duration]`: This setting will be used to set the lifetime (in seconds) of a cached country 
+  associated to an IP. The purpose is to avoid multiple call to the geolocation system (e.g. maxmind database). Default to 86400. Set 0 to disable caching.
 
-- `geolocation[maxmind][database_type]`: Select from `country` or `city`. Default to `country`. These are the two available MaxMind database types.
+
+- `geolocation[maxmind][database_type]`: Select from `country` or `city`. These are the two available MaxMind 
+  database types. Default to `country`.
+
 
 - `geolocation[maxmind][database_path]`: Absolute path to the MaxMind database (e.g. mmdb file)
 
