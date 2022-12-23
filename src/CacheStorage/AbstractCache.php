@@ -6,6 +6,7 @@ namespace CrowdSec\RemediationEngine\CacheStorage;
 
 use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\Decision;
+use DateTime;
 use IPLib\Address\Type;
 use IPLib\Factory;
 use IPLib\Range\RangeInterface;
@@ -33,6 +34,8 @@ abstract class AbstractCache
     public const INDEX_MAIN = 0;
     /** @var string The cache key prefix for a IPV4 range bucket */
     public const IPV4_BUCKET_KEY = 'range_bucket_ipv4';
+    /** @var string The cache key prefix or tag for a geolocation */
+    public const GEOLOCATION = 'geolocation';
     /** @var string Internal name for removed item index */
     public const REMOVED = 'removed';
     /** @var string Cache symbol */
@@ -110,17 +113,19 @@ abstract class AbstractCache
      *
      * @throws CacheException
      */
-    public function getCacheKey(string $scope, string $value): string
+    public function getCacheKey(string $prefix, string $value): string
     {
-        if (!isset($this->cacheKeys[$scope][$value])) {
-            switch ($scope) {
+        if (!isset($this->cacheKeys[$prefix][$value])) {
+            switch ($prefix) {
                 case Constants::SCOPE_IP:
                 case Constants::SCOPE_RANGE:
+                case Constants::SCOPE_COUNTRY:
                 case self::IPV4_BUCKET_KEY:
-                    $result = $scope . self::SEP . $value;
+                case self::GEOLOCATION:
+                    $result = $prefix . self::SEP . $value;
                     break;
                 default:
-                    throw new CacheException('Unknown scope:' . $scope);
+                    throw new CacheException('Unknown cache key prefix:' . $prefix);
             }
 
             /**
@@ -128,10 +133,10 @@ abstract class AbstractCache
              *
              * @see https://symfony.com/doc/current/components/cache/cache_items.html#cache-item-keys-and-values
              */
-            $this->cacheKeys[$scope][$value] = preg_replace('/[^A-Za-z0-9_.]/', self::SEP, $result);
+            $this->cacheKeys[$prefix][$value] = preg_replace('/[^A-Za-z0-9_.]/', self::SEP, $result);
         }
 
-        return $this->cacheKeys[$scope][$value];
+        return $this->cacheKeys[$prefix][$value];
     }
 
     /**
@@ -174,6 +179,7 @@ abstract class AbstractCache
         $result = [self::DONE => 0, self::DEFER => 0, self::REMOVED => []];
         switch ($decision->getScope()) {
             case Constants::SCOPE_IP:
+            case Constants::SCOPE_COUNTRY:
                 $result = $this->remove($decision);
                 break;
             case Constants::SCOPE_RANGE:
@@ -190,6 +196,18 @@ abstract class AbstractCache
         return $result;
     }
 
+    public function retrieveDecisionsForCountry(string $country): array
+    {
+        $cachedDecisions = [self::STORED => []];
+        $cacheKey = $this->getCacheKey(Constants::SCOPE_COUNTRY, $country);
+        $item = $this->getItem($cacheKey);
+        if ($item->isHit()) {
+            $cachedDecisions[self::STORED] = $item->get();
+        }
+
+        return $cachedDecisions;
+    }
+
     /**
      * @throws InvalidArgumentException|CacheException
      *
@@ -197,13 +215,13 @@ abstract class AbstractCache
      */
     public function retrieveDecisionsForIp(string $scope, string $ip): array
     {
-        $cachedDecisions = [AbstractCache::STORED => []];
+        $cachedDecisions = [self::STORED => []];
         switch ($scope) {
             case Constants::SCOPE_IP:
                 $cacheKey = $this->getCacheKey($scope, $ip);
                 $item = $this->getItem($cacheKey);
                 if ($item->isHit()) {
-                    $cachedDecisions[AbstractCache::STORED] = $item->get();
+                    $cachedDecisions[self::STORED] = $item->get();
                 }
                 break;
             case Constants::SCOPE_RANGE:
@@ -219,7 +237,7 @@ abstract class AbstractCache
                         $cacheKey = $this->getCacheKey(Constants::SCOPE_RANGE, $rangeString);
                         $item = $this->getItem($cacheKey);
                         if ($item->isHit()) {
-                            $cachedDecisions[AbstractCache::STORED] = $item->get();
+                            $cachedDecisions[self::STORED] = $item->get();
                         }
                     }
                 }
@@ -249,6 +267,7 @@ abstract class AbstractCache
         $result = [self::DONE => 0, self::DEFER => 0, self::STORED => []];
         switch ($decision->getScope()) {
             case Constants::SCOPE_IP:
+            case Constants::SCOPE_COUNTRY:
                 $result = $this->store($decision);
                 break;
             case Constants::SCOPE_RANGE:
@@ -262,6 +281,72 @@ abstract class AbstractCache
         }
 
         return $result;
+    }
+
+    /**
+     * Retrieved prepared cached variables associated to an Ip
+     * Set null if not already in cache.
+     */
+    public function getIpVariables(string $prefix, array $names, string $ip): array
+    {
+        $cachedVariables = $this->getIpCachedVariables($prefix, $ip);
+        $variables = [];
+        foreach ($names as $name) {
+            $variables[$name] = null;
+            if (isset($cachedVariables[$name])) {
+                $variables[$name] = $cachedVariables[$name];
+            }
+        }
+
+        return $variables;
+    }
+
+    /**
+     * Store variables in cache for some IP and cache tag.
+     *
+     * @return void
+     */
+    public function setIpVariables(string $cacheScope, array $pairs, string $ip, int $duration, string $cacheTag = '')
+    {
+        $cacheKey = $this->getCacheKey($cacheScope, $ip);
+        $cachedVariables = $this->getIpCachedVariables($cacheScope, $ip);
+        foreach ($pairs as $name => $value) {
+            $cachedVariables[$name] = $value;
+        }
+        $this->saveCacheItem($cacheKey, $cachedVariables, $duration, $cacheTag);
+    }
+
+    private function saveCacheItem(
+        string $cacheKey,
+        array $cachedVariables,
+        int $duration,
+        string $cacheTag = ''
+    ): array {
+        $item = $this->adapter->getItem(base64_encode($cacheKey));
+        $item->set($cachedVariables);
+        $item->expiresAt(new DateTime("+$duration seconds"));
+        if (!empty($cacheTag) && $this->adapter instanceof TagAwareAdapterInterface) {
+            $item->tag($cacheTag);
+        }
+        $this->adapter->save($item);
+
+        return $cachedVariables;
+    }
+
+    /**
+     * Retrieve raw cache item for some IP and cache scope.
+     *
+     * @return array|mixed
+     */
+    private function getIpCachedVariables(string $prefix, string $ip): array
+    {
+        $cacheKey = $this->getCacheKey($prefix, $ip);
+        $cachedVariables = [];
+        if ($this->adapter->hasItem(base64_encode($cacheKey))) {
+            $cachedVariables = $this->adapter->getItem(base64_encode($cacheKey))->get();
+        }
+
+        return $cachedVariables;
     }
 
     /**
@@ -328,8 +413,6 @@ abstract class AbstractCache
     }
 
     /**
-     * @return array
-     *
      * @throws CacheException
      */
     private function handleRangeScoped(Decision $decision, string $cachedIndex, callable $method): array
@@ -475,7 +558,7 @@ abstract class AbstractCache
     {
         $maxExpiration = $this->getMaxExpiration($valuesToCache);
         $item->set($valuesToCache);
-        $item->expiresAt(new \DateTime('@' . $maxExpiration));
+        $item->expiresAt(new DateTime('@' . $maxExpiration));
         if ($this->adapter instanceof TagAwareAdapterInterface) {
             $item->tag($tags);
         }

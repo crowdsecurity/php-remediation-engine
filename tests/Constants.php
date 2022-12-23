@@ -34,4 +34,7 @@ class Constants
                                          self::IP_RANGE;
     public const IP_V6 = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
     public const TMP_DIR = '/tmp';
+    public const IP_JAPAN = '210.249.74.42';
+    public const IP_FRANCE = '78.119.253.85';
+    public const CACHE_DURATION = 100;
 }

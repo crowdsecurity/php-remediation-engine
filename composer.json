@@ -48,7 +48,8 @@
         "crowdsec/capi-client": "0.6.0",
         "crowdsec/lapi-client": "0.0.1",
         "monolog/monolog": "^1.17 || ^2.1",
-        "mlocati/ip-lib": "^1.18"
+        "mlocati/ip-lib": "^1.18",
+        "geoip2/geoip2": "^2.13.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^8.5.30 || ^9.3",

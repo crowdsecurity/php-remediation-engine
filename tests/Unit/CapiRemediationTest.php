@@ -51,6 +51,8 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\Decision::getOrigin
  * @uses \CrowdSec\RemediationEngine\Decision::toArray
  * @uses \CrowdSec\RemediationEngine\Logger\FileLog::__construct
+ * @uses \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
  *
  * @covers \CrowdSec\RemediationEngine\Decision::getExpiresAt
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::__construct
@@ -615,7 +617,7 @@ final class CapiRemediationTest extends AbstractRemediation
             ]));
         // Test 1: bypass
         $type = Constants::REMEDIATION_BYPASS;
-        $duration = '147h';
+        $duration = sprintf('%ss', Constants::CACHE_EXPIRATION_FOR_CLEAN_IP);
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'handleDecisionExpiresAt',
@@ -623,7 +625,7 @@ final class CapiRemediationTest extends AbstractRemediation
         );
         $this->assertTrue(
             (time() + Constants::CACHE_EXPIRATION_FOR_CLEAN_IP) === $result,
-            'Should return current time + clean ip duration config'
+            'Should return current time + decision duration'
         );
 
         // Test 2 : ban in stream mode

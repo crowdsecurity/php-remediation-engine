@@ -82,17 +82,51 @@ abstract class AbstractRemediation
      */
     abstract public function refreshDecisions(): array;
 
+    protected function convertRawDecisionsToDecisions(array $rawDecisions): array
+    {
+        $decisions = [];
+        foreach ($rawDecisions as $rawDecision) {
+            $decision = $this->convertRawDecision($rawDecision);
+            if ($decision) {
+                $decisions[] = $decision;
+            }
+        }
 
-    protected function getAllCachedDecisions(string $ip): array
+        return $decisions;
+    }
+
+    protected function getCountryForIp(string $ip): string
+    {
+        $geolocConfigs = $this->getConfig('geolocation');
+        if (!empty($geolocConfigs['enabled'])) {
+            $geolocation = new Geolocation($geolocConfigs, $this->cacheStorage, $this->logger);
+            $countryResult = $geolocation->handleCountryResultForIp(
+                $ip,
+                (int) $geolocConfigs['cache_duration']
+            );
+
+            return !empty($countryResult['country']) ? $countryResult['country'] : '';
+        }
+
+        return '';
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    protected function getAllCachedDecisions(string $ip, string $country): array
     {
         // Ask cache for Ip scoped decision
         $ipDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_IP, $ip);
         // Ask cache for Range scoped decision
         $rangeDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip);
+        // Ask cache for Country scoped decision
+        $countryDecisions = $country ? $this->cacheStorage->retrieveDecisionsForCountry($country) : [];
 
         return array_merge(
             !empty($ipDecisions[AbstractCache::STORED]) ? $ipDecisions[AbstractCache::STORED] : [],
-            !empty($rangeDecisions[AbstractCache::STORED]) ? $rangeDecisions[AbstractCache::STORED] : []
+            !empty($rangeDecisions[AbstractCache::STORED]) ? $rangeDecisions[AbstractCache::STORED] : [],
+            !empty($countryDecisions[AbstractCache::STORED]) ? $countryDecisions[AbstractCache::STORED] : []
         );
     }
 
@@ -136,48 +170,6 @@ abstract class AbstractRemediation
     }
 
     /**
-     * Add decisions in cache.
-     *
-     * @throws CacheException
-     * @throws InvalidArgumentException|\Psr\Cache\CacheException
-     */
-    protected function storeDecisions(array $decisions): array
-    {
-        if (!$decisions) {
-            return [AbstractCache::DONE => 0, AbstractCache::STORED => []];
-        }
-        $deferCount = 0;
-        $doneCount = 0;
-        $stored = [];
-        foreach ($decisions as $decision) {
-            $storeResult = $this->cacheStorage->storeDecision($decision);
-            $deferCount += $storeResult[AbstractCache::DEFER];
-            $doneCount += $storeResult[AbstractCache::DONE];
-            if (!empty($storeResult[AbstractCache::STORED])) {
-                $stored[] =  $storeResult[AbstractCache::STORED];
-            }
-        }
-
-        return [
-            AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
-            AbstractCache::STORED => $stored,
-        ];
-    }
-
-    protected function convertRawDecisionsToDecisions(array $rawDecisions): array
-    {
-        $decisions = [];
-        foreach ($rawDecisions as $rawDecision) {
-            $decision = $this->convertRawDecision($rawDecision);
-            if ($decision) {
-                $decisions[] = $decision;
-            }
-        }
-
-        return $decisions;
-    }
-
-    /**
      * Sort the decision array of a cache item, by remediation priorities.
      */
     protected function sortDecisionsByRemediationPriority(array $decisions): array
@@ -205,6 +197,35 @@ abstract class AbstractRemediation
         usort($decisionsWithPriority, $compareFunction);
 
         return $decisionsWithPriority;
+    }
+
+    /**
+     * Add decisions in cache.
+     *
+     * @throws CacheException
+     * @throws InvalidArgumentException|\Psr\Cache\CacheException
+     */
+    protected function storeDecisions(array $decisions): array
+    {
+        if (!$decisions) {
+            return [AbstractCache::DONE => 0, AbstractCache::STORED => []];
+        }
+        $deferCount = 0;
+        $doneCount = 0;
+        $stored = [];
+        foreach ($decisions as $decision) {
+            $storeResult = $this->cacheStorage->storeDecision($decision);
+            $deferCount += $storeResult[AbstractCache::DEFER];
+            $doneCount += $storeResult[AbstractCache::DONE];
+            if (!empty($storeResult[AbstractCache::STORED])) {
+                $stored[] = $storeResult[AbstractCache::STORED];
+            }
+        }
+
+        return [
+            AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
+            AbstractCache::STORED => $stored,
+        ];
     }
 
     /**
@@ -249,16 +270,9 @@ abstract class AbstractRemediation
 
     private function handleDecisionExpiresAt(string $type, string $duration): int
     {
-        switch ($type) {
-            case Constants::REMEDIATION_BYPASS:
-                $duration = $this->getConfig('clean_ip_cache_duration');
-                break;
-            default:
-                $duration = $this->parseDurationToSeconds($duration);
-                if (!$this->getConfig('stream_mode')) {
-                    $duration = min((int) $this->getConfig('bad_ip_cache_duration'), $duration);
-                }
-                break;
+        $duration = $this->parseDurationToSeconds($duration);
+        if (Constants::REMEDIATION_BYPASS !== $type && !$this->getConfig('stream_mode')) {
+            $duration = min((int) $this->getConfig('bad_ip_cache_duration'), $duration);
         }
 
         return time() + (int) $duration;

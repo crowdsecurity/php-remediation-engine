@@ -63,6 +63,7 @@ This kind of action is called a remediation and can be:
   - Retrieve and cache decisions from CAPI or LAPI
     - Handle IP scoped decisions for Ipv4 and IPv6
     - Handle Range scoped decisions for IPv4
+    - Handle Country scoped decisions using [MaxMind](https://www.maxmind.com) database
   - Determine remediation for a given IP
     - Use the cached decisions for CAPI and for LAPI in stream mode
     - For LAPI in live mode, call LAPI if there is no cached decision
@@ -352,6 +353,25 @@ php tests/scripts/get-remediation-lapi.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM
 php tests/scripts/get-remediation-lapi.php 1.2.3.4 0b85479f39a8152af8b27b316ad0a80c  https://crowdsec:8080 0
 ```
 
+
+##### Get remediation for an IP using geolocation
+
+This test require to have at least one Maxmind database (`GeoLite2-Country.mmdb`) in the `tests/geolocation` folder. 
+These database is downloadable from the [MaxMind](https://www.maxmind.com) website.
+
+###### Command usage
+
+```php
+php tests/scripts/get-remediation-lapi-with-geoloc.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM_MODE>
+```
+
+###### Example usage
+
+```bash
+php tests/scripts/get-remediation-lapi-with-geoloc.php 1.2.3.4 0b85479f39a8152af8b27b316ad0a80c  https://crowdsec:8080 0
+```
+
+
 ##### Clear cache
 
 ###### Command usage
@@ -421,19 +441,56 @@ $configs = [
 The `fallback_remediation` setting will be used to determine which remediation to use in case a decision has a 
 type that does not belong to the `ordered_remediations` setting.
 
-This setting is not required. If you don't set any value, `'bypass'` will be used by default.
+This setting is not required. If you don't set any value, `bypass` will be used by default.
 
 If you set some value, be aware to include this value in the `ordered_remediations` setting too.
 
 In the example above, if a retrieved decision has the unknown `mfa` type, the `ban` fallback will be use instead.
 
 
+### Geolocation
+
+```php
+$configs = [
+        ... 
+        'geolocation' => [
+            'enabled' => true,
+            'cache_duration' => 86400,
+            'type' => 'maxmind',
+            'maxmind' => [
+                'database_type' => 'country',
+                'database_path' => '/var/www/html/geolocation/GeoLite2-Country.mmdb',
+            ],
+        ]
+        ...
+];
+```
+
+This setting is not required.
+
+- `geolocation[enabled]`: `true` to enable remediation based on country. Default to `false`.
+
+
+- `geolocation[type]`:  Geolocation system. Only `maxmind` is available for the moment. Default to `maxmind`.
+
+
+- `geolocation[cache_duration]`: This setting will be used to set the lifetime (in seconds) of a cached country 
+  associated to an IP. The purpose is to avoid multiple call to the geolocation system (e.g. maxmind database). Default to 86400. Set 0 to disable caching.
+
+
+- `geolocation[maxmind][database_type]`: Select from `country` or `city`. These are the two available MaxMind 
+  database types. Default to `country`.
+
+
+- `geolocation[maxmind][database_path]`: Absolute path to the MaxMind database (e.g. mmdb file)
+
 
 ## LAPI remediation engine configurations
 
 The first parameter `$configs` of the `LapiRemediation` constructor can be used to pass some settings.
 
-As for the CAPI remediation engine above, you can pass `ordered_remediations` and `fallback_remediation` settings.
+As for the CAPI remediation engine above, you can pass `ordered_remediations`, `fallback_remediation` and 
+`geolocation` settings.
 
 In addition, LAPI remediation engine handles the following settings:
 
@@ -460,6 +517,14 @@ settings below.
 
 ### Clean IP cache duration
 
+```php
+$configs = [
+        ... 
+        'clean_ip_cache_duration' => 120
+        ...
+];
+```
+
 If there is no decision for an IP, this IP will be considered as "clean" and this setting will be used to set the 
 cache lifetime of the `bypass` remediation to store. 
 
@@ -468,6 +533,14 @@ This is only useful in live mode. In stream mode, a "clean" IP is considered as 
 In seconds. Must be greater or equal than 1. Default to 60 seconds if not set.
 
 ### Bad IP cache duration
+
+```php
+$configs = [
+        ... 
+        'bad_ip_cache_duration' => 86400
+        ...
+];
+```
 
 If there is an active decision for an IP, this IP will be considered as "bad" and this setting will be used to set the
 cache lifetime of the remediation to store (`ban`, `captcha`, etc.). More specifically, the lifetime will be the 

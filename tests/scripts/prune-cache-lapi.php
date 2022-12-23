@@ -29,7 +29,7 @@ $cacheFileConfigs = [
     'fs_cache_path' => __DIR__ . '/.cache/lapi',
 ];
 $phpFileCache = new PhpFiles($cacheFileConfigs, $logger);
-// Init CAPI remediation
+// Init LAPI remediation
 $remediationConfigs = [];
 $remediationEngine = new LapiRemediation($remediationConfigs, $lapiClient, $phpFileCache, $logger);
 // Prune the cache (only available for pruneable cache like PhpFiles)

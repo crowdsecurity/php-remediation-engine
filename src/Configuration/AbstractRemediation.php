@@ -23,7 +23,7 @@ abstract class AbstractRemediation implements ConfigurationInterface
 {
     private function getDefaultOrderedRemediations(): array
     {
-        if (get_class($this) === Capi::class) {
+        if (Capi::class === get_class($this)) {
             return array_merge(CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]);
         }
 
@@ -66,6 +66,46 @@ abstract class AbstractRemediation implements ConfigurationInterface
             ->end()
             ->integerNode('bad_ip_cache_duration')
                 ->min(1)->defaultValue(Constants::CACHE_EXPIRATION_FOR_BAD_IP)
+            ->end()
+        ->end();
+        $this->addGeolocationNodes($rootNode);
+    }
+
+    /**
+     * Geolocation settings.
+     *
+     * @param $rootNode
+     * @return void
+     */
+    private function addGeolocationNodes($rootNode)
+    {
+        $rootNode->children()
+            ->arrayNode('geolocation')
+                ->addDefaultsIfNotSet()
+                ->children()
+                    ->booleanNode('enabled')
+                        ->defaultFalse()
+                    ->end()
+                    ->integerNode('cache_duration')
+                        ->min(0)->defaultValue(Constants::CACHE_EXPIRATION_FOR_GEO)
+                    ->end()
+                    ->enumNode('type')
+                        ->defaultValue(Constants::GEOLOCATION_TYPE_MAXMIND)
+                        ->values([Constants::GEOLOCATION_TYPE_MAXMIND])
+                    ->end()
+                    ->arrayNode(Constants::GEOLOCATION_TYPE_MAXMIND)
+                        ->addDefaultsIfNotSet()
+                        ->children()
+                            ->enumNode('database_type')
+                                ->defaultValue(Constants::MAXMIND_COUNTRY)
+                                ->values([Constants::MAXMIND_COUNTRY, Constants::MAXMIND_CITY])
+                            ->end()
+                            ->scalarNode('database_path')
+                                ->cannotBeEmpty()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ->end();
     }

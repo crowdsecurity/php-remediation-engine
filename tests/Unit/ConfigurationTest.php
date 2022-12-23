@@ -31,6 +31,7 @@ use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
 
 /**
+ * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::validateCommon
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addCommonNodes
@@ -59,6 +60,14 @@ final class ConfigurationTest extends TestCase
                 'ordered_remediations' => array_merge(
                     CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
+                'geolocation' => [
+                    'cache_duration' => 86400,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should set default config'
@@ -73,6 +82,14 @@ final class ConfigurationTest extends TestCase
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'bypass'],
+                'geolocation' => [
+                    'cache_duration' => 86400,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -86,6 +103,14 @@ final class ConfigurationTest extends TestCase
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'rem3', 'rem4', 'bypass'],
+                'geolocation' => [
+                    'cache_duration' => 86400,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -100,6 +125,14 @@ final class ConfigurationTest extends TestCase
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['ban', 'captcha', 'bypass'],
+                'geolocation' => [
+                    'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should normalize config'
@@ -153,6 +186,14 @@ final class ConfigurationTest extends TestCase
                 'ordered_remediations' => array_merge(
                     LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
+                'geolocation' => [
+                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should set default config'
@@ -169,6 +210,14 @@ final class ConfigurationTest extends TestCase
                 'ordered_remediations' => array_merge(
                     LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
+                'geolocation' => [
+                    'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should set stream mode false'
@@ -184,6 +233,14 @@ final class ConfigurationTest extends TestCase
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'bypass'],
+                'geolocation' => [
+                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -197,6 +254,14 @@ final class ConfigurationTest extends TestCase
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'rem3', 'rem4', 'bypass'],
+                'geolocation' => [
+                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -211,6 +276,14 @@ final class ConfigurationTest extends TestCase
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['ban', 'captcha', 'bypass'],
+                'geolocation' => [
+                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
             ],
             $result,
             'Should normalize config'
