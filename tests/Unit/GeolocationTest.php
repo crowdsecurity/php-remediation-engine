@@ -72,7 +72,6 @@ final class GeolocationTest extends AbstractRemediation
         $this->debugFile = 'debug-' . $currentDate . '.log';
         $this->prodFile = 'prod-' . $currentDate . '.log';
         $this->logger = new FileLog(['log_directory_path' => $this->root->url(), 'debug_mode' => true]);
-        $this->watcher = $this->getWatcherMock();
 
         $cachePhpfilesConfigs = ['fs_cache_path' => $this->root->url()];
         $mockedMethods = [];
@@ -106,7 +105,7 @@ final class GeolocationTest extends AbstractRemediation
         }
 
         return [
-            'save_result' => false,
+            'cache_duration' => 0,
             'enabled' => true,
             'type' => 'maxmind',
             'maxmind' => [
@@ -140,7 +139,7 @@ final class GeolocationTest extends AbstractRemediation
             'Country should not have been cached'
         );
         // Test 2 : save result
-        $configs['save_result'] = true;
+        $configs['cache_duration'] = 86400;
         $geolocation = new Geolocation($configs, $this->cacheStorage, $this->logger);
 
         $result = $geolocation->handleCountryResultForIp(TestConstants::IP_FRANCE, TestConstants::CACHE_DURATION);
@@ -163,7 +162,7 @@ final class GeolocationTest extends AbstractRemediation
         // Test 3 : no database
         $this->cacheStorage->clear();
         $configs['maxmind']['database_path'] = __DIR__ . '/../geolocation/do-not-exist.mmdb';
-        $configs['save_result'] = true;
+        $configs['cache_duration'] = 86400;
         $geolocation = new Geolocation($configs, $this->cacheStorage, $this->logger);
 
         $result = $geolocation->handleCountryResultForIp(TestConstants::IP_FRANCE, TestConstants::CACHE_DURATION);
@@ -181,7 +180,7 @@ final class GeolocationTest extends AbstractRemediation
 
         // Test 4 : not found
         $configs = $this->handleMaxMindConfig($maxmindConfig);
-        $configs['save_result'] = true;
+        $configs['cache_duration'] = 86400;
         $geolocation = new Geolocation($configs, $this->cacheStorage, $this->logger);
         $result = $geolocation->handleCountryResultForIp('0.0.0.0', TestConstants::CACHE_DURATION);
         $this->assertEquals('', $result['country'], 'Country should be empty');
@@ -204,7 +203,7 @@ final class GeolocationTest extends AbstractRemediation
 
         // Test 5 : unknown geolocation type
         $configs['type'] = 'unit-test';
-        $configs['save_result'] = false;
+        $configs['cache_duration'] = 0;
         $error = '';
         $geolocation = new Geolocation($configs, $this->cacheStorage, $this->logger);
 
@@ -223,9 +222,8 @@ final class GeolocationTest extends AbstractRemediation
 
         // Test 6: unknown maxmind base type
         $configs['type'] = 'maxmind';
-        $configs['save_result'] = false;
+        $configs['cache_duration'] = 0;
         $configs['maxmind']['database_type'] = 'region';
-        $error = '';
         $geolocation = new Geolocation($configs, $this->cacheStorage, $this->logger);
 
         $result = $geolocation->handleCountryResultForIp('0.0.0.0', TestConstants::CACHE_DURATION);

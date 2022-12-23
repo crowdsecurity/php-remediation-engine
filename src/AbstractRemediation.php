@@ -102,7 +102,7 @@ abstract class AbstractRemediation
             $geolocation = new Geolocation($geolocConfigs, $this->cacheStorage, $this->logger);
             $countryResult = $geolocation->handleCountryResultForIp(
                 $ip,
-                (int) $this->getConfig('geolocation_cache_duration')
+                (int) $geolocConfigs['cache_duration']
             );
 
             return !empty($countryResult['country']) ? $countryResult['country'] : '';

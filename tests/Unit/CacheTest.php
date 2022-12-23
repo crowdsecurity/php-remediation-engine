@@ -25,6 +25,7 @@ use CrowdSec\RemediationEngine\Logger\FileLog;
 use CrowdSec\RemediationEngine\Tests\Constants as TestConstants;
 use CrowdSec\RemediationEngine\Tests\PHPUnitUtil;
 use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamDirectory;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -77,6 +78,14 @@ final class CacheTest extends TestCase
      */
     private $cacheStorage;
     /**
+     * @var string
+     */
+    private $debugFile;
+    /**
+     * @var FileLog
+     */
+    private $logger;
+    /**
      * @var Memcached
      */
     private $memcachedStorage;
@@ -85,9 +94,17 @@ final class CacheTest extends TestCase
      */
     private $phpFileStorage;
     /**
+     * @var string
+     */
+    private $prodFile;
+    /**
      * @var Redis
      */
     private $redisStorage;
+    /**
+     * @var vfsStreamDirectory
+     */
+    private $root;
 
     public function cacheTypeProvider(): array
     {

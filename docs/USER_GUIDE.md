@@ -353,6 +353,25 @@ php tests/scripts/get-remediation-lapi.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM
 php tests/scripts/get-remediation-lapi.php 1.2.3.4 0b85479f39a8152af8b27b316ad0a80c  https://crowdsec:8080 0
 ```
 
+
+##### Get remediation for an IP using geolocation
+
+This test require to have at least one Maxmind database (`GeoLite2-Country.mmdb`) in the `tests/geolocation` folder. 
+These database is downloadable from the [MaxMind](https://www.maxmind.com) website.
+
+###### Command usage
+
+```php
+php tests/scripts/get-remediation-lapi-with-geoloc.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM_MODE>
+```
+
+###### Example usage
+
+```bash
+php tests/scripts/get-remediation-lapi-with-geoloc.php 1.2.3.4 0b85479f39a8152af8b27b316ad0a80c  https://crowdsec:8080 0
+```
+
+
 ##### Clear cache
 
 ###### Command usage
@@ -429,12 +448,45 @@ If you set some value, be aware to include this value in the `ordered_remediatio
 In the example above, if a retrieved decision has the unknown `mfa` type, the `ban` fallback will be use instead.
 
 
+### Geolocation
+
+```php
+$configs = [
+        ... 
+        'geolocation' => [
+            'enabled' => true,
+            'cache_duration' => 86400,
+            'type' => 'maxmind',
+            'maxmind' => [
+                'database_type' => 'country',
+                'database_path' => '/var/www/html/geolocation/GeoLite2-Country.mmdb',
+            ],
+        ]
+        ...
+];
+```
+
+- `geolocation[enabled]`: `true` to enable remediation based on country. Default to `false`.
+
+- `geolocation[type]`:  Geolocation system. Only `maxmind` is available for the moment. Default to `maxmind`.
+
+- `geolocation[cache_duration]`: This setting will be used to set the lifetime of a cached country associated to an 
+  IP. The purpose is to avoid multiple call to the geolocalized system (e.g. maxmind database). Default to 86400.
+  Set 0 to disable caching.
+
+- `geolocation[maxmind]`: MaxMind settings.
+
+- `geolocation[maxmind][database_type]`: Select from `country` or `city`. Default to `country`. These are the two available MaxMind database types.
+
+- `geolocation[maxmind][database_path]`: Absolute path to the MaxMind database (e.g. mmdb file)
+
 
 ## LAPI remediation engine configurations
 
 The first parameter `$configs` of the `LapiRemediation` constructor can be used to pass some settings.
 
-As for the CAPI remediation engine above, you can pass `ordered_remediations` and `fallback_remediation` settings.
+As for the CAPI remediation engine above, you can pass `ordered_remediations`, `fallback_remediation` and 
+`geolocation` settings.
 
 In addition, LAPI remediation engine handles the following settings:
 
@@ -461,6 +513,14 @@ settings below.
 
 ### Clean IP cache duration
 
+```php
+$configs = [
+        ... 
+        'clean_ip_cache_duration' => 120
+        ...
+];
+```
+
 If there is no decision for an IP, this IP will be considered as "clean" and this setting will be used to set the 
 cache lifetime of the `bypass` remediation to store. 
 
@@ -469,6 +529,14 @@ This is only useful in live mode. In stream mode, a "clean" IP is considered as 
 In seconds. Must be greater or equal than 1. Default to 60 seconds if not set.
 
 ### Bad IP cache duration
+
+```php
+$configs = [
+        ... 
+        'bad_ip_cache_duration' => 86400
+        ...
+];
+```
 
 If there is an active decision for an IP, this IP will be considered as "bad" and this setting will be used to set the
 cache lifetime of the remediation to store (`ban`, `captcha`, etc.). More specifically, the lifetime will be the 

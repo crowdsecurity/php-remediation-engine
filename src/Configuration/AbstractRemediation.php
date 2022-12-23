@@ -67,9 +67,6 @@ abstract class AbstractRemediation implements ConfigurationInterface
             ->integerNode('bad_ip_cache_duration')
                 ->min(1)->defaultValue(Constants::CACHE_EXPIRATION_FOR_BAD_IP)
             ->end()
-            ->integerNode('geolocation_cache_duration')
-                ->min(1)->defaultValue(Constants::CACHE_EXPIRATION_FOR_GEO)
-            ->end()
         ->end();
         $this->addGeolocationNodes($rootNode);
     }
@@ -86,11 +83,11 @@ abstract class AbstractRemediation implements ConfigurationInterface
             ->arrayNode('geolocation')
                 ->addDefaultsIfNotSet()
                 ->children()
-                    ->booleanNode('save_result')
-                        ->defaultTrue()
-                    ->end()
                     ->booleanNode('enabled')
                         ->defaultFalse()
+                    ->end()
+                    ->integerNode('cache_duration')
+                        ->min(0)->defaultValue(Constants::CACHE_EXPIRATION_FOR_GEO)
                     ->end()
                     ->enumNode('type')
                         ->defaultValue(Constants::GEOLOCATION_TYPE_MAXMIND)

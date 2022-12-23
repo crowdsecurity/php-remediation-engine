@@ -46,16 +46,8 @@ For a quick start, follow the below steps.
 
 #### DDEV installation
 
-This project is fully compatible with DDEV 1.21.3, and it is recommended to use this specific version.
-For the DDEV installation, please follow the [official instructions](https://ddev.readthedocs.io/en/stable/#installation).
-On a Linux distribution, you can run:
-```
-sudo apt-get -qq update
-sudo apt-get -qq -y install libnss3-tools
-curl -LO https://raw.githubusercontent.com/drud/ddev/master/scripts/install_ddev.sh
-bash install_ddev.sh v1.21.3
-rm install_ddev.sh
-```
+This project is fully compatible with DDEV 1.21.4, and it is recommended to use this specific version.
+For the DDEV installation, please follow the [official instructions](https://ddev.readthedocs.io/en/stable/users/install/ddev-installation/).
 
 
 #### Prepare DDEV PHP environment
@@ -131,6 +123,9 @@ ddev composer update --working-dir ./my-own-modules/remediation-engine
 ddev php ./my-own-modules/remediation-engine/vendor/bin/phpunit  ./my-own-modules/remediation-engine/tests/Unit --testdox
 ```
 
+**N.B.**: Some geolocation tests require to have 2 Maxmind databases (`GeoLite2-Country.mmdb` and `GeoLite2-City.
+mmdb`) in the `tests/geolocation` folder. These databases are downloadable from the [MaxMind](https://www.maxmind.com) 
+website.
 
 #### Coding standards
 
@@ -219,6 +214,11 @@ If you want to generate a text report in the same folder:
 ```bash
 ddev php -dxdebug.mode=coverage ./my-own-modules/remediation-engine/tools/coding-standards/vendor/bin/phpunit --configuration ./my-own-modules/remediation-engine/tools/coding-standards/phpunit/phpunit.xml --coverage-text=./my-own-modules/remediation-engine/tools/coding-standards/phpunit/code-coverage/report.txt
 ```
+
+**N.B.**: Some geolocation tests require to have 2 Maxmind databases (`GeoLite2-Country.mmdb` and `GeoLite2-City.
+mmdb`) in the `tests/geolocation` folder. These databases are downloadable from the [MaxMind](https://www.maxmind.com)
+website.
+
 
 ## Commit message
 

@@ -56,13 +56,12 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => array_merge(
                     CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' => 86400,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -81,11 +80,10 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'bypass'],
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' => 86400,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -103,11 +101,10 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'rem3', 'rem4', 'bypass'],
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' => 86400,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -126,11 +123,10 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['ban', 'captcha', 'bypass'],
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -186,13 +182,12 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => array_merge(
                     LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -211,13 +206,12 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => false,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => array_merge(
                     LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -237,11 +231,10 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'bypass'],
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -259,11 +252,10 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'rem3', 'rem4', 'bypass'],
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -282,11 +274,10 @@ final class ConfigurationTest extends TestCase
                 'stream_mode' => true,
                 'clean_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_CLEAN_IP,
                 'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
-                'geolocation_cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['ban', 'captcha', 'bypass'],
                 'geolocation' => [
-                    'save_result' => true,
+                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [

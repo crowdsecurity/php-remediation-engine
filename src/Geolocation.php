@@ -45,7 +45,7 @@ class Geolocation
     public function handleCountryResultForIp(string $ip, int $cacheDuration): array
     {
         $result = $this->geolocTemplate;
-        $saveInCache = !empty($this->configs['save_result']);
+        $saveInCache = $this->configs['cache_duration'] > 0;
         if ($saveInCache) {
             $cachedVariables = $this->cacheStorage->getIpVariables(
                 AbstractCache::GEOLOCATION,
