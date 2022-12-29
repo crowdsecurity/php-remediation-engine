@@ -13,7 +13,7 @@ use Symfony\Component\Config\Definition\Processor;
 class PhpFiles extends AbstractCache
 {
     /**
-     * @throws CacheException
+     * @throws CacheStorageException
      */
     public function __construct(array $configs, LoggerInterface $logger = null)
     {
@@ -24,7 +24,7 @@ class PhpFiles extends AbstractCache
             );
             // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
-            throw new CacheException('Error when creating to PhpFiles cache adapter:' . $e->getMessage());
+            throw new CacheStorageException('Error when creating to PhpFiles cache adapter:' . $e->getMessage());
             // @codeCoverageIgnoreEnd
         }
         parent::__construct($this->configs, $adapter, $logger);

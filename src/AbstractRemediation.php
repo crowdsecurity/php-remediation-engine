@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace CrowdSec\RemediationEngine;
 
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
-use CrowdSec\RemediationEngine\CacheStorage\CacheException;
+use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
 use Monolog\Handler\NullHandler;
 use Monolog\Logger;
+use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
@@ -69,7 +70,7 @@ abstract class AbstractRemediation
     /**
      * Prune cache.
      *
-     * @throws CacheStorage\CacheException
+     * @throws CacheStorage\CacheStorageException
      */
     public function pruneCache(): bool
     {
@@ -95,6 +96,9 @@ abstract class AbstractRemediation
         return $decisions;
     }
 
+    /**
+     * @throws RemediationException
+     */
     protected function getCountryForIp(string $ip): string
     {
         $geolocConfigs = $this->getConfig('geolocation');
@@ -112,7 +116,7 @@ abstract class AbstractRemediation
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException|CacheStorageException
      */
     protected function getAllCachedDecisions(string $ip, string $country): array
     {
@@ -143,8 +147,9 @@ abstract class AbstractRemediation
     /**
      * Remove decisions from cache.
      *
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
      * @throws CacheException
-     * @throws InvalidArgumentException|\Psr\Cache\CacheException
      */
     protected function removeDecisions(array $decisions): array
     {
@@ -202,8 +207,9 @@ abstract class AbstractRemediation
     /**
      * Add decisions in cache.
      *
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
      * @throws CacheException
-     * @throws InvalidArgumentException|\Psr\Cache\CacheException
      */
     protected function storeDecisions(array $decisions): array
     {

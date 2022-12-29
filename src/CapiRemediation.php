@@ -6,8 +6,9 @@ namespace CrowdSec\RemediationEngine;
 
 use CrowdSec\CapiClient\Watcher;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
-use CrowdSec\RemediationEngine\CacheStorage\CacheException;
+use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
 use CrowdSec\RemediationEngine\Configuration\Capi as CapiRemediationConfig;
+use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Processor;
@@ -37,8 +38,9 @@ class CapiRemediation extends AbstractRemediation
     /**
      * {@inheritdoc}
      *
-     * @throws CacheException
-     * @throws InvalidArgumentException|\Psr\Cache\CacheException
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
+     * @throws RemediationException
      */
     public function getIpRemediation(string $ip): string
     {
@@ -55,9 +57,9 @@ class CapiRemediation extends AbstractRemediation
     /**
      * {@inheritdoc}
      *
-     * @throws CacheException
+     * @throws CacheStorageException
      * @throws InvalidArgumentException
-     * @throws RemediationException|\Psr\Cache\CacheException
+     * @throws CacheException
      */
     public function refreshDecisions(): array
     {

@@ -13,6 +13,7 @@ use IPLib\Range\RangeInterface;
 use IPLib\Range\Subnet;
 use Monolog\Handler\NullHandler;
 use Monolog\Logger;
+use Psr\Cache\CacheException;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -111,7 +112,7 @@ abstract class AbstractCache
     /**
      * Cache key convention.
      *
-     * @throws CacheException
+     * @throws CacheStorageException
      */
     public function getCacheKey(string $prefix, string $value): string
     {
@@ -125,7 +126,7 @@ abstract class AbstractCache
                     $result = $prefix . self::SEP . $value;
                     break;
                 default:
-                    throw new CacheException('Unknown cache key prefix:' . $prefix);
+                    throw new CacheStorageException('Unknown cache key prefix:' . $prefix);
             }
 
             /**
@@ -160,7 +161,7 @@ abstract class AbstractCache
     /**
      * Prune (delete) of all expired cache items.
      *
-     * @throws CacheException
+     * @throws CacheStorageException
      */
     public function prune(): bool
     {
@@ -168,11 +169,13 @@ abstract class AbstractCache
             return $this->adapter->prune();
         }
 
-        throw new CacheException('Cache Adapter ' . \get_class($this->adapter) . ' can not be pruned.');
+        throw new CacheStorageException('Cache Adapter ' . \get_class($this->adapter) . ' can not be pruned.');
     }
 
     /**
-     * @throws InvalidArgumentException|CacheException|\Psr\Cache\CacheException
+     * @throws CacheException
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
      */
     public function removeDecision(Decision $decision): array
     {
@@ -196,6 +199,10 @@ abstract class AbstractCache
         return $result;
     }
 
+    /**
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
+     */
     public function retrieveDecisionsForCountry(string $country): array
     {
         $cachedDecisions = [self::STORED => []];
@@ -209,9 +216,10 @@ abstract class AbstractCache
     }
 
     /**
-     * @throws InvalidArgumentException|CacheException
-     *
      * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+     *
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
      */
     public function retrieveDecisionsForIp(string $scope, string $ip): array
     {
@@ -260,7 +268,8 @@ abstract class AbstractCache
 
     /**
      * @throws CacheException
-     * @throws InvalidArgumentException|\Psr\Cache\CacheException
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
      */
     public function storeDecision(Decision $decision): array
     {
@@ -286,6 +295,9 @@ abstract class AbstractCache
     /**
      * Retrieved prepared cached variables associated to an Ip
      * Set null if not already in cache.
+     *
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
      */
     public function getIpVariables(string $prefix, array $names, string $ip): array
     {
@@ -305,6 +317,11 @@ abstract class AbstractCache
      * Store variables in cache for some IP and cache tag.
      *
      * @return void
+     *
+     * @throws CacheException
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     public function setIpVariables(string $cacheScope, array $pairs, string $ip, int $duration, string $cacheTag = '')
     {
@@ -316,6 +333,11 @@ abstract class AbstractCache
         $this->saveCacheItem($cacheKey, $cachedVariables, $duration, $cacheTag);
     }
 
+    /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     */
     private function saveCacheItem(
         string $cacheKey,
         array $cachedVariables,
@@ -337,6 +359,9 @@ abstract class AbstractCache
      * Retrieve raw cache item for some IP and cache scope.
      *
      * @return array|mixed
+     *
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
      */
     private function getIpCachedVariables(string $prefix, string $ip): array
     {
@@ -383,21 +408,21 @@ abstract class AbstractCache
     }
 
     /**
-     * @throws CacheException
+     * @throws CacheStorageException
      */
     private function getRangeIntForIp(string $ip): int
     {
         $ipInt = ip2long($ip);
         if (false === $ipInt) {
             // @codeCoverageIgnoreStart
-            throw new CacheException("$ip is not a valid IpV4 address");
+            throw new CacheStorageException("$ip is not a valid IpV4 address");
             // @codeCoverageIgnoreEnd
         }
         try {
             $result = intdiv($ipInt, self::IPV4_BUCKET_SIZE);
             // @codeCoverageIgnoreStart
         } catch (\ArithmeticError | \DivisionByZeroError $e) {
-            throw new CacheException('Something went wrong during integer division: ' . $e->getMessage());
+            throw new CacheStorageException('Something went wrong during integer division: ' . $e->getMessage());
             // @codeCoverageIgnoreEnd
         }
 
@@ -413,7 +438,8 @@ abstract class AbstractCache
     }
 
     /**
-     * @throws CacheException
+     * @throws CacheStorageException
+     * @throws CacheStorageException
      */
     private function handleRangeScoped(Decision $decision, string $cachedIndex, callable $method): array
     {
@@ -462,11 +488,12 @@ abstract class AbstractCache
     }
 
     /**
-     * @throws CacheException
-     * @throws InvalidArgumentException
-     * @throws \Exception|\Psr\Cache\CacheException
-     *
      * @noinspection PhpSameParameterValueInspection
+     */
+    /**
+     * @throws InvalidArgumentException
+     * @throws CacheException
+     * @throws CacheStorageException
      */
     private function remove(Decision $decision, ?int $bucketInt = null): array
     {
@@ -510,11 +537,13 @@ abstract class AbstractCache
     }
 
     /**
-     * @throws CacheException
-     * @throws InvalidArgumentException
-     * @throws \Exception|\Psr\Cache\CacheException
-     *
      * @noinspection PhpSameParameterValueInspection
+     */
+    /**
+     * @throws InvalidArgumentException
+     * @throws CacheException
+     * @throws CacheStorageException
+     * @throws \Exception
      */
     private function store(Decision $decision, ?int $bucketInt = null): array
     {
@@ -550,7 +579,7 @@ abstract class AbstractCache
 
     /**
      * @throws InvalidArgumentException
-     * @throws \Exception|\Psr\Cache\CacheException
+     * @throws \Exception|CacheException
      *
      * @SuppressWarnings(PHPMD.MissingImport)
      */

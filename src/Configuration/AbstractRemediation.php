@@ -74,7 +74,6 @@ abstract class AbstractRemediation implements ConfigurationInterface
     /**
      * Geolocation settings.
      *
-     * @param $rootNode
      * @return void
      */
     private function addGeolocationNodes($rootNode)

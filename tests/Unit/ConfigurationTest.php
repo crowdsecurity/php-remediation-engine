@@ -187,7 +187,7 @@ final class ConfigurationTest extends TestCase
                     LapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
                 ),
                 'geolocation' => [
-                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -234,7 +234,7 @@ final class ConfigurationTest extends TestCase
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'bypass'],
                 'geolocation' => [
-                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -255,7 +255,7 @@ final class ConfigurationTest extends TestCase
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['rem1', 'rem2', 'rem3', 'rem4', 'bypass'],
                 'geolocation' => [
-                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [
@@ -277,7 +277,7 @@ final class ConfigurationTest extends TestCase
                 'fallback_remediation' => 'bypass',
                 'ordered_remediations' => ['ban', 'captcha', 'bypass'],
                 'geolocation' => [
-                    'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                    'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                     'enabled' => false,
                     'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
                     'maxmind' => [

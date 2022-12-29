@@ -42,6 +42,10 @@ class Geolocation
         $this->logger = $logger;
     }
 
+    /**
+     * @throws RemediationException
+     * @throws \Exception
+     */
     public function handleCountryResultForIp(string $ip, int $cacheDuration): array
     {
         $result = $this->geolocTemplate;

@@ -14,9 +14,9 @@ class Memcached extends AbstractCache
     /**
      * Using a MemcachedAdapter with a TagAwareAdapter for storing tags is discouraged.
      *
-     * @see \Symfony\Component\Cache\Adapter\MemcachedAdapter::__construct comment
+     * @see MemcachedAdapter::__construct comment
      *
-     * @throws CacheException
+     * @throws CacheStorageException
      *
      * @SuppressWarnings(PHPMD.StaticAccess)
      */
@@ -28,7 +28,7 @@ class Memcached extends AbstractCache
             $adapter = new MemcachedAdapter(MemcachedAdapter::createConnection($this->configs['memcached_dsn']));
             // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
-            throw new CacheException('Error when creating Memcached cache adapter:' . $e->getMessage());
+            throw new CacheStorageException('Error when creating Memcached cache adapter:' . $e->getMessage());
             // @codeCoverageIgnoreEnd
         } finally {
             $this->unsetCustomErrorHandler();
@@ -39,7 +39,7 @@ class Memcached extends AbstractCache
     /**
      * {@inheritdoc}
      *
-     * @throws CacheException
+     * @throws CacheStorageException
      */
     public function clear(): bool
     {
@@ -56,7 +56,7 @@ class Memcached extends AbstractCache
     /**
      * {@inheritdoc}
      *
-     * @throws CacheException
+     * @throws CacheStorageException
      */
     public function commit(): bool
     {
@@ -74,7 +74,7 @@ class Memcached extends AbstractCache
      * When Memcached connection fail, it throws an unhandled warning.
      * To catch this warning as a clean exception we have to temporarily change the error handler.
      *
-     * @throws CacheException
+     * @throws CacheStorageException
      *
      * @codeCoverageIgnore
      */
@@ -82,7 +82,7 @@ class Memcached extends AbstractCache
     {
         set_error_handler(function ($errno, $errstr) {
             $message = "Memcached error. (Error level: $errno) Original error was: $errstr";
-            throw new CacheException($message);
+            throw new CacheStorageException($message);
         });
     }
 

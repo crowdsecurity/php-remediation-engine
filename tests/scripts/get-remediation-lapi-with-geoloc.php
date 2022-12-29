@@ -24,7 +24,7 @@ $lapiUrl = $argv[3] ?? false;
 $streamMode = isset($argv[4]) ? (bool) $argv[4] : true;
 if (!$bouncerKey || !$lapiUrl) {
     exit('Params <BOUNCER_KEY> and <LAPI_URL> are required' . \PHP_EOL .
-         'Usage: php get-remediation-lapi.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM_MODE>' .\PHP_EOL .
+         'Usage: php get-remediation-lapi.php <IP> <BOUNCER_KEY> <LAPI_URL> <STREAM_MODE>' . \PHP_EOL .
          'Example: php get-remediation-lapi.php 172.0.0.24 c580ebdff45da6e01415ed0e9bc9c06b  https://crowdsec:8080 0' .
          \PHP_EOL);
 }
