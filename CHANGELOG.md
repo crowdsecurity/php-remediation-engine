@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update `crowdsec/capi-client` dependency to `v0.7.0`
 - Update `crowdsec/lapi-client` dependency to `v0.2.0`
+- Fix `symfony/cache` dependency to `5.4.15` or `6.0.15` as `5.4.17` and `6.0.17` are buggy for Redis
 
 --- 
 
