@@ -13,7 +13,7 @@ use Symfony\Component\Config\Definition\Processor;
 class Redis extends AbstractCache
 {
     /**
-     * @throws CacheException
+     * @throws CacheStorageException
      *
      * @SuppressWarnings(PHPMD.StaticAccess)
      */
@@ -25,7 +25,7 @@ class Redis extends AbstractCache
             $adapter = new RedisTagAwareAdapter(RedisAdapter::createConnection($this->configs['redis_dsn']));
             // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
-            throw new CacheException('Error when creating Redis cache adapter:' . $e->getMessage());
+            throw new CacheStorageException('Error when creating Redis cache adapter:' . $e->getMessage());
             // @codeCoverageIgnoreEnd
         }
         parent::__construct($this->configs, $adapter, $logger);

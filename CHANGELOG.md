@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v0.3.0) - 2022-12-29
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v0.2.0...v0.3.0)
+
+### Changed
+- Update `crowdsec/capi-client` dependency to `v0.7.0`
+- Update `crowdsec/lapi-client` dependency to `v0.2.0`
+
+--- 
+
+
+
 ## [0.2.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v0.2.0) - 2022-12-23
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v0.1.1...v0.2.0)
 

@@ -16,7 +16,7 @@ namespace CrowdSec\RemediationEngine\Tests\Unit;
  */
 
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
-use CrowdSec\RemediationEngine\CacheStorage\CacheException;
+use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
@@ -222,7 +222,7 @@ final class CacheTest extends TestCase
         $error = '';
         try {
             $this->cacheStorage->prune();
-        } catch (CacheException $e) {
+        } catch (CacheStorageException $e) {
             $error = $e->getMessage();
         }
         if ('PhpFilesAdapter' === $cacheType) {
@@ -282,7 +282,7 @@ final class CacheTest extends TestCase
         $error = '';
         try {
             $this->cacheStorage->getCacheKey('Dummy', '1.2.3.4');
-        } catch (CacheException $e) {
+        } catch (CacheStorageException $e) {
             $error = $e->getMessage();
         }
 

@@ -501,7 +501,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $remediationConfigs = [
             'stream_mode' => false,
             'geolocation' => [
-                'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'enabled' => true,
                 'type' => 'maxmind',
                 'maxmind' => [
@@ -605,7 +605,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $remediationConfigs = [
             'stream_mode' => true,
             'geolocation' => [
-                'cache_duration' =>  Constants::CACHE_EXPIRATION_FOR_GEO,
+                'cache_duration' => Constants::CACHE_EXPIRATION_FOR_GEO,
                 'enabled' => true,
                 'type' => 'maxmind',
                 'maxmind' => [

@@ -16,6 +16,6 @@ use CrowdSec\RemediationEngine\RemediationException;
  * @copyright Copyright (c) 2022+ CrowdSec
  * @license   MIT License
  */
-class CacheException extends RemediationException
+class CacheStorageException extends RemediationException
 {
 }

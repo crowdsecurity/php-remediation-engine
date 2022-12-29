@@ -6,8 +6,9 @@ namespace CrowdSec\RemediationEngine;
 
 use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
-use CrowdSec\RemediationEngine\CacheStorage\CacheException;
+use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
 use CrowdSec\RemediationEngine\Configuration\Lapi as LapiRemediationConfig;
+use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Config\Definition\Processor;
@@ -38,8 +39,10 @@ class LapiRemediation extends AbstractRemediation
     /**
      * {@inheritdoc}
      *
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
+     * @throws RemediationException
      * @throws CacheException
-     * @throws InvalidArgumentException|\Psr\Cache\CacheException
      */
     public function getIpRemediation(string $ip): string
     {
@@ -85,8 +88,8 @@ class LapiRemediation extends AbstractRemediation
      * {@inheritdoc}
      *
      * @throws CacheException
+     * @throws CacheStorageException
      * @throws InvalidArgumentException
-     * @throws RemediationException|\Psr\Cache\CacheException
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
