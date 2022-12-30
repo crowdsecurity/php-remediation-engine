@@ -139,6 +139,10 @@ abstract class AbstractRemediation
         $cleanDecisions = $this->cacheStorage->cleanCachedValues($decisions);
 
         $sortedDecisions = $this->sortDecisionsByRemediationPriority($cleanDecisions);
+        $this->logger->debug('', [
+            'type' => 'REM_SORTED_DECISIONS',
+            'decisions' => $sortedDecisions,
+        ]);
 
         // Return only a remediation with the highest priority
         return $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS;
@@ -311,7 +315,7 @@ abstract class AbstractRemediation
         preg_match($re, $duration, $matches);
         if (empty($matches[0])) {
             $this->logger->error('', [
-                'type' => 'DECISION_DURATION_PARSE_ERROR',
+                'type' => 'REM_DECISION_DURATION_PARSE_ERROR',
                 'duration' => $duration,
             ]);
 
@@ -353,8 +357,8 @@ abstract class AbstractRemediation
             return true;
         }
 
-        $this->logger->warning('', [
-            'type' => 'RAW_DECISION_NOT_AS_EXPECTED',
+        $this->logger->error('', [
+            'type' => 'REM_RAW_DECISION_NOT_AS_EXPECTED',
             'raw_decision' => json_encode($rawDecision),
         ]);
 

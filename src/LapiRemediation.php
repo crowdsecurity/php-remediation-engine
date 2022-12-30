@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CrowdSec\RemediationEngine;
 
 use CrowdSec\LapiClient\Bouncer;
+use CrowdSec\LapiClient\ClientException;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
 use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
 use CrowdSec\RemediationEngine\Configuration\Lapi as LapiRemediationConfig;
@@ -42,7 +43,7 @@ class LapiRemediation extends AbstractRemediation
      * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws RemediationException
-     * @throws CacheException
+     * @throws CacheException|ClientException
      */
     public function getIpRemediation(string $ip): string
     {
@@ -50,6 +51,10 @@ class LapiRemediation extends AbstractRemediation
         $cachedDecisions = $this->getAllCachedDecisions($ip, $country);
 
         if (!$cachedDecisions) {
+            $this->logger->debug('', [
+                'type' => 'LAPI_REM_NO_CACHED_DECISIONS',
+                'ip' => $ip,
+            ]);
             // In stream_mode, we do not store this bypass, and we do not call LAPI directly
             if ($this->getConfig('stream_mode')) {
                 return Constants::REMEDIATION_BYPASS;
@@ -89,7 +94,7 @@ class LapiRemediation extends AbstractRemediation
      *
      * @throws CacheException
      * @throws CacheStorageException
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentException|ClientException
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */

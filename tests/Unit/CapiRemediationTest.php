@@ -416,7 +416,7 @@ final class CapiRemediationTest extends AbstractRemediation
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"RAW_DECISION_NOT_AS_EXPECTED"/',
+            '/.*400.*"type":"REM_RAW_DECISION_NOT_AS_EXPECTED"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -867,7 +867,7 @@ final class CapiRemediationTest extends AbstractRemediation
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"CACHE_REMOVE_NON_IMPLEMENTED_SCOPE.*CAPI-ban-do-not-know-delete-1.2.3.4"/',
+            '/.*300.*"type":"REM_CACHE_REMOVE_NON_IMPLEMENTED_SCOPE.*CAPI-ban-do-not-know-delete-1.2.3.4"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -881,7 +881,7 @@ final class CapiRemediationTest extends AbstractRemediation
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"CACHE_STORE_NON_IMPLEMENTED_SCOPE.*CAPI-ban-do-not-know-store-1.2.3.4"/',
+            '/.*300.*"type":"REM_CACHE_STORE_NON_IMPLEMENTED_SCOPE.*CAPI-ban-do-not-know-store-1.2.3.4"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -895,7 +895,7 @@ final class CapiRemediationTest extends AbstractRemediation
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"IPV6_RANGE_NOT_IMPLEMENTED"/',
+            '/.*300.*"type":"REM_CACHE_IPV6_RANGE_NOT_IMPLEMENTED"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -977,7 +977,7 @@ final class CapiRemediationTest extends AbstractRemediation
         );
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*400.*"type":"DECISION_DURATION_PARSE_ERROR"/',
+            '/.*400.*"type":"REM_DECISION_DURATION_PARSE_ERROR"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );

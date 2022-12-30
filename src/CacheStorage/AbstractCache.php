@@ -190,7 +190,7 @@ abstract class AbstractCache
                 break;
             default:
                 $this->logger->warning('', [
-                    'type' => 'CACHE_REMOVE_NON_IMPLEMENTED_SCOPE',
+                    'type' => 'REM_CACHE_REMOVE_NON_IMPLEMENTED_SCOPE',
                     'decision' => $decision->toArray(),
                 ]);
                 break;
@@ -252,7 +252,7 @@ abstract class AbstractCache
                 break;
             default:
                 $this->logger->warning('', [
-                    'type' => 'CACHE_RETRIEVE_FOR_IP_NON_IMPLEMENTED_SCOPE',
+                    'type' => 'REM_CACHE_RETRIEVE_FOR_IP_NON_IMPLEMENTED_SCOPE',
                     'scope' => $scope,
                 ]);
                 break;
@@ -284,7 +284,7 @@ abstract class AbstractCache
                 break;
             default:
                 $this->logger->warning('', [
-                    'type' => 'CACHE_STORE_NON_IMPLEMENTED_SCOPE',
+                    'type' => 'REM_CACHE_STORE_NON_IMPLEMENTED_SCOPE',
                     'decision' => $decision->toArray(),
                 ]);
         }
@@ -468,7 +468,7 @@ abstract class AbstractCache
         $range = Subnet::parseString($rangeString);
         if (null === $range) {
             $this->logger->error('', [
-                'type' => 'INVALID_RANGE',
+                'type' => 'REM_CACHE_INVALID_RANGE',
                 'decision' => $decision->toArray(),
             ]);
 
@@ -477,7 +477,7 @@ abstract class AbstractCache
         $addressType = $range->getAddressType();
         if (Type::T_IPv6 === $addressType) {
             $this->logger->warning('', [
-                'type' => 'IPV6_RANGE_NOT_IMPLEMENTED',
+                'type' => 'REM_CACHE_IPV6_RANGE_NOT_IMPLEMENTED',
                 'decision' => $decision->toArray(),
             ]);
 
@@ -523,8 +523,8 @@ abstract class AbstractCache
             $result[self::DEFER] = 1;
             $result[self::REMOVED] = $removed;
             if (!$this->saveDeferred($item)) {
-                $this->logger->warning('', [
-                    'type' => 'CACHE_STORE_DEFERRED_FAILED_FOR_REMOVE_DECISION',
+                $this->logger->error('', [
+                    'type' => 'REM_CACHE_STORE_DEFERRED_FAILED_FOR_REMOVE_DECISION',
                     'decision' => $decision->toArray(),
                     'bucket_int' => $bucketInt,
                 ]);
@@ -565,8 +565,8 @@ abstract class AbstractCache
 
         $result = [self::DONE => 0, self::DEFER => 1, self::STORED => $currentValue];
         if (!$this->saveDeferred($item)) {
-            $this->logger->warning('', [
-                'type' => 'CACHE_STORE_DEFERRED_FAILED',
+            $this->logger->error('', [
+                'type' => 'REM_CACHE_STORE_DEFERRED_FAILED',
                 'decision' => $decision->toArray(),
                 'bucket_int' => $bucketInt,
             ]);

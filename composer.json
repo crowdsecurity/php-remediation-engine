@@ -44,8 +44,8 @@
         "php": "^7.2.5 || ^8.0",
         "ext-json": "*",
         "symfony/config": "^4.4.27 || ^5.2 || ^6.0",
-        "symfony/cache": "^5.4.11,!=5.4.17 || ^6.0.11,!=6.0.16,!=6.0.17,!=6.1.9,!=6.2.3",
-        "crowdsec/capi-client": "0.7.0",
+        "symfony/cache": "^5.4.11|| ^6.0.11",
+        "crowdsec/capi-client": "0.8.0",
         "crowdsec/lapi-client": "0.2.0",
         "monolog/monolog": "^1.17 || ^2.1",
         "mlocati/ip-lib": "^1.18",
@@ -55,6 +55,9 @@
         "phpunit/phpunit": "^8.5.30 || ^9.3",
         "mikey179/vfsstream": "^1.6.11",
         "ext-curl": "*"
+    },
+    "conflict": {
+        "symfony/cache": "6.2.3 || 6.1.9 || 6.0.17 || 5.4.17"
     },
     "suggest": {
         "ext-curl": "*"
