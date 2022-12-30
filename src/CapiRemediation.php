@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CrowdSec\RemediationEngine;
 
+use CrowdSec\CapiClient\ClientException;
 use CrowdSec\CapiClient\Watcher;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
 use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
@@ -47,6 +48,10 @@ class CapiRemediation extends AbstractRemediation
         $cachedDecisions = $this->getAllCachedDecisions($ip, $this->getCountryForIp($ip));
 
         if (!$cachedDecisions) {
+            $this->logger->debug('', [
+                'type' => 'CAPI_REM_NO_CACHED_DECISIONS',
+                'ip' => $ip,
+            ]);
             // As CAPI is always in stream_mode, we do not store this bypass
             return Constants::REMEDIATION_BYPASS;
         }
@@ -59,7 +64,7 @@ class CapiRemediation extends AbstractRemediation
      *
      * @throws CacheStorageException
      * @throws InvalidArgumentException
-     * @throws CacheException
+     * @throws CacheException|ClientException
      */
     public function refreshDecisions(): array
     {
