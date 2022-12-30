@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Add `symfony/cache` conflicts with Redis not working versions
+- Add `symfony/cache` conflicts for Redis not working versions
 - Add some relevant logs
 
 --- 

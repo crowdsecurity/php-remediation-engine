@@ -337,7 +337,7 @@ final class CacheTest extends TestCase
         );
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*400.*"type":"INVALID_RANGE"/',
+            '/.*400.*"type":"REM_CACHE_INVALID_RANGE"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -354,7 +354,7 @@ final class CacheTest extends TestCase
         );
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"IPV6_RANGE_NOT_IMPLEMENTED"/',
+            '/.*300.*"type":"REM_CACHE_IPV6_RANGE_NOT_IMPLEMENTED"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -407,7 +407,7 @@ final class CacheTest extends TestCase
         );
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"CACHE_RETRIEVE_FOR_IP_NON_IMPLEMENTED_SCOPE"/',
+            '/.*300.*"type":"REM_CACHE_RETRIEVE_FOR_IP_NON_IMPLEMENTED_SCOPE"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
