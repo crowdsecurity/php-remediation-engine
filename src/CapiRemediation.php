@@ -48,7 +48,7 @@ class CapiRemediation extends AbstractRemediation
         $cachedDecisions = $this->getAllCachedDecisions($ip, $this->getCountryForIp($ip));
 
         if (!$cachedDecisions) {
-            $this->logger->debug('', [
+            $this->logger->debug('There is no cached decision', [
                 'type' => 'CAPI_REM_NO_CACHED_DECISIONS',
                 'ip' => $ip,
             ]);

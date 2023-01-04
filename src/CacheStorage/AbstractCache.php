@@ -23,6 +23,8 @@ use Symfony\Component\Cache\PruneableInterface;
 
 abstract class AbstractCache
 {
+    /** @var string Internal name for cache config item */
+    public const CONFIG = 'config';
     /** @var string Internal name for deferred cache item */
     public const DEFER = 'deferred';
     /** @var string Internal name for effective saved cache item (not deferred) */
@@ -43,6 +45,8 @@ abstract class AbstractCache
     public const SEP = '_';
     /** @var string Internal name for stored item index */
     public const STORED = 'stored';
+    /** @var string Internal name for warm up config item */
+    public const WARMUP = 'warmed_up';
     /** @var string Cache tag for remediation */
     private const CACHE_TAG_REM = 'remediation';
     /** @var int The size of ipv4 range cache bucket */
@@ -159,6 +163,19 @@ abstract class AbstractCache
     }
 
     /**
+     * @throws InvalidArgumentException
+     */
+    public function updateItem(string $cacheKey, array $content): bool
+    {
+        $cacheItem = $this->getItem($cacheKey);
+        $itemContent = $cacheItem->isHit() ? $cacheItem->get() : [];
+        $content = array_replace_recursive($itemContent, $content);
+        $cacheItem->set($content);
+
+        return $this->adapter->save($cacheItem);
+    }
+
+    /**
      * Prune (delete) of all expired cache items.
      *
      * @throws CacheStorageException
@@ -189,7 +206,7 @@ abstract class AbstractCache
                 $result = $this->handleRangeScoped($decision, self::REMOVED, [$this, 'remove']);
                 break;
             default:
-                $this->logger->warning('', [
+                $this->logger->warning('This scope is not implemented yet', [
                     'type' => 'REM_CACHE_REMOVE_NON_IMPLEMENTED_SCOPE',
                     'decision' => $decision->toArray(),
                 ]);
@@ -251,7 +268,7 @@ abstract class AbstractCache
                 }
                 break;
             default:
-                $this->logger->warning('', [
+                $this->logger->warning('This scope is not implemented yet', [
                     'type' => 'REM_CACHE_RETRIEVE_FOR_IP_NON_IMPLEMENTED_SCOPE',
                     'scope' => $scope,
                 ]);
@@ -261,7 +278,7 @@ abstract class AbstractCache
         return $cachedDecisions;
     }
 
-    public function saveDeferred(CacheItemInterface $item): bool
+    protected function saveDeferred(CacheItemInterface $item): bool
     {
         return $this->adapter->saveDeferred($item);
     }
@@ -283,7 +300,7 @@ abstract class AbstractCache
                 $result = $this->handleRangeScoped($decision, self::STORED, [$this, 'store']);
                 break;
             default:
-                $this->logger->warning('', [
+                $this->logger->warning('This scope is not implemented yet', [
                     'type' => 'REM_CACHE_STORE_NON_IMPLEMENTED_SCOPE',
                     'decision' => $decision->toArray(),
                 ]);
@@ -467,7 +484,7 @@ abstract class AbstractCache
         $rangeString = $decision->getValue();
         $range = Subnet::parseString($rangeString);
         if (null === $range) {
-            $this->logger->error('', [
+            $this->logger->error('Range is not valid', [
                 'type' => 'REM_CACHE_INVALID_RANGE',
                 'decision' => $decision->toArray(),
             ]);
@@ -476,7 +493,7 @@ abstract class AbstractCache
         }
         $addressType = $range->getAddressType();
         if (Type::T_IPv6 === $addressType) {
-            $this->logger->warning('', [
+            $this->logger->warning('Range for IPV6 is not implemented yet', [
                 'type' => 'REM_CACHE_IPV6_RANGE_NOT_IMPLEMENTED',
                 'decision' => $decision->toArray(),
             ]);
@@ -523,7 +540,7 @@ abstract class AbstractCache
             $result[self::DEFER] = 1;
             $result[self::REMOVED] = $removed;
             if (!$this->saveDeferred($item)) {
-                $this->logger->error('', [
+                $this->logger->error('Saving a deferred item failed', [
                     'type' => 'REM_CACHE_STORE_DEFERRED_FAILED_FOR_REMOVE_DECISION',
                     'decision' => $decision->toArray(),
                     'bucket_int' => $bucketInt,
@@ -565,7 +582,7 @@ abstract class AbstractCache
 
         $result = [self::DONE => 0, self::DEFER => 1, self::STORED => $currentValue];
         if (!$this->saveDeferred($item)) {
-            $this->logger->error('', [
+            $this->logger->error('Saving a deferred item failed', [
                 'type' => 'REM_CACHE_STORE_DEFERRED_FAILED',
                 'decision' => $decision->toArray(),
                 'bucket_int' => $bucketInt,

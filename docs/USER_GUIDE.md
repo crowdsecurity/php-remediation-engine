@@ -324,21 +324,19 @@ Thus, if you are using the PhpFiles cache, you should use this method.
 You will find some ready-to-use php scripts in the `tests/scripts` folder. These scripts could be useful to better
 understand what you can do with this remediation engine.
 
-As LAPI remediation methods need sometimes an array as parameter, we use a json format in command line.
-
 
 ##### Get decisions stream
 
 ###### Command usage
 
 ```php
-php tests/scripts/refresh-decisions-lapi.php <STARTUP> <FILTER_JSON> <BOUNCER_KEY> <LAPI_URL>
+php tests/scripts/refresh-decisions-lapi.php  <BOUNCER_KEY> <LAPI_URL>
 ```
 
 ###### Example usage
 
 ```bash
-php tests/scripts/refresh-decisions-lapi.php 1 '{"scopes":"Ip,Range"}' 68c2b479830c89bfd48926f9d764da39  https://crowdsec:8080 
+php tests/scripts/refresh-decisions-lapi.php 68c2b479830c89bfd48926f9d764da39  https://crowdsec:8080 
 ```
 
 ##### Get remediation for an IP
