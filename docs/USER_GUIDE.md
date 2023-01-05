@@ -273,15 +273,23 @@ Once your LAPI remediation engine is instantiated, you can perform the following
 
 
 ```php
-$remediationEngine->refreshDecisions($startup, $filter);
+$remediationEngine->refreshDecisions();
 ```
 
-- The first parameter `$startup` is a boolean:
-  - When the `$startup` flag is true, all the decisions are returned.
-  - When the `$startup` flag is false, only the decisions updates (add or remove) from the last stream call are returned.
+LAPI allows to pass `$startup` and `$filter` parameters when retrieving streamed decisions. Please see the [CrowdSec 
+LAPI documentation](https://crowdsecurity.github.io/api_doc/index.html?urls.primaryName=LAPI#/bouncers/getDecisionsStream) for more details.
 
-- The second parameter `$filter` is an array. Please see the [CrowdSec LAPI documentation](https://crowdsecurity.github.io/api_doc/index.html?urls.primaryName=LAPI#/bouncers/getDecisionsStream) for more details about available
-  filters (scopes, origins, scenarios, etc.).
+
+- The `refreshDecisions` will use a `warm_up` cached item to detect if this is a first call (`$startup=true`) or a 
+  decisions update (`$startup=false`): 
+
+  - If there is no `warm_up` cached item, the `$startup` flag is set to true, all the decisions are returned and the 
+    `warm_up` item is cached. Furthermore, cache will be cleaned before retrieving decisions of this first call.
+  - If there is a `warm_up` cached item, the `$startup` flag is set to false and only the decisions updates (add or 
+    remove) from the last stream call are returned.
+
+
+- The second parameter `$filter` will be the array `['scopes'=>'ip,range']` by default and `['scopes'=>'ip,range, country']` if geolocation feature is enabled (see [Geolocation configuration](#geolocation)).
 
 ##### Get remediation for an IP
 
