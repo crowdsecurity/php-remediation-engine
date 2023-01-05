@@ -51,6 +51,8 @@ abstract class AbstractCache
     private const CACHE_TAG_REM = 'remediation';
     /** @var int The size of ipv4 range cache bucket */
     private const IPV4_BUCKET_SIZE = 256;
+    /** @var string The message for not implemented scope*/
+    private const NOT_IMPLEMENTED_SCOPE = 'This scope is not yet implemented';
     /** @var string The cache tag for range bucket cache item */
     private const RANGE_BUCKET_TAG = 'range_bucket';
     /** @var AdapterInterface */
@@ -206,7 +208,7 @@ abstract class AbstractCache
                 $result = $this->handleRangeScoped($decision, self::REMOVED, [$this, 'remove']);
                 break;
             default:
-                $this->logger->warning('This scope is not implemented yet', [
+                $this->logger->warning(self::NOT_IMPLEMENTED_SCOPE, [
                     'type' => 'REM_CACHE_REMOVE_NON_IMPLEMENTED_SCOPE',
                     'decision' => $decision->toArray(),
                 ]);
@@ -268,7 +270,7 @@ abstract class AbstractCache
                 }
                 break;
             default:
-                $this->logger->warning('This scope is not implemented yet', [
+                $this->logger->warning(self::NOT_IMPLEMENTED_SCOPE, [
                     'type' => 'REM_CACHE_RETRIEVE_FOR_IP_NON_IMPLEMENTED_SCOPE',
                     'scope' => $scope,
                 ]);
@@ -300,7 +302,7 @@ abstract class AbstractCache
                 $result = $this->handleRangeScoped($decision, self::STORED, [$this, 'store']);
                 break;
             default:
-                $this->logger->warning('This scope is not implemented yet', [
+                $this->logger->warning(self::NOT_IMPLEMENTED_SCOPE, [
                     'type' => 'REM_CACHE_STORE_NON_IMPLEMENTED_SCOPE',
                     'decision' => $decision->toArray(),
                 ]);
