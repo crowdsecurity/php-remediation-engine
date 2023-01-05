@@ -139,7 +139,7 @@ abstract class AbstractRemediation
         $cleanDecisions = $this->cacheStorage->cleanCachedValues($decisions);
 
         $sortedDecisions = $this->sortDecisionsByRemediationPriority($cleanDecisions);
-        $this->logger->debug('', [
+        $this->logger->debug('Decisions have been sorted by priority', [
             'type' => 'REM_SORTED_DECISIONS',
             'decisions' => $sortedDecisions,
         ]);
@@ -314,7 +314,7 @@ abstract class AbstractRemediation
         $re = '/(-?)(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)(?:\.\d+)?(m?)s)?/m';
         preg_match($re, $duration, $matches);
         if (empty($matches[0])) {
-            $this->logger->error('', [
+            $this->logger->error('An error occurred during duration parsing', [
                 'type' => 'REM_DECISION_DURATION_PARSE_ERROR',
                 'duration' => $duration,
             ]);
@@ -357,7 +357,7 @@ abstract class AbstractRemediation
             return true;
         }
 
-        $this->logger->error('', [
+        $this->logger->error('Retrieved raw decision is not as expected', [
             'type' => 'REM_RAW_DECISION_NOT_AS_EXPECTED',
             'raw_decision' => json_encode($rawDecision),
         ]);

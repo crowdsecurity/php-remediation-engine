@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.5.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v0.5.0) - 2023-01-05
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v0.4.0...v0.5.0)
+
+### Changed
+
+- Use message log instead of a context message field
+- Update `crowdsec/capi-client` dependency to `v0.9.0`
+- Update `crowdsec/lapi-client` dependency to `v0.3.0`
+
+### Added 
+
+- Add cache warmup feature for LAPI 
+
+--- 
+
 ## [0.4.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v0.4.0) - 2022-12-30
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v0.3.1...v0.4.0)
 

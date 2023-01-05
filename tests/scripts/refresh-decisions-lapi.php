@@ -9,22 +9,13 @@ use CrowdSec\RemediationEngine\CacheStorage\Redis;
 use CrowdSec\RemediationEngine\LapiRemediation;
 use CrowdSec\RemediationEngine\Logger\FileLog;
 
-$startup = isset($argv[1]) ? (bool) $argv[1] : false;
-$filter = isset($argv[2]) ? json_decode($argv[2], true)
-    : ['scopes' => Constants::SCOPE_IP . ',' . Constants::SCOPE_RANGE];
-$bouncerKey = $argv[3] ?? false;
-$lapiUrl = $argv[4] ?? false;
+$bouncerKey = $argv[1] ?? false;
+$lapiUrl = $argv[2] ?? false;
 if (!$bouncerKey || !$lapiUrl) {
     exit('Params <BOUNCER_KEY> and <LAPI_URL> are required' . \PHP_EOL
-         . 'Usage: php refresh-decisions-lapi.php <STARTUP> <FILTER_JSON> <BOUNCER_KEY> <LAPI_URL>' . \PHP_EOL
-         . 'Example: php refresh-decisions-lapi.php 1 \'{"scopes":"Ip,Range,Country"}\' 68c2b479830c89bfd48926f9d764da39 https://crowdsec:8080' . \PHP_EOL
+         . 'Usage: php refresh-decisions-lapi.php <BOUNCER_KEY> <LAPI_URL>' . \PHP_EOL
+         . 'Example: php refresh-decisions-lapi.php 68c2b479830c89bfd48926f9d764da39 https://crowdsec:8080' . \PHP_EOL
     );
-}
-
-if (is_null($filter)) {
-    exit('Param <FILTER_JSON> is not a valid json' . \PHP_EOL
-         . 'Usage: php refresh-decisions-lapi.php <STARTUP> <FILTER_JSON> <BOUNCER_KEY> <LAPI_URL>'
-         . \PHP_EOL);
 }
 
 // Init  logger
@@ -54,5 +45,5 @@ $redisCache = new Redis($cacheRedisConfigs, $logger);
 // Init CAPI remediation
 $remediationConfigs = [];
 $remediationEngine = new LapiRemediation($remediationConfigs, $lapiClient, $phpFileCache, $logger);
-// Retrieve fresh decisions from CAPI and update the cache
-echo json_encode($remediationEngine->refreshDecisions($startup, $filter)) . \PHP_EOL;
+// Retrieve fresh decisions from LAPI and update the cache
+echo json_encode($remediationEngine->refreshDecisions()) . \PHP_EOL;

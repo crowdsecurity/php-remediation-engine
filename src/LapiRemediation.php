@@ -25,6 +25,10 @@ class LapiRemediation extends AbstractRemediation
      * @var Bouncer
      */
     private $client;
+    /**
+     * @var null|array
+     */
+    private $scopes;
 
     public function __construct(
         array $configs,
@@ -51,7 +55,7 @@ class LapiRemediation extends AbstractRemediation
         $cachedDecisions = $this->getAllCachedDecisions($ip, $country);
 
         if (!$cachedDecisions) {
-            $this->logger->debug('', [
+            $this->logger->debug('There is no cached decision', [
                 'type' => 'LAPI_REM_NO_CACHED_DECISIONS',
                 'ip' => $ip,
             ]);
@@ -90,15 +94,16 @@ class LapiRemediation extends AbstractRemediation
     }
 
     /**
-     * {@inheritdoc}
-     *
+     * @param bool $startup
+     * @param array $filter
+     * @return array
      * @throws CacheException
      * @throws CacheStorageException
-     * @throws InvalidArgumentException|ClientException
-     *
+     * @throws ClientException
+     * @throws InvalidArgumentException
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
-    public function refreshDecisions(bool $startup = false, array $filter = []): array
+    private function getStreamDecisions(bool $startup = false, array $filter = []): array
     {
         $rawDecisions = $this->client->getStreamDecisions($startup, $filter);
         $newDecisions = $this->convertRawDecisionsToDecisions($rawDecisions[self::CS_NEW] ?? []);
@@ -110,6 +115,90 @@ class LapiRemediation extends AbstractRemediation
             self::CS_NEW => $stored[AbstractCache::DONE] ?? 0,
             self::CS_DEL => $removed[AbstractCache::DONE] ?? 0,
         ];
+    }
+
+    /**
+     * @return array
+     */
+    private function getScopes(): array
+    {
+        if (null === $this->scopes) {
+            $finalScopes = [Constants::SCOPE_IP, Constants::SCOPE_RANGE];
+            $geolocConfigs = (array) $this->getConfig('geolocation');
+            if (!empty($geolocConfigs['enabled'])) {
+                $finalScopes[] = Constants::SCOPE_COUNTRY;
+            }
+            $this->scopes = $finalScopes;
+        }
+
+        return $this->scopes;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
+     * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+     * @return array
+     * @throws CacheException
+     * @throws CacheStorageException
+     * @throws ClientException
+     * @throws InvalidArgumentException
+     */
+    public function refreshDecisions(): array
+    {
+        if (!$this->getConfig('stream_mode')) {
+            $this->logger->info('Decisions refresh is only available in stream mode', [
+                'type' => 'LAPI_REM_REFRESH_DECISIONS'
+            ]);
+
+            return [
+                self::CS_NEW => 0,
+                self::CS_DEL => 0
+            ];
+        }
+
+        $filter = ['scopes' => implode(',', $this->getScopes())];
+
+        if (!$this->isWarm()) {
+            return $this->warmUp($filter);
+        }
+
+        return $this->getStreamDecisions(false, $filter);
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function isWarm(): bool
+    {
+        $cacheConfigItem = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $cacheConfig = $cacheConfigItem->get();
+
+        return (\is_array($cacheConfig) && isset($cacheConfig[AbstractCache::WARMUP])
+                && true === $cacheConfig[AbstractCache::WARMUP]);
+    }
+
+    /**
+     * @throws ClientException
+     * @throws InvalidArgumentException
+     * @throws CacheException
+     * @throws CacheStorageException
+     */
+    private function warmUp(array $filter): array
+    {
+        $this->logger->info('Will now clear the cache', ['type' => 'LAPI_REM_CACHE_WARMUP_CLEAR']);
+        $this->cacheStorage->clear();
+        $this->logger->info('Beginning of cache warmup', ['type' => 'LAPI_REM_CACHE_WARMUP_START']);
+        $result = $this->getStreamDecisions(true, $filter);
+        // Store the fact that the cache has been warmed up.
+        $this->cacheStorage->updateItem(AbstractCache::CONFIG, [AbstractCache::WARMUP => true]);
+
+        $this->logger->info('End of cache warmup', [
+            'type' => 'LAPI_REM_CACHE_WARM_UP_END',
+            self::CS_NEW => $result[self::CS_NEW] ?? 0,
+            self::CS_DEL => $result[self::CS_DEL] ?? 0
+        ]);
+        return $result;
     }
 
     /**

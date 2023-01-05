@@ -73,6 +73,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::storeDecisions
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::sortDecisionsByRemediationPriority
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::refreshDecisions
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::getStreamDecisions
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::removeDecisions
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::clear
@@ -108,6 +109,10 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getAllCachedDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getRemediationFromDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::updateItem
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::getScopes
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::isWarm
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::warmUp
  */
 final class LapiRemediationTest extends AbstractRemediation
 {
@@ -712,12 +717,50 @@ final class LapiRemediationTest extends AbstractRemediation
                 MockedData::DECISIONS['country_ban']       // Test 11 : store country decision
             )
         );
+        $this->bouncer->expects($this->exactly(11))
+            ->method('getStreamDecisions')
+            ->withConsecutive(
+                [true, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range']],
+                [false, ['scopes'=>'ip,range,country']]
+        );
+
+        $this->assertEquals(
+            false,
+            file_exists($this->root->url() . '/' . $this->prodFile),
+            'Prod File should not exist'
+        );
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $this->assertEquals(
+            false,
+            $item->isHit(),
+            'Cached should not be warmed up'
+        );
         // Test 1
         $result = $remediation->refreshDecisions();
         $this->assertEquals(
             ['new' => 1, 'deleted' => 0],
             $result,
             'Refresh count should be correct'
+        );
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $this->assertEquals(
+            true,
+            $item->isHit(),
+            'Cached should be warmed up'
+        );
+        $this->assertEquals(
+            [AbstractCache::WARMUP => true],
+            $item->get(),
+            'Warmup cache item should be as expected'
         );
 
         $adapter = $this->cacheStorage->getAdapter();
@@ -851,11 +894,6 @@ final class LapiRemediationTest extends AbstractRemediation
         );
 
         // Test 8
-        $this->assertEquals(
-            false,
-            file_exists($this->root->url() . '/' . $this->prodFile),
-            'Prod File should not exist'
-        );
         $result = $remediation->refreshDecisions();
         $this->assertEquals(
             ['new' => 0, 'deleted' => 0],
@@ -903,6 +941,8 @@ final class LapiRemediationTest extends AbstractRemediation
             'Prod log content should be correct'
         );
         // Test 11
+        $remediationConfigs = ['geolocation' => ['enabled' => true]];
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
         $result = $remediation->refreshDecisions();
         $this->assertEquals(
             ['new' => 1, 'deleted' => 0],
@@ -917,6 +957,22 @@ final class LapiRemediationTest extends AbstractRemediation
             $item->isHit(),
             'Remediation should have been cached for country'
         );
+        // Test 12 (stream mode)
+        $remediationConfigs = ['stream_mode' => false];
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
+        $result = $remediation->refreshDecisions();
+        $this->assertEquals(
+            ['new' => 0, 'deleted' => 0],
+            $result,
+            'Refresh count should be correct'
+        );
+        PHPUnitUtil::assertRegExp(
+            $this,
+            '/.*200.*Decisions refresh is only available in stream mode.*"type":"LAPI_REM_REFRESH_DECISIONS"/',
+            file_get_contents($this->root->url() . '/' . $this->prodFile),
+            'Prod log content should be correct'
+        );
+
         // parseDurationToSeconds
         $result = PHPUnitUtil::callMethod(
             $remediation,
