@@ -79,6 +79,11 @@ abstract class AbstractCache
             $logger->pushHandler(new NullHandler());
         }
         $this->logger = $logger;
+        $this->logger->debug('Instantiate cache', [
+            'type' => 'CACHE_INIT',
+            'configs' => $configs,
+            'adapter' => \get_class($adapter)
+        ]);
     }
 
     public function cleanCachedValues(array $cachedValues): array
@@ -99,7 +104,12 @@ abstract class AbstractCache
      */
     public function clear(): bool
     {
-        return $this->adapter->clear();
+        $result = $this->adapter->clear();
+        $this->logger->info('Clearing cache', [
+            'type' => 'REM_CACHE_CLEAR',
+            'result' => $result,
+        ]);
+        return $result;
     }
 
     /**
@@ -123,18 +133,7 @@ abstract class AbstractCache
     public function getCacheKey(string $prefix, string $value): string
     {
         if (!isset($this->cacheKeys[$prefix][$value])) {
-            switch ($prefix) {
-                case Constants::SCOPE_IP:
-                case Constants::SCOPE_RANGE:
-                case Constants::SCOPE_COUNTRY:
-                case self::IPV4_BUCKET_KEY:
-                case self::GEOLOCATION:
-                    $result = $prefix . self::SEP . $value;
-                    break;
-                default:
-                    throw new CacheStorageException('Unknown cache key prefix:' . $prefix);
-            }
-
+            $result = $prefix . self::SEP . $value;
             /**
              * Replace unauthorized symbols.
              *
@@ -333,7 +332,7 @@ abstract class AbstractCache
     }
 
     /**
-     * Store variables in cache for some IP and cache tag.
+     * Store variables in cache for some IP.
      *
      * @return void
      *
@@ -351,6 +350,27 @@ abstract class AbstractCache
         }
         $this->saveCacheItem($cacheKey, $cachedVariables, $duration, $cacheTag);
     }
+
+    /**
+     * Unset variables in cache for some IP.
+     *
+     * @return void
+     *
+     * @throws CacheException
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     */
+    public function unsetIpVariables(string $cacheScope, array $pairs, string $ip, int $duration, string $cacheTag = '')
+    {
+        $cacheKey = $this->getCacheKey($cacheScope, $ip);
+        $cachedVariables = $this->getIpCachedVariables($cacheScope, $ip);
+        foreach ($pairs as $name => $value) {
+            unset($cachedVariables[$name]);
+        }
+        $this->saveCacheItem($cacheKey, $cachedVariables, $duration, $cacheTag);
+    }
+
 
     /**
      * @throws CacheException

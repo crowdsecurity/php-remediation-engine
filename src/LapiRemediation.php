@@ -111,10 +111,19 @@ class LapiRemediation extends AbstractRemediation
         $stored = $this->storeDecisions($newDecisions);
         $removed = $this->removeDecisions($deletedDecisions);
 
-        return [
+        $result = [
             self::CS_NEW => $stored[AbstractCache::DONE] ?? 0,
             self::CS_DEL => $removed[AbstractCache::DONE] ?? 0,
         ];
+
+        $this->logger->info('Retrieved stream decisions', [
+            'type' => 'LAPI_REM_STREAM_DECISIONS',
+            'startup' => $startup,
+            'filter' => $filter,
+            'result' => $result
+        ]);
+
+        return $result;
     }
 
     /**
@@ -186,18 +195,12 @@ class LapiRemediation extends AbstractRemediation
      */
     private function warmUp(array $filter): array
     {
-        $this->logger->info('Will now clear the cache', ['type' => 'LAPI_REM_CACHE_WARMUP_CLEAR']);
         $this->cacheStorage->clear();
-        $this->logger->info('Beginning of cache warmup', ['type' => 'LAPI_REM_CACHE_WARMUP_START']);
         $result = $this->getStreamDecisions(true, $filter);
         // Store the fact that the cache has been warmed up.
+        $this->logger->info('Flag cache warmup', ['type' => 'LAPI_REM_CACHE_WARMUP']);
         $this->cacheStorage->updateItem(AbstractCache::CONFIG, [AbstractCache::WARMUP => true]);
 
-        $this->logger->info('End of cache warmup', [
-            'type' => 'LAPI_REM_CACHE_WARM_UP_END',
-            self::CS_NEW => $result[self::CS_NEW] ?? 0,
-            self::CS_DEL => $result[self::CS_DEL] ?? 0
-        ]);
         return $result;
     }
 
@@ -208,6 +211,6 @@ class LapiRemediation extends AbstractRemediation
     {
         $configuration = new LapiRemediationConfig();
         $processor = new Processor();
-        $this->configs = $processor->processConfiguration($configuration, [$configs]);
+        $this->configs = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
     }
 }

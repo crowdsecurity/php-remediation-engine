@@ -42,6 +42,11 @@ abstract class AbstractRemediation
             $logger->pushHandler(new NullHandler());
         }
         $this->logger = $logger;
+        $this->logger->debug('Instantiate remediation engine', [
+            'type' => 'REM_INIT',
+            'configs' => $configs,
+            'cache' => \get_class($cacheStorage)
+        ]);
     }
 
     /**
@@ -49,7 +54,12 @@ abstract class AbstractRemediation
      */
     public function clearCache(): bool
     {
-        return $this->cacheStorage->clear();
+        return $this->getCacheStorage()->clear();
+    }
+
+    public function getCacheStorage(): AbstractCache
+    {
+        return $this->cacheStorage;
     }
 
     /**
@@ -74,7 +84,7 @@ abstract class AbstractRemediation
      */
     public function pruneCache(): bool
     {
-        return $this->cacheStorage->prune();
+        return $this->getCacheStorage()->prune();
     }
 
     /**
@@ -103,11 +113,8 @@ abstract class AbstractRemediation
     {
         $geolocConfigs = $this->getConfig('geolocation');
         if (!empty($geolocConfigs['enabled'])) {
-            $geolocation = new Geolocation($geolocConfigs, $this->cacheStorage, $this->logger);
-            $countryResult = $geolocation->handleCountryResultForIp(
-                $ip,
-                (int) $geolocConfigs['cache_duration']
-            );
+            $geolocation = new Geolocation($geolocConfigs, $this->getCacheStorage(), $this->logger);
+            $countryResult = $geolocation->handleCountryResultForIp($ip);
 
             return !empty($countryResult['country']) ? $countryResult['country'] : '';
         }
@@ -121,11 +128,11 @@ abstract class AbstractRemediation
     protected function getAllCachedDecisions(string $ip, string $country): array
     {
         // Ask cache for Ip scoped decision
-        $ipDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_IP, $ip);
+        $ipDecisions = $this->getCacheStorage()->retrieveDecisionsForIp(Constants::SCOPE_IP, $ip);
         // Ask cache for Range scoped decision
-        $rangeDecisions = $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip);
+        $rangeDecisions = $this->getCacheStorage()->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip);
         // Ask cache for Country scoped decision
-        $countryDecisions = $country ? $this->cacheStorage->retrieveDecisionsForCountry($country) : [];
+        $countryDecisions = $country ? $this->getCacheStorage()->retrieveDecisionsForCountry($country) : [];
 
         return array_merge(
             !empty($ipDecisions[AbstractCache::STORED]) ? $ipDecisions[AbstractCache::STORED] : [],
@@ -136,7 +143,7 @@ abstract class AbstractRemediation
 
     protected function getRemediationFromDecisions(array $decisions): string
     {
-        $cleanDecisions = $this->cacheStorage->cleanCachedValues($decisions);
+        $cleanDecisions = $this->getCacheStorage()->cleanCachedValues($decisions);
 
         $sortedDecisions = $this->sortDecisionsByRemediationPriority($cleanDecisions);
         $this->logger->debug('Decisions have been sorted by priority', [
@@ -164,7 +171,7 @@ abstract class AbstractRemediation
         $doneCount = 0;
         $removed = [];
         foreach ($decisions as $decision) {
-            $removeResult = $this->cacheStorage->removeDecision($decision);
+            $removeResult = $this->getCacheStorage()->removeDecision($decision);
             $deferCount += $removeResult[AbstractCache::DEFER];
             $doneCount += $removeResult[AbstractCache::DONE];
             if (!empty($removeResult[AbstractCache::REMOVED])) {
@@ -173,7 +180,7 @@ abstract class AbstractRemediation
         }
 
         return [
-            AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
+            AbstractCache::DONE => $doneCount + ($this->getCacheStorage()->commit() ? $deferCount : 0),
             AbstractCache::REMOVED => $removed,
         ];
     }
@@ -224,7 +231,7 @@ abstract class AbstractRemediation
         $doneCount = 0;
         $stored = [];
         foreach ($decisions as $decision) {
-            $storeResult = $this->cacheStorage->storeDecision($decision);
+            $storeResult = $this->getCacheStorage()->storeDecision($decision);
             $deferCount += $storeResult[AbstractCache::DEFER];
             $doneCount += $storeResult[AbstractCache::DONE];
             if (!empty($storeResult[AbstractCache::STORED])) {
@@ -233,7 +240,7 @@ abstract class AbstractRemediation
         }
 
         return [
-            AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
+            AbstractCache::DONE => $doneCount + ($this->getCacheStorage()->commit() ? $deferCount : 0),
             AbstractCache::STORED => $stored,
         ];
     }

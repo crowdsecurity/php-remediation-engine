@@ -33,9 +33,9 @@ class FileLog extends Logger
      */
     public const PROD_FILE = 'prod.log';
 
-    public function __construct(array $configs = [])
+    public function __construct(array $configs = [],  string $name = self::LOGGER_NAME)
     {
-        parent::__construct(self::LOGGER_NAME);
+        parent::__construct($name);
         $logDir = $configs['log_directory_path'] ?? __DIR__ . '/.logs';
         if (empty($configs['disable_prod_log'])) {
             $logPath = $logDir . '/' . self::PROD_FILE;

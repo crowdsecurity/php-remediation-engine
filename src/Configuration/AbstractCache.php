@@ -16,6 +16,6 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * @copyright Copyright (c) 2022+ CrowdSec
  * @license   MIT License
  */
-abstract class AbstractCache implements ConfigurationInterface
+abstract class AbstractCache extends AbstractConfiguration
 {
 }

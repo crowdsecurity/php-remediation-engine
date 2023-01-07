@@ -38,6 +38,6 @@ class Redis extends AbstractCache
     {
         $configuration = new RedisCacheConfig();
         $processor = new Processor();
-        $this->configs = $processor->processConfiguration($configuration, [$configs]);
+        $this->configs = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
     }
 }

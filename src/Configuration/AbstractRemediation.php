@@ -19,8 +19,22 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * @copyright Copyright (c) 2022+ CrowdSec
  * @license   MIT License
  */
-abstract class AbstractRemediation implements ConfigurationInterface
+abstract class AbstractRemediation extends AbstractConfiguration
 {
+
+    /**
+     * @var string[]
+     */
+    protected $keys = [
+        'fallback_remediation',
+        'ordered_remediations',
+        'stream_mode',
+        'clean_ip_cache_duration',
+        'bad_ip_cache_duration',
+        'geolocation'
+    ];
+
+
     private function getDefaultOrderedRemediations(): array
     {
         if (Capi::class === get_class($this)) {
@@ -117,11 +131,11 @@ abstract class AbstractRemediation implements ConfigurationInterface
     protected function validateCommon($rootNode)
     {
         $rootNode->validate()
-            ->ifTrue(function (array $v) {
-                return Constants::REMEDIATION_BYPASS !== $v['fallback_remediation'] &&
-                       !in_array($v['fallback_remediation'], $v['ordered_remediations']);
-            })
-            ->thenInvalid('Fallback remediation must belong to ordered remediations.')
+                ->ifTrue(function (array $v) {
+                    return Constants::REMEDIATION_BYPASS !== $v['fallback_remediation'] &&
+                           !in_array($v['fallback_remediation'], $v['ordered_remediations']);
+                })
+                ->thenInvalid('Fallback remediation must belong to ordered remediations.')
             ->end();
     }
 }

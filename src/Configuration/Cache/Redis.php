@@ -19,8 +19,15 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * @copyright Copyright (c) 2022+ CrowdSec
  * @license   MIT License
  */
-class Redis extends AbstractCache implements ConfigurationInterface
+class Redis extends AbstractCache
 {
+    /**
+     * @var string[]
+     */
+    protected $keys = [
+        'redis_dsn'
+    ];
+
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('config');
