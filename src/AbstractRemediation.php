@@ -109,7 +109,11 @@ abstract class AbstractRemediation
     }
 
     /**
+     * @throws CacheException
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
      * @throws RemediationException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     protected function getCountryForIp(string $ip): string
     {

@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace CrowdSec\RemediationEngine;
 
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
+use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
 use GeoIp2\Database\Reader;
 use GeoIp2\Exception\AddressNotFoundException;
+use Psr\Cache\CacheException;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 class Geolocation
@@ -62,8 +65,11 @@ class Geolocation
     }
 
     /**
+     * @throws CacheStorageException
      * @throws RemediationException
-     * @throws \Exception
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     public function handleCountryResultForIp(string $ip): array
     {
@@ -118,8 +124,6 @@ class Geolocation
 
     /**
      * Retrieve a country from a MaxMind database.
-     *
-     * @throws \Exception
      */
     private function getMaxMindCountryResult(string $ip, string $databaseType, string $databasePath): array
     {

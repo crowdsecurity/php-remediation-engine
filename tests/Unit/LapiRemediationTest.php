@@ -431,7 +431,7 @@ final class LapiRemediationTest extends AbstractRemediation
                         'type' => 'ban',
                         'origin' => 'lapi',
                         'duration' => '1h',
-                    ]
+                    ],
                 ]   // Test 4 : IPv6 range scoped
             )
         );
@@ -516,11 +516,10 @@ final class LapiRemediationTest extends AbstractRemediation
             $result,
             'Should return a ban remediation'
         );
-        $item = $adapter->getItem(base64_encode(RemConstants::SCOPE_IP . AbstractCache::SEP . TestConstants::IP_V6_CACHE_KEY ));
+        $item = $adapter->getItem(base64_encode(RemConstants::SCOPE_IP . AbstractCache::SEP . TestConstants::IP_V6_CACHE_KEY));
         $cachedItem = $item->get();
         $this->assertCount(1, $cachedItem, 'Should have cache 1 decisions for IP');
         $this->assertEquals($cachedItem[0][0], 'ban', 'Should be a ban');
-
     }
 
     /**

@@ -176,7 +176,6 @@ final class GeolocationTest extends AbstractRemediation
             'Item should have been cleaned'
         );
 
-
         // Test 3 : no database
         $this->cacheStorage->clear();
         $configs['maxmind']['database_path'] = __DIR__ . '/../geolocation/do-not-exist.mmdb';

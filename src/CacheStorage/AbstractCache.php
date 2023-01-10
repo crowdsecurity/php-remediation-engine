@@ -6,7 +6,6 @@ namespace CrowdSec\RemediationEngine\CacheStorage;
 
 use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\Decision;
-use DateTime;
 use IPLib\Address\Type;
 use IPLib\Factory;
 use IPLib\Range\RangeInterface;
@@ -20,7 +19,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
 use Symfony\Component\Cache\PruneableInterface;
-
 
 abstract class AbstractCache
 {
@@ -129,7 +127,6 @@ abstract class AbstractCache
 
     /**
      * Cache key convention.
-     *
      */
     public function getCacheKey(string $prefix, string $value): string
     {
@@ -361,6 +358,7 @@ abstract class AbstractCache
      * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     *
      * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
     public function unsetIpVariables(string $cacheScope, array $names, string $ip, int $duration, string $cacheTag = '')
@@ -386,7 +384,7 @@ abstract class AbstractCache
     ): array {
         $item = $this->adapter->getItem(base64_encode($cacheKey));
         $item->set($cachedVariables);
-        $item->expiresAt(new DateTime("+$duration seconds"));
+        $item->expiresAt(new \DateTime("+$duration seconds"));
         if (!empty($cacheTag) && $this->adapter instanceof TagAwareAdapterInterface) {
             $item->tag($cacheTag);
         }
@@ -625,7 +623,7 @@ abstract class AbstractCache
     {
         $maxExpiration = $this->getMaxExpiration($valuesToCache);
         $item->set($valuesToCache);
-        $item->expiresAt(new DateTime('@' . $maxExpiration));
+        $item->expiresAt(new \DateTime('@' . $maxExpiration));
         if ($this->adapter instanceof TagAwareAdapterInterface) {
             $item->tag($tags);
         }
