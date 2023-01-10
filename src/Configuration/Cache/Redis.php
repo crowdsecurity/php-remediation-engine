@@ -7,7 +7,6 @@ namespace CrowdSec\RemediationEngine\Configuration\Cache;
 use CrowdSec\RemediationEngine\Configuration\AbstractCache;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * The remediation cache configuration for Redis.
@@ -25,7 +24,7 @@ class Redis extends AbstractCache
      * @var string[]
      */
     protected $keys = [
-        'redis_dsn'
+        'redis_dsn',
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder

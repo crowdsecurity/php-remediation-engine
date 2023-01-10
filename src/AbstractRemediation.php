@@ -6,6 +6,8 @@ namespace CrowdSec\RemediationEngine;
 
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
 use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
+use IPLib\Address\Type;
+use IPLib\Factory;
 use Monolog\Handler\NullHandler;
 use Monolog\Logger;
 use Psr\Cache\CacheException;
@@ -45,7 +47,7 @@ abstract class AbstractRemediation
         $this->logger->debug('Instantiate remediation engine', [
             'type' => 'REM_INIT',
             'configs' => $configs,
-            'cache' => \get_class($cacheStorage)
+            'cache' => \get_class($cacheStorage),
         ]);
     }
 
@@ -122,6 +124,13 @@ abstract class AbstractRemediation
         return '';
     }
 
+    protected function getIpType(string $ip): int
+    {
+        $address = Factory::parseAddressString($ip);
+
+        return !is_null($address) ? $address->getAddressType() : 0;
+    }
+
     /**
      * @throws InvalidArgumentException|CacheStorageException
      */
@@ -130,7 +139,10 @@ abstract class AbstractRemediation
         // Ask cache for Ip scoped decision
         $ipDecisions = $this->getCacheStorage()->retrieveDecisionsForIp(Constants::SCOPE_IP, $ip);
         // Ask cache for Range scoped decision
-        $rangeDecisions = $this->getCacheStorage()->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip);
+        $rangeDecisions = Type::T_IPv4 === $this->getIpType($ip)
+            ? $this->getCacheStorage()->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip)
+            : []
+        ;
         // Ask cache for Country scoped decision
         $countryDecisions = $country ? $this->getCacheStorage()->retrieveDecisionsForCountry($country) : [];
 

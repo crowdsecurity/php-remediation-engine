@@ -33,6 +33,7 @@ class Constants
                                          AbstractCache::SEP .
                                          self::IP_RANGE;
     public const IP_V6 = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
+    public const IP_V6_CACHE_KEY = '2001_0db8_85a3_0000_0000_8a2e_0370_7334';
     public const TMP_DIR = '/tmp';
     public const IP_JAPAN = '210.249.74.42';
     public const IP_FRANCE = '78.119.253.85';

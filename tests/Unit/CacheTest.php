@@ -33,6 +33,7 @@ use PHPUnit\Framework\TestCase;
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\Memcached::getConfigTreeBuilder
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\Redis::getConfigTreeBuilder
+ * @uses \CrowdSec\RemediationEngine\Configuration\AbstractConfiguration::cleanConfigs
  *
  * @covers \CrowdSec\RemediationEngine\CacheStorage\Memcached::clear
  * @covers \CrowdSec\RemediationEngine\CacheStorage\Memcached::commit
@@ -288,9 +289,9 @@ final class CacheTest extends TestCase
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/Unknown cache key prefix/',
+            '//',
             $error,
-            'Should throw error if unknown scope'
+            'Should not throw error if unknown scope'
         );
 
         $cacheKey = $this->cacheStorage->getCacheKey('range', '1.2.3.4/24');

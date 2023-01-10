@@ -53,6 +53,9 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\Logger\FileLog::__construct
  * @uses \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
+ * @uses \CrowdSec\RemediationEngine\Configuration\AbstractConfiguration::cleanConfigs
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::getIpType
  *
  * @covers \CrowdSec\RemediationEngine\Decision::getExpiresAt
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::__construct

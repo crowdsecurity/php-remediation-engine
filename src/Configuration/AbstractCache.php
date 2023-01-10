@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace CrowdSec\RemediationEngine\Configuration;
 
-use Symfony\Component\Config\Definition\ConfigurationInterface;
-
 /**
  * The remediation cache common configuration.
  *

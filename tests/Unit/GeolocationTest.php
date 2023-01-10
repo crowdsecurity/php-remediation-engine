@@ -33,6 +33,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\CacheStorage\PhpFiles::configure
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
  * @uses \CrowdSec\RemediationEngine\Logger\FileLog::__construct
+ * @uses \CrowdSec\RemediationEngine\Configuration\AbstractConfiguration::cleanConfigs
  *
  * @covers \CrowdSec\RemediationEngine\Geolocation::__construct()
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::saveCacheItem
@@ -41,6 +42,8 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getIpVariables
  * @covers \CrowdSec\RemediationEngine\Geolocation::getMaxMindCountryResult
  * @covers \CrowdSec\RemediationEngine\Geolocation::handleCountryResultForIp
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::unsetIpVariables
+ * @covers \CrowdSec\RemediationEngine\Geolocation::clearGeolocationCache
  */
 final class GeolocationTest extends AbstractRemediation
 {
@@ -158,6 +161,21 @@ final class GeolocationTest extends AbstractRemediation
         );
         $result = $geolocation->handleCountryResultForIp(TestConstants::IP_FRANCE, TestConstants::CACHE_DURATION);
         $this->assertEquals('FR', $result['country'], 'Should retrieve cached country');
+
+        // Clear storage
+        $geolocation->clearGeolocationCache(TestConstants::IP_FRANCE);
+        $item = $adapter->getItem(base64_encode(AbstractCache::GEOLOCATION . AbstractCache::SEP . TestConstants::IP_FRANCE));
+        $this->assertEquals(
+            true,
+            $item->isHit(),
+            'Country should have been cached'
+        );
+        $this->assertEquals(
+            [],
+            $item->get(),
+            'Item should have been cleaned'
+        );
+
 
         // Test 3 : no database
         $this->cacheStorage->clear();

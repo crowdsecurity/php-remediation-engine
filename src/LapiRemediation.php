@@ -9,6 +9,7 @@ use CrowdSec\LapiClient\ClientException;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
 use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
 use CrowdSec\RemediationEngine\Configuration\Lapi as LapiRemediationConfig;
+use IPLib\Address\Type;
 use Psr\Cache\CacheException;
 use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -26,7 +27,7 @@ class LapiRemediation extends AbstractRemediation
      */
     private $client;
     /**
-     * @var null|array
+     * @var array|null
      */
     private $scopes;
 
@@ -53,12 +54,12 @@ class LapiRemediation extends AbstractRemediation
     {
         $country = $this->getCountryForIp($ip);
         $cachedDecisions = $this->getAllCachedDecisions($ip, $country);
-
+        $this->logger->debug('Cache result', [
+            'type' => 'LAPI_REM_CACHED_DECISIONS',
+            'ip' => $ip,
+            'result' => $cachedDecisions ? 'hit' : 'miss',
+        ]);
         if (!$cachedDecisions) {
-            $this->logger->debug('There is no cached decision', [
-                'type' => 'LAPI_REM_NO_CACHED_DECISIONS',
-                'ip' => $ip,
-            ]);
             // In stream_mode, we do not store this bypass, and we do not call LAPI directly
             if ($this->getConfig('stream_mode')) {
                 return Constants::REMEDIATION_BYPASS;
@@ -66,6 +67,8 @@ class LapiRemediation extends AbstractRemediation
             // In live mode, ask LAPI (Retrieve Ip AND Range scoped decisions)
             $rawIpDecisions = $this->client->getFilteredDecisions(['ip' => $ip]);
             $ipDecisions = $this->convertRawDecisionsToDecisions($rawIpDecisions);
+            // IPV6 range scoped decisions are not yet stored in cache, so we store it as IP scoped decisions
+            $ipDecisions = $this->handleIpV6RangeDecisions($ipDecisions);
             $countryDecisions = [];
             if ($country) {
                 // Retrieve country scoped decisions
@@ -86,21 +89,34 @@ class LapiRemediation extends AbstractRemediation
                 ]]);
             // Store decision(s) even if bypass
             $stored = $this->storeDecisions($finalDecisions);
-
             $cachedDecisions = !empty($stored[AbstractCache::STORED]) ? $stored[AbstractCache::STORED] : [];
         }
 
         return $this->getRemediationFromDecisions($cachedDecisions);
     }
 
+    private function handleIpV6RangeDecisions(array $decisions): array
+    {
+        /** @var Decision $decision */
+        foreach ($decisions as $index => $decision) {
+            if (Constants::SCOPE_RANGE === $decision->getScope()) {
+                $rangeIp = preg_replace('#^(.*)/(.*)$#', '$1', $decision->getValue());
+                if (Type::T_IPv6 === $this->getIpType($rangeIp)) {
+                    $decision->setValue($rangeIp)->setScope(Constants::SCOPE_IP);
+                    $decisions[$index] = $decision;
+                }
+            }
+        }
+
+        return $decisions;
+    }
+
     /**
-     * @param bool $startup
-     * @param array $filter
-     * @return array
      * @throws CacheException
      * @throws CacheStorageException
      * @throws ClientException
      * @throws InvalidArgumentException
+     *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      */
     private function getStreamDecisions(bool $startup = false, array $filter = []): array
@@ -120,15 +136,12 @@ class LapiRemediation extends AbstractRemediation
             'type' => 'LAPI_REM_STREAM_DECISIONS',
             'startup' => $startup,
             'filter' => $filter,
-            'result' => $result
+            'result' => $result,
         ]);
 
         return $result;
     }
 
-    /**
-     * @return array
-     */
     private function getScopes(): array
     {
         if (null === $this->scopes) {
@@ -147,7 +160,7 @@ class LapiRemediation extends AbstractRemediation
      * {@inheritdoc}
      *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-     * @return array
+     *
      * @throws CacheException
      * @throws CacheStorageException
      * @throws ClientException
@@ -157,12 +170,12 @@ class LapiRemediation extends AbstractRemediation
     {
         if (!$this->getConfig('stream_mode')) {
             $this->logger->info('Decisions refresh is only available in stream mode', [
-                'type' => 'LAPI_REM_REFRESH_DECISIONS'
+                'type' => 'LAPI_REM_REFRESH_DECISIONS',
             ]);
 
             return [
                 self::CS_NEW => 0,
-                self::CS_DEL => 0
+                self::CS_DEL => 0,
             ];
         }
 
@@ -183,8 +196,8 @@ class LapiRemediation extends AbstractRemediation
         $cacheConfigItem = $this->cacheStorage->getItem(AbstractCache::CONFIG);
         $cacheConfig = $cacheConfigItem->get();
 
-        return (\is_array($cacheConfig) && isset($cacheConfig[AbstractCache::WARMUP])
-                && true === $cacheConfig[AbstractCache::WARMUP]);
+        return \is_array($cacheConfig) && isset($cacheConfig[AbstractCache::WARMUP])
+                && true === $cacheConfig[AbstractCache::WARMUP];
     }
 
     /**

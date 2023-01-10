@@ -21,6 +21,7 @@ use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
 use CrowdSec\RemediationEngine\Constants;
+use CrowdSec\RemediationEngine\Constants as RemConstants;
 use CrowdSec\RemediationEngine\LapiRemediation;
 use CrowdSec\RemediationEngine\Logger\FileLog;
 use CrowdSec\RemediationEngine\Tests\Constants as TestConstants;
@@ -59,7 +60,13 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\Geolocation::__construct
  * @uses \CrowdSec\RemediationEngine\Geolocation::getMaxMindCountryResult
  * @uses \CrowdSec\RemediationEngine\Geolocation::handleCountryResultForIp
+ * @uses \CrowdSec\RemediationEngine\Configuration\AbstractConfiguration::cleanConfigs
  *
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::handleIpV6RangeDecisions
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getIpType
+ * @covers \CrowdSec\RemediationEngine\Decision::setScope
+ * @covers \CrowdSec\RemediationEngine\Decision::setValue
  * @covers \CrowdSec\RemediationEngine\Decision::getExpiresAt
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::__construct
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionScope
@@ -393,7 +400,9 @@ final class LapiRemediationTest extends AbstractRemediation
                 ]]],                            // Test 2 : retrieve cached bypass
                 [AbstractCache::STORED => []],  // Test 2 : retrieve empty range
                 [AbstractCache::STORED => []],  // Test 3 : retrieve empty IP decisions
-                [AbstractCache::STORED => []]   // Test 3 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 3 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 4 : retrieve empty IP decisions
+                [AbstractCache::STORED => []]   // Test 4 : retrieve empty range decisions
             )
         );
         $this->bouncer->method('getFilteredDecisions')->will(
@@ -414,7 +423,16 @@ final class LapiRemediationTest extends AbstractRemediation
                         'origin' => 'lapi',
                         'duration' => '1h',
                     ],
-                ]    // Test 3
+                ],    // Test 3
+                [
+                    [
+                        'scope' => 'range',
+                        'value' => TestConstants::IP_V6 . '/24',
+                        'type' => 'ban',
+                        'origin' => 'lapi',
+                        'duration' => '1h',
+                    ]
+                ]   // Test 4 : IPv6 range scoped
             )
         );
 
@@ -439,7 +457,7 @@ final class LapiRemediationTest extends AbstractRemediation
         );
 
         // Direct LAPI call will be done only if there is no cached decisions (Test1, Test 3)
-        $this->bouncer->expects($this->exactly(2))->method('getFilteredDecisions');
+        $this->bouncer->expects($this->exactly(3))->method('getFilteredDecisions');
 
         // Test 1 (No cached items and no active decision)
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
@@ -490,6 +508,19 @@ final class LapiRemediationTest extends AbstractRemediation
         $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
         $cachedItem = $item->get();
         $this->assertCount(2, $cachedItem, 'Should have cache 2 decisions for IP');
+        // Test 4 (no cached decision and 1 active IPv6 range decision)
+        $this->cacheStorage->clear();
+        $result = $remediation->getIpRemediation(TestConstants::IP_V6);
+        $this->assertEquals(
+            Constants::REMEDIATION_BAN,
+            $result,
+            'Should return a ban remediation'
+        );
+        $item = $adapter->getItem(base64_encode(RemConstants::SCOPE_IP . AbstractCache::SEP . TestConstants::IP_V6_CACHE_KEY ));
+        $cachedItem = $item->get();
+        $this->assertCount(1, $cachedItem, 'Should have cache 1 decisions for IP');
+        $this->assertEquals($cachedItem[0][0], 'ban', 'Should be a ban');
+
     }
 
     /**
@@ -720,18 +751,18 @@ final class LapiRemediationTest extends AbstractRemediation
         $this->bouncer->expects($this->exactly(11))
             ->method('getStreamDecisions')
             ->withConsecutive(
-                [true, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range']],
-                [false, ['scopes'=>'ip,range,country']]
-        );
+                [true, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range']],
+                [false, ['scopes' => 'ip,range,country']]
+            );
 
         $this->assertEquals(
             false,

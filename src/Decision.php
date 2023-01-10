@@ -68,6 +68,13 @@ class Decision
         return $this->scope;
     }
 
+    public function setScope(string $scope): Decision
+    {
+        $this->scope = $scope;
+
+        return $this;
+    }
+
     public function getType(): string
     {
         return $this->type;
@@ -76,6 +83,13 @@ class Decision
     public function getValue(): string
     {
         return $this->value;
+    }
+
+    public function setValue(string $value): Decision
+    {
+        $this->value = $value;
+
+        return $this;
     }
 
     public function toArray(): array

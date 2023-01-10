@@ -40,6 +40,7 @@ use Symfony\Component\Config\Definition\Processor;
  * @covers \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::getDefaultOrderedRemediations
  * @covers \CrowdSec\RemediationEngine\Configuration\Lapi::getConfigTreeBuilder
+ * @covers \CrowdSec\RemediationEngine\Configuration\AbstractConfiguration::cleanConfigs
  */
 final class ConfigurationTest extends TestCase
 {
@@ -50,7 +51,7 @@ final class ConfigurationTest extends TestCase
 
         // Test default config
         $configs = [];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'stream_mode' => true,
@@ -74,7 +75,7 @@ final class ConfigurationTest extends TestCase
         );
         // Test bypass is always with the lowest priority (i.e. always last element)
         $configs = ['ordered_remediations' => ['rem1', 'rem2']];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'stream_mode' => true,
@@ -95,7 +96,7 @@ final class ConfigurationTest extends TestCase
             'Should add bypass with the lowest priority'
         );
         $configs = ['ordered_remediations' => ['rem1', 'bypass', 'rem2', 'rem3', 'bypass', 'rem4']];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'stream_mode' => true,
@@ -117,7 +118,7 @@ final class ConfigurationTest extends TestCase
         );
         // Test array unique
         $configs = ['ordered_remediations' => ['ban', 'test' => 'ban', 'captcha']];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'stream_mode' => true,
@@ -141,7 +142,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = ['ordered_remediations' => ['ban', 'captcha'], 'fallback_remediation' => 'm2a'];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -157,7 +158,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = ['ordered_remediations' => ['ban', 'captcha'], 'fallback_remediation' => 'bypass'];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -176,7 +177,7 @@ final class ConfigurationTest extends TestCase
 
         // Test default config
         $configs = [];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'stream_mode' => true,
@@ -200,7 +201,7 @@ final class ConfigurationTest extends TestCase
         );
         // Test streammode flase
         $configs = ['stream_mode' => false];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'stream_mode' => false,
@@ -225,7 +226,7 @@ final class ConfigurationTest extends TestCase
 
         // Test bypass is always with the lowest priority (i.e. always last element)
         $configs = ['ordered_remediations' => ['rem1', 'rem2']];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'stream_mode' => true,
@@ -268,7 +269,7 @@ final class ConfigurationTest extends TestCase
         );
         // Test array unique
         $configs = ['ordered_remediations' => ['ban', 'test' => 'ban', 'captcha']];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'stream_mode' => true,
@@ -292,7 +293,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = ['ordered_remediations' => ['ban', 'captcha'], 'fallback_remediation' => 'm2a'];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -308,7 +309,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = ['ordered_remediations' => ['ban', 'captcha'], 'fallback_remediation' => 'bypass'];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -326,7 +327,7 @@ final class ConfigurationTest extends TestCase
         $processor = new Processor();
         // Test default config
         $configs = ['memcached_dsn' => 'memcached_dsn_test'];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'memcached_dsn' => 'memcached_dsn_test',
@@ -339,7 +340,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = [];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -354,7 +355,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = ['memcached_dsn' => ''];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -373,7 +374,7 @@ final class ConfigurationTest extends TestCase
         $processor = new Processor();
         // Test default config
         $configs = ['fs_cache_path' => 'fs_cache_path_test'];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'fs_cache_path' => 'fs_cache_path_test',
@@ -386,7 +387,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = [];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -401,7 +402,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = ['fs_cache_path' => ''];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -420,7 +421,7 @@ final class ConfigurationTest extends TestCase
         $processor = new Processor();
         // Test default config
         $configs = ['redis_dsn' => 'redis_dsn_test'];
-        $result = $processor->processConfiguration($configuration, [$configs]);
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
                 'redis_dsn' => 'redis_dsn_test',
@@ -429,11 +430,24 @@ final class ConfigurationTest extends TestCase
             'Should set default config'
         );
 
+        // Test config cleaning
+        $configs = [
+            'redis_dsn' => 'redis_dsn_test',
+            'some_useless_conf' => 'what-ever'
+            ];
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
+        $this->assertEquals(
+            [
+                'redis_dsn' => 'redis_dsn_test',
+            ],
+            $result,
+            'Should clean unexpected config'
+        );
         // Test missing dsn
         $error = '';
         $configs = [];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }
@@ -448,7 +462,7 @@ final class ConfigurationTest extends TestCase
         $error = '';
         $configs = ['redis_dsn' => ''];
         try {
-            $processor->processConfiguration($configuration, [$configs]);
+            $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         } catch (InvalidConfigurationException $e) {
             $error = $e->getMessage();
         }

@@ -24,7 +24,7 @@ class Memcached extends AbstractCache
      * @var string[]
      */
     protected $keys = [
-        'memcached_dsn'
+        'memcached_dsn',
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder

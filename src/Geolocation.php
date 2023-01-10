@@ -43,8 +43,6 @@ class Geolocation
     }
 
     /**
-     * @param string $ip
-     * @return void
      * @throws CacheStorage\CacheStorageException
      * @throws \Psr\Cache\CacheException
      * @throws \Psr\Cache\InvalidArgumentException
@@ -53,9 +51,13 @@ class Geolocation
     public function clearGeolocationCache(string $ip): void
     {
         $variables = ['crowdsec_geolocation_country', 'crowdsec_geolocation_not_found'];
-        $cacheDuration = $this->configs['cache_duration']??0;
+        $cacheDuration = $this->configs['cache_duration'] ?? 0;
         $this->cacheStorage->unsetIpVariables(
-            AbstractCache::GEOLOCATION, $variables, $ip, $cacheDuration,AbstractCache::GEOLOCATION
+            AbstractCache::GEOLOCATION,
+            $variables,
+            $ip,
+            $cacheDuration,
+            AbstractCache::GEOLOCATION
         );
     }
 
@@ -66,7 +68,7 @@ class Geolocation
     public function handleCountryResultForIp(string $ip): array
     {
         $result = $this->geolocTemplate;
-        $cacheDuration = $this->configs['cache_duration']??0;
+        $cacheDuration = $this->configs['cache_duration'] ?? 0;
         if ($cacheDuration > 0) {
             $cachedVariables = $this->cacheStorage->getIpVariables(
                 AbstractCache::GEOLOCATION,

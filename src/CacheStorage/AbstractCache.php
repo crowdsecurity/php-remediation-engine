@@ -21,6 +21,7 @@ use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
 use Symfony\Component\Cache\PruneableInterface;
 
+
 abstract class AbstractCache
 {
     /** @var string Internal name for cache config item */
@@ -51,7 +52,7 @@ abstract class AbstractCache
     private const CACHE_TAG_REM = 'remediation';
     /** @var int The size of ipv4 range cache bucket */
     private const IPV4_BUCKET_SIZE = 256;
-    /** @var string The message for not implemented scope*/
+    /** @var string The message for not implemented scope */
     private const NOT_IMPLEMENTED_SCOPE = 'This scope is not yet implemented';
     /** @var string The cache tag for range bucket cache item */
     private const RANGE_BUCKET_TAG = 'range_bucket';
@@ -82,7 +83,7 @@ abstract class AbstractCache
         $this->logger->debug('Instantiate cache', [
             'type' => 'CACHE_INIT',
             'configs' => $configs,
-            'adapter' => \get_class($adapter)
+            'adapter' => \get_class($adapter),
         ]);
     }
 
@@ -109,6 +110,7 @@ abstract class AbstractCache
             'type' => 'REM_CACHE_CLEAR',
             'result' => $result,
         ]);
+
         return $result;
     }
 
@@ -128,7 +130,6 @@ abstract class AbstractCache
     /**
      * Cache key convention.
      *
-     * @throws CacheStorageException
      */
     public function getCacheKey(string $prefix, string $value): string
     {
@@ -360,17 +361,17 @@ abstract class AbstractCache
      * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
-    public function unsetIpVariables(string $cacheScope, array $pairs, string $ip, int $duration, string $cacheTag = '')
+    public function unsetIpVariables(string $cacheScope, array $names, string $ip, int $duration, string $cacheTag = '')
     {
         $cacheKey = $this->getCacheKey($cacheScope, $ip);
         $cachedVariables = $this->getIpCachedVariables($cacheScope, $ip);
-        foreach ($pairs as $name => $value) {
+        foreach ($names as $name) {
             unset($cachedVariables[$name]);
         }
         $this->saveCacheItem($cacheKey, $cachedVariables, $duration, $cacheTag);
     }
-
 
     /**
      * @throws CacheException
@@ -415,8 +416,6 @@ abstract class AbstractCache
 
     /**
      * Format decision to use a minimal amount of data (less cache data consumption).
-     *
-     * @throws \Exception
      */
     private function format(Decision $decision, ?int $bucketInt = null): array
     {

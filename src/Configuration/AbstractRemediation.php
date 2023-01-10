@@ -7,7 +7,6 @@ namespace CrowdSec\RemediationEngine\Configuration;
 use CrowdSec\RemediationEngine\CapiRemediation;
 use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\LapiRemediation;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * The remediation common configuration.
@@ -21,7 +20,6 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 abstract class AbstractRemediation extends AbstractConfiguration
 {
-
     /**
      * @var string[]
      */
@@ -31,9 +29,8 @@ abstract class AbstractRemediation extends AbstractConfiguration
         'stream_mode',
         'clean_ip_cache_duration',
         'bad_ip_cache_duration',
-        'geolocation'
+        'geolocation',
     ];
-
 
     private function getDefaultOrderedRemediations(): array
     {
