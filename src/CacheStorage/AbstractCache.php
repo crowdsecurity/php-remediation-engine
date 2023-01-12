@@ -375,6 +375,7 @@ abstract class AbstractCache
      * @throws CacheException
      * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     * @SuppressWarnings(PHPMD.MissingImport)
      */
     private function saveCacheItem(
         string $cacheKey,
