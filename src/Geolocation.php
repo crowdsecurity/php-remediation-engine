@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace CrowdSec\RemediationEngine;
 
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
+use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
 use GeoIp2\Database\Reader;
 use GeoIp2\Exception\AddressNotFoundException;
+use Psr\Cache\CacheException;
+use Psr\Cache\InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 
 class Geolocation
@@ -43,14 +46,36 @@ class Geolocation
     }
 
     /**
-     * @throws RemediationException
-     * @throws \Exception
+     * @throws CacheStorage\CacheStorageException
+     * @throws \Psr\Cache\CacheException
+     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
-    public function handleCountryResultForIp(string $ip, int $cacheDuration): array
+    public function clearGeolocationCache(string $ip): void
+    {
+        $variables = ['crowdsec_geolocation_country', 'crowdsec_geolocation_not_found'];
+        $cacheDuration = $this->configs['cache_duration'] ?? 0;
+        $this->cacheStorage->unsetIpVariables(
+            AbstractCache::GEOLOCATION,
+            $variables,
+            $ip,
+            $cacheDuration,
+            AbstractCache::GEOLOCATION
+        );
+    }
+
+    /**
+     * @throws CacheStorageException
+     * @throws RemediationException
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     */
+    public function handleCountryResultForIp(string $ip): array
     {
         $result = $this->geolocTemplate;
-        $saveInCache = $this->configs['cache_duration'] > 0;
-        if ($saveInCache) {
+        $cacheDuration = $this->configs['cache_duration'] ?? 0;
+        if ($cacheDuration > 0) {
             $cachedVariables = $this->cacheStorage->getIpVariables(
                 AbstractCache::GEOLOCATION,
                 ['crowdsec_geolocation_country', 'crowdsec_geolocation_not_found'],
@@ -74,7 +99,7 @@ class Geolocation
         $configPath = $this->configs[Constants::GEOLOCATION_TYPE_MAXMIND];
         $result = $this->getMaxMindCountryResult($ip, $configPath['database_type'], $configPath['database_path']);
 
-        if ($saveInCache) {
+        if ($cacheDuration > 0) {
             if (!empty($result['country'])) {
                 $this->cacheStorage->setIpVariables(
                     AbstractCache::GEOLOCATION,
@@ -99,8 +124,6 @@ class Geolocation
 
     /**
      * Retrieve a country from a MaxMind database.
-     *
-     * @throws \Exception
      */
     private function getMaxMindCountryResult(string $ip, string $databaseType, string $databasePath): array
     {

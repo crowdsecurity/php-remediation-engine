@@ -6,7 +6,6 @@ namespace CrowdSec\RemediationEngine\CacheStorage;
 
 use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\Decision;
-use DateTime;
 use IPLib\Address\Type;
 use IPLib\Factory;
 use IPLib\Range\RangeInterface;
@@ -51,7 +50,7 @@ abstract class AbstractCache
     private const CACHE_TAG_REM = 'remediation';
     /** @var int The size of ipv4 range cache bucket */
     private const IPV4_BUCKET_SIZE = 256;
-    /** @var string The message for not implemented scope*/
+    /** @var string The message for not implemented scope */
     private const NOT_IMPLEMENTED_SCOPE = 'This scope is not yet implemented';
     /** @var string The cache tag for range bucket cache item */
     private const RANGE_BUCKET_TAG = 'range_bucket';
@@ -79,6 +78,11 @@ abstract class AbstractCache
             $logger->pushHandler(new NullHandler());
         }
         $this->logger = $logger;
+        $this->logger->debug('Instantiate cache', [
+            'type' => 'CACHE_INIT',
+            'configs' => $configs,
+            'adapter' => \get_class($adapter),
+        ]);
     }
 
     public function cleanCachedValues(array $cachedValues): array
@@ -99,7 +103,13 @@ abstract class AbstractCache
      */
     public function clear(): bool
     {
-        return $this->adapter->clear();
+        $result = $this->adapter->clear();
+        $this->logger->info('Clearing cache', [
+            'type' => 'REM_CACHE_CLEAR',
+            'result' => $result,
+        ]);
+
+        return $result;
     }
 
     /**
@@ -117,24 +127,11 @@ abstract class AbstractCache
 
     /**
      * Cache key convention.
-     *
-     * @throws CacheStorageException
      */
     public function getCacheKey(string $prefix, string $value): string
     {
         if (!isset($this->cacheKeys[$prefix][$value])) {
-            switch ($prefix) {
-                case Constants::SCOPE_IP:
-                case Constants::SCOPE_RANGE:
-                case Constants::SCOPE_COUNTRY:
-                case self::IPV4_BUCKET_KEY:
-                case self::GEOLOCATION:
-                    $result = $prefix . self::SEP . $value;
-                    break;
-                default:
-                    throw new CacheStorageException('Unknown cache key prefix:' . $prefix);
-            }
-
+            $result = $prefix . self::SEP . $value;
             /**
              * Replace unauthorized symbols.
              *
@@ -333,7 +330,7 @@ abstract class AbstractCache
     }
 
     /**
-     * Store variables in cache for some IP and cache tag.
+     * Store variables in cache for some IP.
      *
      * @return void
      *
@@ -353,9 +350,32 @@ abstract class AbstractCache
     }
 
     /**
+     * Unset variables in cache for some IP.
+     *
+     * @return void
+     *
+     * @throws CacheException
+     * @throws CacheStorageException
+     * @throws InvalidArgumentException
+     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     *
+     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
+     */
+    public function unsetIpVariables(string $cacheScope, array $names, string $ip, int $duration, string $cacheTag = '')
+    {
+        $cacheKey = $this->getCacheKey($cacheScope, $ip);
+        $cachedVariables = $this->getIpCachedVariables($cacheScope, $ip);
+        foreach ($names as $name) {
+            unset($cachedVariables[$name]);
+        }
+        $this->saveCacheItem($cacheKey, $cachedVariables, $duration, $cacheTag);
+    }
+
+    /**
      * @throws CacheException
      * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     * @SuppressWarnings(PHPMD.MissingImport)
      */
     private function saveCacheItem(
         string $cacheKey,
@@ -365,7 +385,7 @@ abstract class AbstractCache
     ): array {
         $item = $this->adapter->getItem(base64_encode($cacheKey));
         $item->set($cachedVariables);
-        $item->expiresAt(new DateTime("+$duration seconds"));
+        $item->expiresAt(new \DateTime("+$duration seconds"));
         if (!empty($cacheTag) && $this->adapter instanceof TagAwareAdapterInterface) {
             $item->tag($cacheTag);
         }
@@ -395,8 +415,6 @@ abstract class AbstractCache
 
     /**
      * Format decision to use a minimal amount of data (less cache data consumption).
-     *
-     * @throws \Exception
      */
     private function format(Decision $decision, ?int $bucketInt = null): array
     {
@@ -606,7 +624,7 @@ abstract class AbstractCache
     {
         $maxExpiration = $this->getMaxExpiration($valuesToCache);
         $item->set($valuesToCache);
-        $item->expiresAt(new DateTime('@' . $maxExpiration));
+        $item->expiresAt(new \DateTime('@' . $maxExpiration));
         if ($this->adapter instanceof TagAwareAdapterInterface) {
             $item->tag($tags);
         }

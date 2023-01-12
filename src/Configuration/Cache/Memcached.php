@@ -7,7 +7,6 @@ namespace CrowdSec\RemediationEngine\Configuration\Cache;
 use CrowdSec\RemediationEngine\Configuration\AbstractCache;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * The remediation cache configuration for Memcached.
@@ -19,8 +18,15 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * @copyright Copyright (c) 2022+ CrowdSec
  * @license   MIT License
  */
-class Memcached extends AbstractCache implements ConfigurationInterface
+class Memcached extends AbstractCache
 {
+    /**
+     * @var string[]
+     */
+    protected $keys = [
+        'memcached_dsn',
+    ];
+
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('config');

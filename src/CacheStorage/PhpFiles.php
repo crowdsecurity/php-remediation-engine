@@ -37,6 +37,6 @@ class PhpFiles extends AbstractCache
     {
         $configuration = new PhpFilesCacheConfig();
         $processor = new Processor();
-        $this->configs = $processor->processConfiguration($configuration, [$configs]);
+        $this->configs = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
     }
 }

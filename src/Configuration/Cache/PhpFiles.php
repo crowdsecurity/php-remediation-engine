@@ -7,7 +7,6 @@ namespace CrowdSec\RemediationEngine\Configuration\Cache;
 use CrowdSec\RemediationEngine\Configuration\AbstractCache;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * The remediation cache configuration for PhpFiles.
@@ -19,8 +18,15 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * @copyright Copyright (c) 2022+ CrowdSec
  * @license   MIT License
  */
-class PhpFiles extends AbstractCache implements ConfigurationInterface
+class PhpFiles extends AbstractCache
 {
+    /**
+     * @var string[]
+     */
+    protected $keys = [
+        'fs_cache_path',
+    ];
+
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('config');

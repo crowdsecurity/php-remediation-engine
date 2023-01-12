@@ -103,6 +103,6 @@ class Memcached extends AbstractCache
     {
         $configuration = new MemcachedCacheConfig();
         $processor = new Processor();
-        $this->configs = $processor->processConfiguration($configuration, [$configs]);
+        $this->configs = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
     }
 }
