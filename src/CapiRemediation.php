@@ -41,7 +41,7 @@ class CapiRemediation extends AbstractRemediation
      *
      * @throws CacheStorageException
      * @throws InvalidArgumentException
-     * @throws RemediationException
+     * @throws RemediationException|CacheException
      */
     public function getIpRemediation(string $ip): string
     {

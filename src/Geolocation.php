@@ -46,9 +46,8 @@ class Geolocation
     }
 
     /**
-     * @throws CacheStorage\CacheStorageException
-     * @throws \Psr\Cache\CacheException
-     * @throws \Psr\Cache\InvalidArgumentException
+     * @throws CacheException
+     * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     public function clearGeolocationCache(string $ip): void

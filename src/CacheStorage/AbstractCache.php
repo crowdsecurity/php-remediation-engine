@@ -216,7 +216,6 @@ abstract class AbstractCache
     }
 
     /**
-     * @throws CacheStorageException
      * @throws InvalidArgumentException
      */
     public function retrieveDecisionsForCountry(string $country): array
@@ -312,7 +311,6 @@ abstract class AbstractCache
      * Retrieved prepared cached variables associated to an Ip
      * Set null if not already in cache.
      *
-     * @throws CacheStorageException
      * @throws InvalidArgumentException
      */
     public function getIpVariables(string $prefix, array $names, string $ip): array
@@ -335,7 +333,6 @@ abstract class AbstractCache
      * @return void
      *
      * @throws CacheException
-     * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
@@ -355,11 +352,9 @@ abstract class AbstractCache
      * @return void
      *
      * @throws CacheException
-     * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      *
-     * @SuppressWarnings(PHPMD.UnusedLocalVariable)
      */
     public function unsetIpVariables(string $cacheScope, array $names, string $ip, int $duration, string $cacheTag = '')
     {
@@ -375,7 +370,6 @@ abstract class AbstractCache
      * @throws CacheException
      * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
-     * @SuppressWarnings(PHPMD.MissingImport)
      */
     private function saveCacheItem(
         string $cacheKey,
@@ -399,7 +393,6 @@ abstract class AbstractCache
      *
      * @return array|mixed
      *
-     * @throws CacheStorageException
      * @throws InvalidArgumentException
      */
     private function getIpCachedVariables(string $prefix, string $ip): array
@@ -530,7 +523,6 @@ abstract class AbstractCache
     /**
      * @throws InvalidArgumentException
      * @throws CacheException
-     * @throws CacheStorageException
      */
     private function remove(Decision $decision, ?int $bucketInt = null): array
     {
@@ -579,7 +571,6 @@ abstract class AbstractCache
     /**
      * @throws InvalidArgumentException
      * @throws CacheException
-     * @throws CacheStorageException
      * @throws \Exception
      */
     private function store(Decision $decision, ?int $bucketInt = null): array
@@ -618,7 +609,6 @@ abstract class AbstractCache
      * @throws InvalidArgumentException
      * @throws \Exception|CacheException
      *
-     * @SuppressWarnings(PHPMD.MissingImport)
      */
     private function updateCacheItem(CacheItemInterface $item, array $valuesToCache, array $tags): CacheItemInterface
     {
