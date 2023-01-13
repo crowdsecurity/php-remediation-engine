@@ -35,6 +35,8 @@ jobs:
         env:
           DDEV_VERSION: v1.21.4
         run: |
+          # @see https://github.com/actions/runner-images/issues/675#issuecomment-610483420
+          sudo sed -i 's/azure\.//' /etc/apt/sources.list
           # @see https://ddev.readthedocs.io/en/stable/#installationupgrade-script-linux-and-macos-armarm64-and-amd64-architectures
           sudo apt-get -qq update
           sudo apt-get -qq -y install libnss3-tools
