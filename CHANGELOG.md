@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v1.0.0) - 2023-01-27
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v0.7.0...v1.0.0)
+
+### Changed
+
+- Change version to `1.0.0`: first stable release
+
+---
+
 ## [0.7.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v0.7.0) - 2023-01-13
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v0.6.1...v0.7.0)
 

@@ -430,7 +430,8 @@ If there are more than one decision for an IP, remediation with the highest prio
 The specific remediation `bypass` will always be considered as the lowest priority (there is no need to specify it 
 in this setting).
 
-This setting is not required. If you don't set any value, `['ban']` will be used by default.
+This setting is not required. If you don't set any value, `['ban']` will be used by default for CAPI remediation and
+`['ban', 'captcha']` for LAPI remediation.
 
 
 In the example above, priorities can be summarized as `ban > captcha > bypass`.
