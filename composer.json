@@ -45,8 +45,8 @@
         "ext-json": "*",
         "symfony/config": "^4.4.27 || ^5.2 || ^6.0",
         "symfony/cache": "^5.4.11|| ^6.0.11",
-        "crowdsec/capi-client": "0.11.0",
-        "crowdsec/lapi-client": "0.4.0",
+        "crowdsec/capi-client": "^1.0.0",
+        "crowdsec/lapi-client": "^1.0.0",
         "monolog/monolog": "^1.17 || ^2.1",
         "mlocati/ip-lib": "^1.18",
         "geoip2/geoip2": "^2.13.0"
