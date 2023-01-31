@@ -111,7 +111,7 @@ To instantiate a `CapiRemediation` object, you have to:
 
 
 - Optionally, to log some information, you can pass an implementation of the `Psr\Log\LoggerInterface` as a fourth
-    parameter. You will find an example of such implementation with the provided `Logger\FileLog` class.
+    parameter. You will find an example of such implementation with the provided `CrowdSec\CommonLogger\FileLog` class.
 
 
 ```php
@@ -119,7 +119,7 @@ use CrowdSec\CapiClient\Storage\FileStorage;
 use CrowdSec\CapiClient\Watcher;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CapiRemediation;
-use CrowdSec\RemediationEngine\Logger\FileLog;
+use CrowdSec\Common\Logger\FileLog;
 
 // Init logger
 $logger = new FileLog(['debug_mode' => true]);
@@ -235,7 +235,7 @@ To instantiate a `LapiRemediation` object, you have to:
 
 
 - Optionally, to log some information, you can pass an implementation of the `Psr\Log\LoggerInterface` as a fourth
-  parameter. You will find an example of such implementation with the provided `Logger\FileLog` class.
+  parameter. You will find an example of such implementation with the provided `CrowdSec\Common\Logger\FileLog` class.
 
 
 ```php
@@ -243,7 +243,7 @@ use CrowdSec\CapiClient\Storage\FileStorage;
 use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\LapiRemediation;
-use CrowdSec\RemediationEngine\Logger\FileLog;
+use CrowdSec\Common\Logger\FileLog;
 
 // Init logger
 $logger = new FileLog(['debug_mode' => true]);

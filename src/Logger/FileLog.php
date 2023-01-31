@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace CrowdSec\RemediationEngine\Logger;
 
-use Monolog\Formatter\LineFormatter;
-use Monolog\Handler\RotatingFileHandler;
-use Monolog\Logger;
+use CrowdSec\Common\Logger\FileLog as CommonFileLog;
 
 /**
  * A Monolog logger implementation with 2 files : debug and prod.
@@ -17,38 +15,16 @@ use Monolog\Logger;
  *
  * @copyright Copyright (c) 2022+ CrowdSec
  * @license   MIT License
+ *
+ * @deprecated since 1.1.0: Use CrowdSec\Common\Logger\FileLog instead
+ *
+ * @todo remove in 2.0.0
+ *
  */
-class FileLog extends Logger
+class FileLog extends CommonFileLog
 {
-    /**
-     * @var string The debug log filename
-     */
-    public const DEBUG_FILE = 'debug.log';
     /**
      * @var string The logger name
      */
     public const LOGGER_NAME = 'remediation-engine-logger';
-    /**
-     * @var string The prod log filename
-     */
-    public const PROD_FILE = 'prod.log';
-
-    public function __construct(array $configs = [], string $name = self::LOGGER_NAME)
-    {
-        parent::__construct($name);
-        $logDir = $configs['log_directory_path'] ?? __DIR__ . '/.logs';
-        if (empty($configs['disable_prod_log'])) {
-            $logPath = $logDir . '/' . self::PROD_FILE;
-            $fileHandler = new RotatingFileHandler($logPath, 0, Logger::INFO);
-            $fileHandler->setFormatter(new LineFormatter("%datetime%|%level%|%message%|%context%\n"));
-            $this->pushHandler($fileHandler);
-        }
-
-        if (!empty($configs['debug_mode'])) {
-            $debugLogPath = $logDir . '/' . self::DEBUG_FILE;
-            $debugFileHandler = new RotatingFileHandler($debugLogPath, 0, Logger::DEBUG);
-            $debugFileHandler->setFormatter(new LineFormatter("%datetime%|%level%|%message%|%context%\n"));
-            $this->pushHandler($debugFileHandler);
-        }
-    }
 }
