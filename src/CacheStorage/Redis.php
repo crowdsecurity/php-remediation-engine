@@ -27,7 +27,7 @@ class Redis extends AbstractCache
         } catch (\Exception $e) {
             throw new CacheStorageException(
                 'Error when creating Redis cache adapter:' . $e->getMessage(),
-                $e->getCode(),
+                (int)$e->getCode(),
                 $e
             );
             // @codeCoverageIgnoreEnd

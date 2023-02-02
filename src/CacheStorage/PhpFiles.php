@@ -26,7 +26,7 @@ class PhpFiles extends AbstractCache
         } catch (\Exception $e) {
             throw new CacheStorageException(
                 'Error when creating to PhpFiles cache adapter:' . $e->getMessage(),
-                $e->getCode(),
+                (int)$e->getCode(),
                 $e
             );
             // @codeCoverageIgnoreEnd

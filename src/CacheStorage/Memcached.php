@@ -30,7 +30,7 @@ class Memcached extends AbstractCache
         } catch (\Exception $e) {
             throw new CacheStorageException(
                 'Error when creating Memcached cache adapter:' . $e->getMessage(),
-                $e->getCode(),
+                (int)$e->getCode(),
                 $e
             );
             // @codeCoverageIgnoreEnd

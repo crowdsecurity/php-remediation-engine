@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace CrowdSec\RemediationEngine\Configuration;
+
 use CrowdSec\Common\Configuration\AbstractConfiguration;
 
 /**
