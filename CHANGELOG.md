@@ -13,18 +13,18 @@ The public API of this library consists of all public or protected methods, prop
 
 ---
 
-## [?.?.?](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v1.1.0) - 2023-02-02
-[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v1.0.1...v1.1.0)
+## [2.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v2.0.0) - 2023-02-02
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v1.0.1...v2.0.0)
 
 ### Changed
 
-- Use `crowdsec/common` package as a dependency for code factoring
-- Update `crowdsec/capi-client` and `crowdsec/lapi-client` to `2.0.0`
+- *Breaking change*: Update `crowdsec/capi-client` to a new major version [2.0.0](https://github.com/crowdsecurity/php-capi-client/releases/tag/v2.0.0)
+- *Breaking change*: Update `crowdsec/lapi-client` to a new major version [2.0.0](https://github.com/crowdsecurity/php-lapi-client/releases/tag/v2.0.0)
+- Use `crowdsec/common` [package](https://github.com/crowdsecurity/php-common) as a dependency for code factoring
 
+### Removed
 
-### Deprecated
-
-- Deprecate `CrowdSec\RemediationEngine\Logger\FileLog`
+- *Breaking change*: Remove `CrowdSec\RemediationEngine\Logger\FileLog` (replaced by `CrowdSec\Common\Logger\FileLog`)
 
 
 ---
