@@ -41,7 +41,7 @@ $cacheRedisConfigs = [
     'redis_dsn' => 'redis://redis:6379',
 ];
 $redisCache = new Redis($cacheRedisConfigs, $logger);
-// Init CAPI remediation
+// Init LAPI remediation
 $remediationConfigs = [];
 $remediationEngine = new LapiRemediation($remediationConfigs, $lapiClient, $phpFileCache, $logger);
 // Clear the cache

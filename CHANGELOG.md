@@ -13,12 +13,13 @@ The public API of this library consists of all public or protected methods, prop
 
 ---
 
-## [1.1.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v1.1.0) - 2023-02-02
+## [?.?.?](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v1.1.0) - 2023-02-02
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v1.0.1...v1.1.0)
 
 ### Changed
 
 - Use `crowdsec/common` package as a dependency for code factoring
+- Update `crowdsec/capi-client` and `crowdsec/lapi-client` to `2.0.0`
 
 
 ### Deprecated
