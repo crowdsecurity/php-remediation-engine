@@ -9,17 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The purpose of this section is to declare the public API of this library as required by  [item 1 of semantic versioning specification](https://semver.org/spec/v2.0.0.html#spec-item-1).
 
-The public API of this library consists of all public or protected methods, properties and constants belonging to
-the following folders and files:
-- `src/CacheStorage`
-- `src/Configuration`
-- `src/AbstractRemediation.php`
-- `src/CapiRemediation.php`
-- `src/Constants.php`
-- `src/Decision.php`
-- `src/Geolocation.php`
-- `src/LapiRemediation.php`
-- `src/RemediationException.php`
+The public API of this library consists of all public or protected methods, properties and constants belonging to the `src` folder.
+
+---
+
+## [2.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v2.0.0) - 2023-02-02
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v1.0.1...v2.0.0)
+
+### Changed
+
+- *Breaking change*: Update `crowdsec/capi-client` to a new major version [2.0.0](https://github.com/crowdsecurity/php-capi-client/releases/tag/v2.0.0)
+- *Breaking change*: Update `crowdsec/lapi-client` to a new major version [2.0.0](https://github.com/crowdsecurity/php-lapi-client/releases/tag/v2.0.0)
+- Use `crowdsec/common` [package](https://github.com/crowdsecurity/php-common) as a dependency for code factoring
+
+### Removed
+
+- *Breaking change*: Remove `CrowdSec\RemediationEngine\Logger\FileLog` (replaced by `CrowdSec\Common\Logger\FileLog`)
+
 
 ---
 
