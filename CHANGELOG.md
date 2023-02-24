@@ -13,6 +13,18 @@ The public API of this library consists of all public or protected methods, prop
 
 ---
 
+
+## [3.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.0.0) - 2023-??-??
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v2.1.0...v3.0.0)
+
+### Changed
+
+- *Breaking change*: Update `crowdsec/capi-client` dependency to `v3.0.0` (CAPI V3)
+- *Breaking change*: Use custom error handler for `Memcached::getItem` method
+
+
+---
+
 ## [2.1.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v2.1.0) - 2023-02-10
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v2.0.0...v2.1.0)
 

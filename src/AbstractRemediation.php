@@ -279,7 +279,7 @@ abstract class AbstractRemediation
         return ($a < $b) ? -1 : 1;
     }
 
-    private function convertRawDecision(array $rawDecision): ?Decision
+    protected function convertRawDecision(array $rawDecision): ?Decision
     {
         if (!$this->validateRawDecision($rawDecision)) {
             return null;

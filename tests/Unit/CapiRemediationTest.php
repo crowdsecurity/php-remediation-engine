@@ -207,9 +207,9 @@ final class CapiRemediationTest extends AbstractRemediation
         // Test failed deferred
         $this->watcher->method('getStreamDecisions')->will(
             $this->onConsecutiveCalls(
-                MockedData::DECISIONS['new_ip_v4_double'], // Test 1 : new IP decision (ban) (save ok)
-                MockedData::DECISIONS['new_ip_v4_other'],  // Test 2 : new IP decision (ban) (failed deferred)
-                MockedData::DECISIONS['deleted_ip_v4'] // Test 3 : deleted IP decision (failed deferred)
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4_double'], // Test 1 : new IP decision (ban) (save ok)
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4_other'],  // Test 2 : new IP decision (ban) (failed deferred)
+                MockedData::DECISIONS_CAPI_V3['deleted_ip_v4'] // Test 3 : deleted IP decision (failed deferred)
             )
         );
         $cachePhpfilesConfigs = ['fs_cache_path' => $this->root->url()];
@@ -254,9 +254,9 @@ final class CapiRemediationTest extends AbstractRemediation
         );
         $result = $remediation->refreshDecisions();
         $this->assertEquals(
-            ['new' => 0, 'deleted' => 0],
+            ['new' => 0, 'deleted' => 1],
             $result,
-            'Refresh count should be correct for failed deferred remove'
+            'Failed deferred is not call as there is only one decision cached : decision is deleted directly without deferring'
         );
     }
 
@@ -700,16 +700,16 @@ final class CapiRemediationTest extends AbstractRemediation
         // Prepare next tests
         $this->watcher->method('getStreamDecisions')->will(
             $this->onConsecutiveCalls(
-                MockedData::DECISIONS['new_ip_v4'],          // Test 1 : new IP decision (ban)
-                MockedData::DECISIONS['new_ip_v4'],          // Test 2 : same IP decision (ban)
-                MockedData::DECISIONS['deleted_ip_v4'],      // Test 3 : deleted IP decision (existing one and not)
-                MockedData::DECISIONS['new_ip_v4_range'],    // Test 4 : new RANGE decision (ban)
-                MockedData::DECISIONS['delete_ip_v4_range'], // Test 5 : deleted RANGE decision
-                MockedData::DECISIONS['ip_v4_multiple'],     // Test 6 : retrieve multiple RANGE and IP decision
-                MockedData::DECISIONS['ip_v4_multiple_bis'],  // Test 7 : retrieve multiple new and delete
-                MockedData::DECISIONS['ip_v4_remove_unknown'], // Test 8 : delete unknown scope
-                MockedData::DECISIONS['ip_v4_store_unknown'], // Test 9 : store unknown scope
-                MockedData::DECISIONS['new_ip_v6_range'] // Test 10 : store IP V6 range
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4'],          // Test 1 : new IP decision (ban)
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4'],          // Test 2 : same IP decision (ban)
+                MockedData::DECISIONS_CAPI_V3['deleted_ip_v4'],      // Test 3 : deleted IP decision (existing one and not)
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4_range'],    // Test 4 : new RANGE decision (ban)
+                MockedData::DECISIONS_CAPI_V3['delete_ip_v4_range'], // Test 5 : deleted RANGE decision
+                MockedData::DECISIONS_CAPI_V3['ip_v4_multiple'],     // Test 6 : retrieve multiple RANGE and IP decision
+                MockedData::DECISIONS_CAPI_V3['ip_v4_multiple_bis'],  // Test 7 : retrieve multiple new and delete
+                MockedData::DECISIONS_CAPI_V3['ip_v4_remove_unknown'], // Test 8 : delete unknown scope
+                MockedData::DECISIONS_CAPI_V3['ip_v4_store_unknown'], // Test 9 : store unknown scope
+                MockedData::DECISIONS_CAPI_V3['new_ip_v6_range'] // Test 10 : store IP V6 range
             )
         );
         // Test 1
@@ -810,16 +810,16 @@ final class CapiRemediationTest extends AbstractRemediation
         // Test 6
         $result = $remediation->refreshDecisions();
         $this->assertEquals(
-            ['new' => 5, 'deleted' => 0],
+            ['new' => 3, 'deleted' => 0],
             $result,
             'Refresh count should be correct'
         );
         $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
         $cachedValue = $item->get();
         $this->assertEquals(
-            2,
+            1,
             count($cachedValue),
-            'Should have cached 2 remediations'
+            'Should have cached 1 remediation'
         );
         $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_2_CACHE_KEY));
         $cachedValue = $item->get();
@@ -835,7 +835,7 @@ final class CapiRemediationTest extends AbstractRemediation
             $result,
             'Refresh count should be correct'
         );
-        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_3_CACHE_KEY));
         $cachedValue = $item->get();
         $this->assertEquals(
             1,
@@ -845,9 +845,9 @@ final class CapiRemediationTest extends AbstractRemediation
         $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_2_CACHE_KEY));
         $cachedValue = $item->get();
         $this->assertEquals(
-            2,
+            1,
             count($cachedValue),
-            'Should now have 2 cached remediation'
+            'Should now have 1 cached remediation'
         );
 
         // Test 8
@@ -870,7 +870,7 @@ final class CapiRemediationTest extends AbstractRemediation
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"REM_CACHE_REMOVE_NON_IMPLEMENTED_SCOPE.*CAPI-ban-do-not-know-delete-1.2.3.4"/',
+            '/.*300.*"type":"REM_CACHE_REMOVE_NON_IMPLEMENTED_SCOPE.*capi-ban-do-not-know-delete-1.2.3.4"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -884,7 +884,7 @@ final class CapiRemediationTest extends AbstractRemediation
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"REM_CACHE_STORE_NON_IMPLEMENTED_SCOPE.*CAPI-ban-do-not-know-store-1.2.3.4"/',
+            '/.*300.*"type":"REM_CACHE_STORE_NON_IMPLEMENTED_SCOPE.*capi-ban-do-not-know-store-1.2.3.4"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );

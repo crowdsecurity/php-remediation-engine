@@ -64,6 +64,30 @@ class CapiRemediation extends AbstractRemediation
         return $this->getRemediationFromDecisions($cachedDecisions);
     }
 
+    private function convertRawCapiDecisionsToDecisions(array $rawDecisions): array
+    {
+        $decisions = [];
+        foreach ($rawDecisions as $rawDecision) {
+                $capiDecisions = $rawDecision['decisions']??[];
+                $scope = $rawDecision['scope']??null;
+                foreach ($capiDecisions as $capiDecision){
+                    // Deleted decision contains only the value of the deleted decision (an IP, a range, etc)
+                    if(is_string($capiDecision)){
+                        $capiDecision = ['value' => $capiDecision, 'duration' => '0h'];
+                    }
+                    $capiDecision['scope'] = $scope;
+                    $capiDecision['type'] = Constants::REMEDIATION_BAN;
+                    $capiDecision['origin'] = 'capi';//@TODO use ORIGIN_CAPI constant in crowdsec/common
+                    $decision = $this->convertRawDecision($capiDecision);
+                    if ($decision) {
+                        $decisions[] = $decision;
+                    }
+                }
+        }
+
+        return $decisions;
+    }
+
     /**
      * {@inheritdoc}
      *
@@ -74,8 +98,10 @@ class CapiRemediation extends AbstractRemediation
     public function refreshDecisions(): array
     {
         $rawDecisions = $this->client->getStreamDecisions();
-        $newDecisions = $this->convertRawDecisionsToDecisions($rawDecisions[self::CS_NEW] ?? []);
-        $deletedDecisions = $this->convertRawDecisionsToDecisions($rawDecisions[self::CS_DEL] ?? []);
+        $newDecisions = $this->convertRawCapiDecisionsToDecisions($rawDecisions[self::CS_NEW] ?? []);
+        $deletedDecisions = $this->convertRawCapiDecisionsToDecisions($rawDecisions[self::CS_DEL] ?? []);
+
+        //@TODO blocklist decision
 
         $stored = $this->storeDecisions($newDecisions);
         $removed = $this->removeDecisions($deletedDecisions);

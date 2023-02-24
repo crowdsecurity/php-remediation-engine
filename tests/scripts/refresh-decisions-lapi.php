@@ -7,7 +7,7 @@ use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
 use CrowdSec\RemediationEngine\LapiRemediation;
-use CrowdSec\Common\Logger\FileLog;
+use CrowdSec\Common\Logger\ConsoleLog;
 
 $bouncerKey = $argv[1] ?? false;
 $lapiUrl = $argv[2] ?? false;
@@ -19,7 +19,7 @@ if (!$bouncerKey || !$lapiUrl) {
 }
 
 // Init  logger
-$logger = new FileLog(['debug_mode' => true], 'remediation-engine-logger');
+$logger = new ConsoleLog();
 // Init client
 $clientConfigs = [
     'auth_type' => 'api_key',
