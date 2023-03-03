@@ -6,6 +6,7 @@ namespace CrowdSec\RemediationEngine\Configuration;
 
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use CrowdSec\RemediationEngine\Constants;
 
 /**
  * The Capi remediation configuration.
@@ -19,6 +20,20 @@ use Symfony\Component\Config\Definition\Builder\TreeBuilder;
  */
 class Capi extends AbstractRemediation
 {
+    /**
+     * @var string[]
+     */
+    protected $keys = [
+        'fallback_remediation',
+        'ordered_remediations',
+        'stream_mode',
+        'clean_ip_cache_duration',
+        'bad_ip_cache_duration',
+        'geolocation',
+        'refresh_frequency_indicator'
+
+    ];
+
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('config');
@@ -26,7 +41,22 @@ class Capi extends AbstractRemediation
         $rootNode = $treeBuilder->getRootNode();
         $this->addCommonNodes($rootNode);
         $this->validateCommon($rootNode);
+        $this->addCapiNodes($rootNode);
 
         return $treeBuilder;
+    }
+
+    /**
+     * Common remediation settings.
+     *
+     * @return void
+     */
+    private function addCapiNodes($rootNode)
+    {
+        $rootNode->children()
+            ->integerNode('refresh_frequency_indicator')
+                ->min(1)->defaultValue(Constants::REFRESH_FREQUENCY)
+            ->end()
+        ->end();
     }
 }

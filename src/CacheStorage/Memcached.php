@@ -10,9 +10,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\MemcachedAdapter;
 use Symfony\Component\Config\Definition\Processor;
 
-/**
- * @todo Add custom error handler in 3.0.0 in getItem method
- */
 class Memcached extends AbstractCache
 {
     /**
@@ -24,7 +21,8 @@ class Memcached extends AbstractCache
      *
      * @SuppressWarnings(PHPMD.StaticAccess)
      */
-    public function __construct(array $configs, LoggerInterface $logger = null)
+    public function
+    __construct(array $configs, LoggerInterface $logger = null)
     {
         $this->configure($configs);
         $this->setCustomErrorHandler();
@@ -32,11 +30,8 @@ class Memcached extends AbstractCache
             $adapter = new MemcachedAdapter(MemcachedAdapter::createConnection($this->configs['memcached_dsn']));
             // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
-            throw new CacheStorageException(
-                'Error when creating Memcached cache adapter:' . $e->getMessage(),
-                (int)$e->getCode(),
-                $e
-            );
+            $message = 'Error when creating Memcached cache adapter:' . $e->getMessage();
+            throw new CacheStorageException($message, (int) $e->getCode(), $e);
             // @codeCoverageIgnoreEnd
         } finally {
             $this->unsetCustomErrorHandler();

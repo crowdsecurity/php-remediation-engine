@@ -51,7 +51,7 @@ abstract class AbstractRemediation extends TestCase
     {
         return $this->getMockBuilder('CrowdSec\CapiClient\Watcher')
             ->disableOriginalConstructor()
-            ->onlyMethods(['getStreamDecisions'])
+            ->onlyMethods(['getStreamDecisions', 'getCapiHandler'])
             ->getMock();
     }
 

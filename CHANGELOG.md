@@ -19,8 +19,19 @@ The public API of this library consists of all public or protected methods, prop
 
 ### Changed
 
-- *Breaking change*: Update `crowdsec/capi-client` dependency to `v3.0.0` (CAPI V3)
+- *Breaking change*: Update `crowdsec/capi-client` dependency to `v3.0.0` (CAPI V3 endpoints)
+- *Breaking change*: Update `crowdsec/lapi-client` dependency to `v3.0.0`
+- *Breaking change*: Update `crowdsec/common` dependency to `v3.0.0`
 - *Breaking change*: Use custom error handler for `Memcached::getItem` method
+- *Breaking change*: Rename `AbstractCache::updateItem` method to `upsertItem`
+- *Breaking change*: The `cacheTag` string parameter of cache methods become a `tags` array
+- Change visibility of `AbstractRemediation::parseDurationToSeconds` method from private to protected
+
+
+
+### Added
+
+- Handle blocklist linked decisions for CAPI remediation
 
 
 ---

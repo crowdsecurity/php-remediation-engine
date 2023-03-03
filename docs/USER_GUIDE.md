@@ -114,6 +114,7 @@ To instantiate a `CapiRemediation` object, you have to:
     parameter. You will find an example of such implementation with the provided `CrowdSec\CommonLogger\FileLog` class.
 
 
+
 ```php
 use CrowdSec\CapiClient\Storage\FileStorage;
 use CrowdSec\CapiClient\Watcher;
@@ -153,8 +154,7 @@ This method will use the CrowdSec CAPI client (`$capiClient`) to retrieve arrays
 from CAPI. Then, new decisions will be cached using the `CacheStorage` implementation (`$phpFileCache` here) and 
 deleted ones will be removed if necessary.
 
-Practically, you should use some cron task to refresh decisions on a daily basis (you could increase frequency but 
-there should be at least two hours between each refresh). 
+Practically, you should use some cron job to refresh decisions every 2 to 12 hours, 4h recommended.
 
 
 ##### Get remediation for an IP
@@ -492,6 +492,18 @@ This setting is not required.
 
 
 - `geolocation[maxmind][database_path]`: Absolute path to the MaxMind database (e.g. mmdb file)
+
+### Refresh frequency indicator
+
+When your CAPI watcher client is subscribed to a blocklist, it retrieves decisions from a certain block list url 
+during the decisions refresh call. We will use this `refresh_frequency_indicator`setting to optimize how to pull such 
+list decisions.
+
+You must use a number that represents the frequency (in seconds) of your cron job. For example, if you pull 
+decisions every 2 hours, you would set `7200`.
+
+
+This setting is not required. If you don't set any value, `14400` (4h) will be used by default.
 
 
 ## LAPI remediation engine configurations
