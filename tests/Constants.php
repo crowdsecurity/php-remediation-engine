@@ -40,4 +40,14 @@ class Constants
     public const IP_JAPAN = '210.249.74.42';
     public const IP_FRANCE = '78.119.253.85';
     public const CACHE_DURATION = 100;
+
+    /**
+     * @var string The user agent suffix used to send request to CAPI
+     */
+    public const USER_AGENT_SUFFIX = 'PHPCAPITEST';
+
+    /**
+     * @var string The machine id prefix used to send request to CAPI
+     */
+    public const MACHINE_ID_PREFIX = 'capiclienttest';
 }

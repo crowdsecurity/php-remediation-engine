@@ -127,6 +127,13 @@ ddev php ./my-own-modules/remediation-engine/vendor/bin/phpunit  ./my-own-module
 mmdb`) in the `tests/geolocation` folder. These databases are downloadable from the [MaxMind](https://www.maxmind.com) 
 website.
 
+
+#### Integration test
+
+```bash
+ddev php ./my-own-modules/remediation-engine/vendor/bin/phpunit  ./my-own-modules/remediation-engine/tests/Integration --testdox
+```
+
 #### Coding standards
 
 We set up some coding standards tools that you will find in the `tools/coding-standards` folder.
