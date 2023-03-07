@@ -16,6 +16,7 @@ namespace CrowdSec\RemediationEngine\Tests\Unit;
  */
 
 use CrowdSec\CapiClient\Watcher;
+use CrowdSec\Common\Exception;
 use CrowdSec\Common\Logger\FileLog;
 use CrowdSec\RemediationEngine\AbstractRemediation as LibAbstractRemediation;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
@@ -955,7 +956,9 @@ final class CapiRemediationTest extends AbstractRemediation
                 MockedData::DECISIONS_CAPI_V3['ip_v4_remove_unknown'], // Test 8 : delete unknown scope
                 MockedData::DECISIONS_CAPI_V3['ip_v4_store_unknown'], // Test 9 : store unknown scope
                 MockedData::DECISIONS_CAPI_V3['new_ip_v6_range'], // Test 10 : store IP V6 range
-                MockedData::DECISIONS_CAPI_V3['new_ip_v4_and_list'] // Test 11: IPv4 and list
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4_and_list'], // Test 11: IPv4 and list
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4_and_list'], // Test 12: IPv4 and list
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4_and_list'] // Test 13: IPv4 and list but error is thrown
             )
         );
         $this->watcher->method('getCapiHandler')->will(
@@ -966,11 +969,12 @@ final class CapiRemediationTest extends AbstractRemediation
 
         $capiHandlerMock->method('getListDecisions')->will(
             $this->onConsecutiveCalls(
-                TestConstants::IP_V4        // Test 11 : new IP v4 + list
+                TestConstants::IP_V4_2, // Test 11 : new IP v4 + list
+                "", // Test 12 : new IP v4 + list again (not modified)
+                $this->throwException(new Exception('UNIT TEST EXCEPTION')) // Test 13 : will throw an error
             )
         );
 
-        // @TODO More test for list
 
         // Test 1
         $result = $remediation->refreshDecisions();
@@ -1183,14 +1187,70 @@ final class CapiRemediationTest extends AbstractRemediation
             $lastPullItem->isHit()
         );
 
+        $time = time();
+        $listExpiration = $time + 24*60*60;
         $this->assertEquals(
-            [AbstractCache::INDEX_EXP => time() + 24*60*60, AbstractCache::LAST_PULL => time()],
+            [AbstractCache::INDEX_EXP => $listExpiration, AbstractCache::LAST_PULL => $time],
             $lastPullItem->get()
         );
 
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_2_CACHE_KEY));
+        $cachedValue = $item->get();
+        $this->assertEquals(
+            2,
+            count($cachedValue),
+            'Should now have 2 cached remediation'
+        );
 
+        $this->assertEquals(
+            'ban',
+            $cachedValue[0][0]
+        );
+        $this->assertEquals(
+            'captcha',
+            $cachedValue[1][0]
+        );
+        // Test 12 : new + list again
+        // We wait to test that expiration and pull date won't change
+        sleep(1);
+        $result = $remediation->refreshDecisions();
+        $this->assertEquals(
+            ['new' => 0, 'deleted' => 0],
+            $result,
+            'Refresh count should be correct'
+        );
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_2_CACHE_KEY));
+        $cachedValue = $item->get();
+        $this->assertEquals(
+            2,
+            count($cachedValue),
+            'Should now have 2 cached remediation'
+        );
 
+        $this->assertEquals(
+            'ban',
+            $cachedValue[0][0]
+        );
+        $this->assertEquals(
+            'captcha',
+            $cachedValue[1][0]
+        );
+        $lastPullItem = $remediation->getCacheStorage()->getItem($lastPullCacheKey);
 
+        $this->assertEquals(
+            [AbstractCache::INDEX_EXP => $listExpiration, AbstractCache::LAST_PULL => $time],
+            $lastPullItem->get(),
+            'Expiration and pull date should not have change'
+        );
+        // Test 13 : new + list again
+        // We wait to test that expiration and pull date won't change
+        $result = $remediation->refreshDecisions();
+        PHPUnitUtil::assertRegExp(
+            $this,
+            '/.*200.*"type":"CAPI_REM_HANDLE_LIST_DECISIONS.*UNIT TEST EXCEPTION"/',
+            file_get_contents($this->root->url() . '/' . $this->prodFile),
+            'Prod log content should be correct'
+        );
 
     }
 

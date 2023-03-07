@@ -146,7 +146,7 @@ class CapiRemediation extends AbstractRemediation
                     // The existence of the following indexes must be guaranteed by the validateBlocklist method
                     $scope = (string) $blocklist['scope'];
                     $duration = (string) $blocklist['duration'];
-                    $type = $blocklist['remediation'];
+                    $type = (string) $blocklist['remediation'];
                     $listName = strtolower((string) $blocklist['name']);
                     $url = (string) $blocklist['url'];
                     $origin = Constants::ORIGIN_LISTS;

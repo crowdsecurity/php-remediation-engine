@@ -440,7 +440,7 @@ final class CacheTest extends TestCase
         $this->assertEquals(
             true,
             $item->isHit(),
-            'IP variable for geolocation should have not been cached'
+            'IP variable for geolocation should have been cached'
         );
         $this->assertEquals(
             ['crowdsec_geolocation_country' => 'FR'],
