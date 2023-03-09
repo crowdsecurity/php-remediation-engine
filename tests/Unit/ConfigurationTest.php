@@ -40,6 +40,7 @@ use Symfony\Component\Config\Definition\Processor;
  * @covers \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::getDefaultOrderedRemediations
  * @covers \CrowdSec\RemediationEngine\Configuration\Lapi::getConfigTreeBuilder
+ * @covers \CrowdSec\RemediationEngine\Configuration\Capi::addCapiNodes
  */
 final class ConfigurationTest extends TestCase
 {
@@ -68,9 +69,35 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
+                'refresh_frequency_indicator' => 14400,
             ],
             $result,
             'Should set default config'
+        );
+        // Test to pass some conf
+        $configs = ['refresh_frequency_indicator' => 7200, 'clean_ip_cache_duration' => 86400, 'fallback_remediation' => 'ban'];
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
+        $this->assertEquals(
+            [
+                'stream_mode' => true,
+                'clean_ip_cache_duration' => 86400,
+                'bad_ip_cache_duration' => Constants::CACHE_EXPIRATION_FOR_BAD_IP,
+                'fallback_remediation' => 'ban',
+                'ordered_remediations' => array_merge(
+                    CapiRemediation::ORDERED_REMEDIATIONS, [Constants::REMEDIATION_BYPASS]
+                ),
+                'geolocation' => [
+                    'cache_duration' => 86400,
+                    'enabled' => false,
+                    'type' => Constants::GEOLOCATION_TYPE_MAXMIND,
+                    'maxmind' => [
+                        'database_type' => Constants::MAXMIND_COUNTRY,
+                    ],
+                ],
+                'refresh_frequency_indicator' => 7200,
+            ],
+            $result,
+            'Should set passed config'
         );
         // Test bypass is always with the lowest priority (i.e. always last element)
         $configs = ['ordered_remediations' => ['rem1', 'rem2']];
@@ -90,6 +117,7 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
+                'refresh_frequency_indicator' => 14400,
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -111,6 +139,7 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
+                'refresh_frequency_indicator' => 14400,
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -133,6 +162,7 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
+                'refresh_frequency_indicator' => 14400,
             ],
             $result,
             'Should normalize config'

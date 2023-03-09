@@ -4,18 +4,18 @@ require_once __DIR__ . '/../../vendor/autoload.php';
 
 use CrowdSec\CapiClient\Storage\FileStorage;
 use CrowdSec\CapiClient\Watcher;
+use CrowdSec\Common\Logger\ConsoleLog;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
 use CrowdSec\RemediationEngine\CapiRemediation;
-use CrowdSec\Common\Logger\FileLog;
 
 // Init  logger
-$logger = new FileLog(['debug_mode' => true], 'remediation-engine-logger');
+$logger = new ConsoleLog();
 // Init client
 $clientConfigs = [
-    'machine_id_prefix' => 'remediationtest',
-    'scenarios' => ['crowdsecurity/http-sensitive-files'],
+    'machine_id_prefix' => 'capiclienttest',
+    'scenarios' => ['crowdsecurity/http-backdoors-attempts', 'crowdsecurity/http-bad-user-agent'],
 ];
 $capiClient = new Watcher($clientConfigs, new FileStorage(__DIR__), null, $logger);
 // Init PhpFiles cache storage

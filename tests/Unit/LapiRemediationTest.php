@@ -15,6 +15,7 @@ namespace CrowdSec\RemediationEngine\Tests\Unit;
  * @license   MIT License
  */
 
+use CrowdSec\Common\Logger\FileLog;
 use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
@@ -23,7 +24,6 @@ use CrowdSec\RemediationEngine\CacheStorage\Redis;
 use CrowdSec\RemediationEngine\Constants;
 use CrowdSec\RemediationEngine\Constants as RemConstants;
 use CrowdSec\RemediationEngine\LapiRemediation;
-use CrowdSec\Common\Logger\FileLog;
 use CrowdSec\RemediationEngine\Tests\Constants as TestConstants;
 use CrowdSec\RemediationEngine\Tests\MockedData;
 use CrowdSec\RemediationEngine\Tests\PHPUnitUtil;
@@ -31,7 +31,6 @@ use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 
 /**
- *
  * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::__construct
  * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::cleanCachedValues
  * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getAdapter
@@ -55,11 +54,12 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
  * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getIpCachedVariables
  * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::getIpVariables
- * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::saveCacheItem
+ * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::saveItemWithDuration()
  * @uses \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::setIpVariables
  * @uses \CrowdSec\RemediationEngine\Geolocation::__construct
  * @uses \CrowdSec\RemediationEngine\Geolocation::getMaxMindCountryResult
  * @uses \CrowdSec\RemediationEngine\Geolocation::handleCountryResultForIp
+ * @uses \CrowdSec\RemediationEngine\CacheStorage\Memcached::getItem
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::handleIpV6RangeDecisions
@@ -68,7 +68,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\Decision::setValue
  * @covers \CrowdSec\RemediationEngine\Decision::getExpiresAt
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::__construct
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionScope
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::normalize
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionIdentifier
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::parseDurationToSeconds
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionExpiresAt
@@ -93,7 +93,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::removeDecision
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::store
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::storeDecision
- * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::updateCacheItem
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::updateDecisionItem
  * @covers \CrowdSec\RemediationEngine\Decision::__construct
  * @covers \CrowdSec\RemediationEngine\Decision::getIdentifier
  * @covers \CrowdSec\RemediationEngine\Decision::getScope
@@ -115,13 +115,11 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getAllCachedDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getRemediationFromDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
- * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::updateItem
+ * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::upsertItem
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getScopes
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::isWarm
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::warmUp
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getClient
-
- *
  */
 final class LapiRemediationTest extends AbstractRemediation
 {
@@ -942,7 +940,7 @@ final class LapiRemediationTest extends AbstractRemediation
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"REM_CACHE_REMOVE_NON_IMPLEMENTED_SCOPE.*CAPI-ban-do-not-know-delete-1.2.3.4"/',
+            '/.*300.*"type":"REM_CACHE_REMOVE_NON_IMPLEMENTED_SCOPE.*capi-ban-do-not-know-delete-1.2.3.4"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -956,7 +954,7 @@ final class LapiRemediationTest extends AbstractRemediation
 
         PHPUnitUtil::assertRegExp(
             $this,
-            '/.*300.*"type":"REM_CACHE_STORE_NON_IMPLEMENTED_SCOPE.*CAPI-ban-do-not-know-store-1.2.3.4"/',
+            '/.*300.*"type":"REM_CACHE_STORE_NON_IMPLEMENTED_SCOPE.*capi-ban-do-not-know-store-1.2.3.4"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
@@ -1088,6 +1086,103 @@ final class LapiRemediationTest extends AbstractRemediation
             '/.*400.*"type":"REM_DECISION_DURATION_PARSE_ERROR"/',
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
+        );
+    }
+
+    public function testPrivateOrProtectedMethods()
+    {
+        $cachePhpfilesConfigs = ['fs_cache_path' => $this->root->url()];
+        $mockedMethods = [];
+        $this->cacheStorage = $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
+        $remediationConfigs = [];
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
+        // convertRawDecisionsToDecisions
+        // Test 1 : ok
+        $rawDecisions = [
+            [
+                'scope' => 'IP',
+                'value' => '1.2.3.4',
+                'type' => 'ban',
+                'origin' => 'unit',
+                'duration' => '147h',
+            ],
+        ];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'convertRawDecisionsToDecisions',
+            [$rawDecisions]
+        );
+
+        $this->assertCount(
+            1,
+            $result,
+            'Should return array'
+        );
+
+        $decision = $result[0];
+        $this->assertEquals(
+            'ban',
+            $decision->getType(),
+            'Should have created a correct decision'
+        );
+        $this->assertEquals(
+            'ip',
+            $decision->getScope(),
+            'Should have created a normalized scope'
+        );
+        // Test 2: bad raw decision
+        $rawDecisions = [
+            [
+                'value' => '1.2.3.4',
+                'origin' => 'unit',
+                'duration' => '147h',
+            ],
+        ];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'convertRawDecisionsToDecisions',
+            [$rawDecisions]
+        );
+        $this->assertCount(
+            0,
+            $result,
+            'Should return empty array'
+        );
+
+        PHPUnitUtil::assertRegExp(
+            $this,
+            '/.*400.*"type":"REM_RAW_DECISION_NOT_AS_EXPECTED"/',
+            file_get_contents($this->root->url() . '/' . $this->prodFile),
+            'Prod log content should be correct'
+        );
+        // Test 3 : with id
+        $rawDecisions = [
+            [
+                'scope' => 'IP',
+                'value' => '1.2.3.4',
+                'type' => 'ban',
+                'origin' => 'unit',
+                'duration' => '147h',
+                'id' => 42,
+            ],
+        ];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'convertRawDecisionsToDecisions',
+            [$rawDecisions]
+        );
+
+        $this->assertCount(
+            1,
+            $result,
+            'Should return array'
+        );
+
+        $decision = $result[0];
+        $this->assertEquals(
+            'unit-ban-ip-1.2.3.4',
+            $decision->getIdentifier(),
+            'Should have created a correct decision even with id'
         );
     }
 
