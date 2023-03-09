@@ -117,6 +117,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::getClient
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::validateBlocklist
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::shouldAddModifiedSince
+ * @covers \CrowdSec\RemediationEngine\CapiRemediation::handleListResponse
  */
 final class CapiRemediationTest extends AbstractRemediation
 {

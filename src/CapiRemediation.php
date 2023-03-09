@@ -181,18 +181,7 @@ class CapiRemediation extends AbstractRemediation
                             $duration,
                             [AbstractCache::LIST, $listName]
                         );
-                        $listedIps = explode(\PHP_EOL, $listResponse);
-                        $this->logger->debug('Handle list decisions', [
-                            'type' => 'CAPI_REM_HANDLE_LIST_DECISIONS',
-                            'list_count' => count($listedIps),
-                        ]);
-                        foreach ($listedIps as $listedIp) {
-                            $blockDecision['value'] = $listedIp;
-                            $decision = $this->convertRawDecision($blockDecision);
-                            if ($decision) {
-                                $decisions[] = $decision;
-                            }
-                        }
+                        $decisions = $this->handleListResponse($listResponse, $blockDecision);
                     }
                 }
             }
@@ -202,6 +191,25 @@ class CapiRemediation extends AbstractRemediation
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
             ]);
+        }
+
+        return $decisions;
+    }
+
+    private function handleListResponse(string $listResponse, array $blockDecision): array
+    {
+        $decisions = [];
+        $listedIps = explode(\PHP_EOL, $listResponse);
+        $this->logger->debug('Handle list decisions', [
+            'type' => 'CAPI_REM_HANDLE_LIST_DECISIONS',
+            'list_count' => count($listedIps),
+        ]);
+        foreach ($listedIps as $listedIp) {
+            $blockDecision['value'] = $listedIp;
+            $decision = $this->convertRawDecision($blockDecision);
+            if ($decision) {
+                $decisions[] = $decision;
+            }
         }
 
         return $decisions;
