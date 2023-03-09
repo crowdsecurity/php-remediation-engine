@@ -90,22 +90,17 @@ class CapiRemediation extends AbstractRemediation
         return $decisions;
     }
 
-    /**
-     * @param int $timestamp
-     * @return string
-     */
     private function formatIfModifiedSinceHeader(int $timestamp): string
     {
         return gmdate('D, d M Y H:i:s \G\M\T', $timestamp);
     }
 
     /**
-     * This method allows to know if the "If-Modified-Since" should be added when pulling list decisions
+     * This method allows to know if the "If-Modified-Since" should be added when pulling list decisions.
      *
-     * @param int $pullTime // Moment when the list is pulled
+     * @param int $pullTime           // Moment when the list is pulled
      * @param int $listExpirationTime // Expiration of the cached list decisions
-     * @param int $frequency // A certain amount of time in seconds that represents the average decision pull frequency
-     * @return bool
+     * @param int $frequency          // Amount of time in seconds that represents the average decision pull frequency
      */
     private function shouldAddModifiedSince(int $pullTime, int $listExpirationTime, int $frequency): bool
     {
@@ -181,7 +176,7 @@ class CapiRemediation extends AbstractRemediation
                             $lastPullCacheKey,
                             [
                                 AbstractCache::LAST_PULL => $pullTime,
-                                AbstractCache::INDEX_EXP => $duration + $pullTime
+                                AbstractCache::INDEX_EXP => $duration + $pullTime,
                             ],
                             $duration,
                             [AbstractCache::LIST, $listName]

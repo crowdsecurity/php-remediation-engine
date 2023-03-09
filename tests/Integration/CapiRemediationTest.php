@@ -13,21 +13,20 @@ namespace CrowdSec\RemediationEngine\Tests\Integration;
  * @license   MIT License
  */
 
+use CrowdSec\CapiClient\Client\CapiHandler\Curl;
+use CrowdSec\CapiClient\Client\CapiHandler\FileGetContents;
 use CrowdSec\CapiClient\Storage\FileStorage;
+use CrowdSec\CapiClient\Watcher;
+use CrowdSec\Common\Client\AbstractClient;
+use CrowdSec\Common\Logger\FileLog;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CapiRemediation;
 use CrowdSec\RemediationEngine\Tests\Constants as TestConstants;
 use CrowdSec\RemediationEngine\Tests\PHPUnitUtil;
-use CrowdSec\CapiClient\Watcher;
-use CrowdSec\Common\Client\AbstractClient;
-use CrowdSec\CapiClient\Client\CapiHandler\Curl;
-use CrowdSec\CapiClient\Client\CapiHandler\FileGetContents;
-use CrowdSec\Common\Logger\FileLog;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Util\Exception;
-
 
 final class CapiRemediationTest extends TestCase
 {
@@ -125,7 +124,7 @@ final class CapiRemediationTest extends TestCase
         // Empty log file
         file_put_contents($this->root->url() . '/' . $this->debugFile, '');
         $result = $remediationEngine->refreshDecisions();
-        $this->assertTrue((int) $result['new'] === 0);
+        $this->assertTrue(0 === (int) $result['new']);
 
         PHPUnitUtil::assertRegExp(
             $this,

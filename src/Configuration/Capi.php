@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace CrowdSec\RemediationEngine\Configuration;
 
+use CrowdSec\RemediationEngine\Constants;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use CrowdSec\RemediationEngine\Constants;
 
 /**
  * The Capi remediation configuration.
@@ -30,8 +30,7 @@ class Capi extends AbstractRemediation
         'clean_ip_cache_duration',
         'bad_ip_cache_duration',
         'geolocation',
-        'refresh_frequency_indicator'
-
+        'refresh_frequency_indicator',
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder

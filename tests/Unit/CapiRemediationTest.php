@@ -53,16 +53,20 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses   \CrowdSec\RemediationEngine\Decision::toArray
  * @uses   \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
+ *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
+ *
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::getIpType
  * @uses   \CrowdSec\RemediationEngine\CacheStorage\Memcached::getItem
+ *
  * @covers   \CrowdSec\RemediationEngine\CapiRemediation::convertRawCapiDecisionsToDecisions
  * @covers   \CrowdSec\RemediationEngine\CapiRemediation::handleListDecisions
+ *
  * @uses \CrowdSec\RemediationEngine\Configuration\Capi::addCapiNodes
+ *
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::formatIfModifiedSinceHeader
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::handleListPullHeaders
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::upsertItem
- *
  * @covers \CrowdSec\RemediationEngine\Decision::getExpiresAt
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::__construct
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::normalize
@@ -113,8 +117,6 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::getClient
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::validateBlocklist
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::shouldAddModifiedSince
- *
- *
  */
 final class CapiRemediationTest extends AbstractRemediation
 {
@@ -390,15 +392,14 @@ final class CapiRemediationTest extends AbstractRemediation
         // test 1 : single added decision
         $rawDecisions = [
             [
-                "scope" => "ip",
-                "decisions" =>
-                    [
+                'scope' => 'ip',
+                'decisions' => [
                         [
                             'value' => '1.2.3.4',
-                            'duration' => '147h'
-                        ]
+                            'duration' => '147h',
+                        ],
                     ],
-            ]
+            ],
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
@@ -432,12 +433,11 @@ final class CapiRemediationTest extends AbstractRemediation
         // Test 2 : deleted decisions
         $rawDecisions = [
             [
-                "scope" => "range",
-                "decisions" =>
-                    [
-                        "1.2.3.4/24", "5.6.7.8/24"
+                'scope' => 'range',
+                'decisions' => [
+                        '1.2.3.4/24', '5.6.7.8/24',
                     ],
-            ]
+            ],
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
@@ -479,7 +479,7 @@ final class CapiRemediationTest extends AbstractRemediation
             'url' => 'https://',
             'remediation' => 'captcha',
             'scope' => 'ip',
-            'duration' => '24h'
+            'duration' => '24h',
         ];
 
         $result = PHPUnitUtil::callMethod(
@@ -495,7 +495,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $blocklist = [
             'name' => 'tor-exit-node',
             'scope' => 'ip',
-            'duration' => '24h'
+            'duration' => '24h',
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
@@ -663,7 +663,7 @@ final class CapiRemediationTest extends AbstractRemediation
                 'configs' => $remediationConfigs,
                 'client' => $this->watcher,
                 'cacheStorage' => $this->cacheStorage,
-                'logger' => $this->logger,])
+                'logger' => $this->logger, ])
             ->onlyMethods(['getConfig'])
             ->getMock();
 
@@ -705,7 +705,7 @@ final class CapiRemediationTest extends AbstractRemediation
                 'configs' => $remediationConfigs,
                 'client' => $this->watcher,
                 'cacheStorage' => $this->cacheStorage,
-                'logger' => $this->logger,])
+                'logger' => $this->logger, ])
             ->onlyMethods(['getConfig'])
             ->getMock();
 
@@ -740,9 +740,7 @@ final class CapiRemediationTest extends AbstractRemediation
             'Should return current time + decision duration'
         );
 
-
-
-// parseDurationToSeconds
+        // parseDurationToSeconds
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'parseDurationToSeconds',
@@ -924,7 +922,6 @@ final class CapiRemediationTest extends AbstractRemediation
             ['If-Modified-Since' => 'Fri, 03 Mar 2023 00:00:00 GMT'],
             $result
         );
-
     }
 
     /**
@@ -970,11 +967,10 @@ final class CapiRemediationTest extends AbstractRemediation
         $capiHandlerMock->method('getListDecisions')->will(
             $this->onConsecutiveCalls(
                 TestConstants::IP_V4_2, // Test 11 : new IP v4 + list
-                "", // Test 12 : new IP v4 + list again (not modified)
+                '', // Test 12 : new IP v4 + list again (not modified)
                 $this->throwException(new Exception('UNIT TEST EXCEPTION')) // Test 13 : will throw an error
             )
         );
-
 
         // Test 1
         $result = $remediation->refreshDecisions();
@@ -1188,7 +1184,7 @@ final class CapiRemediationTest extends AbstractRemediation
         );
 
         $time = time();
-        $listExpiration = $time + 24*60*60;
+        $listExpiration = $time + 24 * 60 * 60;
         $this->assertEquals(
             [AbstractCache::INDEX_EXP => $listExpiration, AbstractCache::LAST_PULL => $time],
             $lastPullItem->get()
@@ -1251,7 +1247,6 @@ final class CapiRemediationTest extends AbstractRemediation
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
-
     }
 
     protected function tearDown(): void

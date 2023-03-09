@@ -254,17 +254,17 @@ class MockedData
                 ],
             ],
             'deleted' => [],
-            "links" => [
-                "blocklists" => [
+            'links' => [
+                'blocklists' => [
                     [
-                        "name" => "tor-exit-nodes",
-                        "url" => "some-url",
-                        "remediation" => "captcha",
-                        "scope" => "ip",
-                        "duration" => "24h"
-                    ]
-                ]
-            ]
+                        'name' => 'tor-exit-nodes',
+                        'url' => 'some-url',
+                        'remediation' => 'captcha',
+                        'scope' => 'ip',
+                        'duration' => '24h',
+                    ],
+                ],
+            ],
         ],
         'new_ip_v4_other' => [
             'new' => [

@@ -9,7 +9,6 @@ use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
 use CrowdSec\RemediationEngine\CacheStorage\Redis;
 use CrowdSec\RemediationEngine\CapiRemediation;
-use CrowdSec\CapiClient\Client\ListHandler\FileGetContents;
 
 // Init  logger
 $logger = new ConsoleLog();

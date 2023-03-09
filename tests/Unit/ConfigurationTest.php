@@ -69,14 +69,13 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
-                'refresh_frequency_indicator' => 14400
+                'refresh_frequency_indicator' => 14400,
             ],
             $result,
             'Should set default config'
         );
         // Test to pass some conf
-        $configs = ['refresh_frequency_indicator' => 7200, 'clean_ip_cache_duration' => 86400, 'fallback_remediation'
-            => 'ban'];
+        $configs = ['refresh_frequency_indicator' => 7200, 'clean_ip_cache_duration' => 86400, 'fallback_remediation' => 'ban'];
         $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
@@ -95,7 +94,7 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
-                'refresh_frequency_indicator' => 7200
+                'refresh_frequency_indicator' => 7200,
             ],
             $result,
             'Should set passed config'
@@ -118,7 +117,7 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
-                'refresh_frequency_indicator' => 14400
+                'refresh_frequency_indicator' => 14400,
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -140,7 +139,7 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
-                'refresh_frequency_indicator' => 14400
+                'refresh_frequency_indicator' => 14400,
             ],
             $result,
             'Should add bypass with the lowest priority'
@@ -163,7 +162,7 @@ final class ConfigurationTest extends TestCase
                         'database_type' => Constants::MAXMIND_COUNTRY,
                     ],
                 ],
-                'refresh_frequency_indicator' => 14400
+                'refresh_frequency_indicator' => 14400,
             ],
             $result,
             'Should normalize config'

@@ -71,8 +71,6 @@ use Psr\Cache\CacheItemInterface;
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::saveItemWithDuration
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::setIpVariables
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::retrieveDecisionsForCountry
- *
- *
  */
 final class CacheTest extends TestCase
 {
@@ -226,7 +224,6 @@ final class CacheTest extends TestCase
         $this->assertTrue(
             $result instanceof CacheItemInterface
         );
-
 
         $error = '';
         try {
