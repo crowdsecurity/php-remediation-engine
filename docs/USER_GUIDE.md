@@ -37,6 +37,7 @@
   - [Remediation priorities](#remediation-priorities)
   - [Remediation fallback](#remediation-fallback)
   - [Geolocation](#geolocation)
+  - [Refresh frequency indicator](#refresh-frequency-indicator)
 - [LAPI remediation engine configurations](#lapi-remediation-engine-configurations)
   - [Stream mode](#stream-mode)
   - [Clean IP cache duration](#clean-ip-cache-duration)
