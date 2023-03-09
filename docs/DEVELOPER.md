@@ -15,6 +15,7 @@
   - [DDEV Usage](#ddev-usage)
     - [Use composer to update or install the lib](#use-composer-to-update-or-install-the-lib)
     - [Unit test](#unit-test)
+    - [Integration test](#integration-test)
     - [Coding standards](#coding-standards)
       - [PHPCS Fixer](#phpcs-fixer)
       - [PHPSTAN](#phpstan)
