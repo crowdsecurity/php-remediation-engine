@@ -66,6 +66,7 @@ This kind of action is called a remediation and can be:
     - Handle IP scoped decisions for Ipv4 and IPv6
     - Handle Range scoped decisions for IPv4
     - Handle Country scoped decisions using [MaxMind](https://www.maxmind.com) database
+    - Handle List decisions
   - Determine remediation for a given IP
     - Use the cached decisions for CAPI and for LAPI in stream mode
     - For LAPI in live mode, call LAPI if there is no cached decision
