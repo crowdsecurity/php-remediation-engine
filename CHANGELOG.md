@@ -12,6 +12,21 @@ The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this libra
 
 ---
 
+## [?.?.?](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v?.?.?) - 2023-??
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.0.0...v?.?.?)
+
+### Changed
+
+- Do not cache CAPI decision with `0h` duration
+- Set logger in cache adapter to avoid silent error
+
+### Added
+
+- Add a `use_cache_tags` settings for cache storage. By default, we do not use cache tags.
+
+
+
+---
 
 ## [3.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.0.0) - 2023-03-09
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v2.1.0...v3.0.0)

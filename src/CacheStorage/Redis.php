@@ -22,7 +22,10 @@ class Redis extends AbstractCache
         $this->configure($configs);
 
         try {
-            $adapter = new RedisTagAwareAdapter(RedisAdapter::createConnection($this->configs['redis_dsn']));
+            $connection = RedisAdapter::createConnection($this->configs['redis_dsn']);
+            $adapter = !empty($this->configs['use_cache_tags']) ?
+                new RedisTagAwareAdapter($connection) :
+                new RedisAdapter($connection);
             // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
             $message = 'Error when creating Redis cache adapter:' . $e->getMessage();

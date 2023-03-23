@@ -82,6 +82,7 @@ abstract class AbstractCache
             $logger->pushHandler(new NullHandler());
         }
         $this->logger = $logger;
+        $this->adapter->setLogger($this->logger);
         $this->logger->debug('Instantiate cache', [
             'type' => 'CACHE_INIT',
             'configs' => $configs,
