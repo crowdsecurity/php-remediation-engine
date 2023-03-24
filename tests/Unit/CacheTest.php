@@ -33,8 +33,8 @@ use Psr\Cache\CacheItemInterface;
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\Memcached::getConfigTreeBuilder
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\Redis::getConfigTreeBuilder
- * @covers \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
+ * @covers \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  * @covers \CrowdSec\RemediationEngine\CacheStorage\Memcached::clear
  * @covers \CrowdSec\RemediationEngine\CacheStorage\Memcached::commit
  * @covers \CrowdSec\RemediationEngine\CacheStorage\Memcached::getItem

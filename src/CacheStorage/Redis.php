@@ -26,6 +26,9 @@ class Redis extends AbstractCache
             $adapter = !empty($this->configs['use_cache_tags']) ?
                 new RedisTagAwareAdapter($connection) :
                 new RedisAdapter($connection);
+            if ($logger) {
+                $adapter->setLogger($logger);
+            }
             // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
             $message = 'Error when creating Redis cache adapter:' . $e->getMessage();

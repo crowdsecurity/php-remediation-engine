@@ -197,7 +197,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $this->phpFileStorage =
             $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $this->phpFileStorageWithTags =
-            $this->getCacheMock('PhpFilesAdapter', array_merge($cachePhpfilesConfigs,['use_cache_tags'=>true]),
+            $this->getCacheMock('PhpFilesAdapter', array_merge($cachePhpfilesConfigs, ['use_cache_tags' => true]),
                 $this->logger, $mockedMethods);
         $cacheMemcachedConfigs = [
             'memcached_dsn' => getenv('memcached_dsn') ?: 'memcached://memcached:11211',
@@ -500,7 +500,7 @@ final class LapiRemediationTest extends AbstractRemediation
             'Bypass should have been cached'
         );
         $this->assertEquals(
-            $expectedCleanTime,$cachedItem[0][AbstractCache::INDEX_EXP],
+            $expectedCleanTime, $cachedItem[0][AbstractCache::INDEX_EXP],
             'Should return current time + clean ip duration config'
         );
         $this->assertEquals(

@@ -12,6 +12,17 @@ The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this libra
 
 ---
 
+## [3.1.1](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.1.1) - 2023-03-24
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.1.0...v3.1.1)
+
+### Fixed
+
+- Do not set logger in Memcached cache to avoid silent error
+
+
+---
+
+
 ## [3.1.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.1.0) - 2023-03-24
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.0.0...v3.1.0)
 
