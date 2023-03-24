@@ -19,11 +19,11 @@ The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this libra
 
 - Instantiate provided Redis and PhpFiles caches without cache tags by default
 - Do not cache CAPI decision with `0h` duration
-- Pass logger in cache adapter to log Symfony cache log messages
+- Set logger in cache adapter to log Symfony cache messages
 
 ### Added
 
-- Add a boolean `use_cache_tags` settings for Redis and PhpFiles caches. Default to `false`.
+- Add a boolean `use_cache_tags` setting for Redis and PhpFiles caches. Default to `false`.
 
 
 ---
