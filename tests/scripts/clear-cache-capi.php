@@ -32,10 +32,11 @@ $memcachedCache = new Memcached($cacheMemcachedConfigs, $logger);
 // Init Redis cache storage
 $cacheRedisConfigs = [
     'redis_dsn' => 'redis://redis:6379',
+    'use_cache_tags' => false,
 ];
 $redisCache = new Redis($cacheRedisConfigs, $logger);
 // Init CAPI remediation
 $remediationConfigs = [];
-$remediationEngine = new CapiRemediation($remediationConfigs, $capiClient, $phpFileCache, $logger);
+$remediationEngine = new CapiRemediation($remediationConfigs, $capiClient, $redisCache, $logger);
 // Clear the cache
 echo $remediationEngine->clearCache() . \PHP_EOL;

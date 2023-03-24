@@ -41,6 +41,7 @@ use Symfony\Component\Config\Definition\Processor;
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::getDefaultOrderedRemediations
  * @covers \CrowdSec\RemediationEngine\Configuration\Lapi::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::addCapiNodes
+ * @covers \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  */
 final class ConfigurationTest extends TestCase
 {
@@ -364,6 +365,16 @@ final class ConfigurationTest extends TestCase
             $result,
             'Should set default config'
         );
+        // Test use tags is not set
+        $configs = ['memcached_dsn' => 'memcached_dsn_test', 'use_cache_tags' => true];
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
+        $this->assertEquals(
+            [
+                'memcached_dsn' => 'memcached_dsn_test',
+            ],
+            $result,
+            'Should set default config'
+        );
 
         // Test missing dsn
         $error = '';
@@ -407,10 +418,24 @@ final class ConfigurationTest extends TestCase
         $this->assertEquals(
             [
                 'fs_cache_path' => 'fs_cache_path_test',
+                'use_cache_tags' => false
             ],
             $result,
             'Should set default config'
         );
+
+        // Test use tags config
+        $configs = ['fs_cache_path' => 'fs_cache_path_test', 'use_cache_tags' => true];
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
+        $this->assertEquals(
+            [
+                'fs_cache_path' => 'fs_cache_path_test',
+                'use_cache_tags' => true
+            ],
+            $result,
+            'Should set default config'
+        );
+
 
         // Test missing path
         $error = '';
@@ -454,9 +479,20 @@ final class ConfigurationTest extends TestCase
         $this->assertEquals(
             [
                 'redis_dsn' => 'redis_dsn_test',
+                'use_cache_tags' => false
             ],
             $result,
             'Should set default config'
+        );
+        // Test use tags config
+        $configs = ['redis_dsn' => 'redis_dsn_test', 'use_cache_tags' => true];
+        $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
+        $this->assertEquals(
+            [
+                'redis_dsn' => 'redis_dsn_test',
+                'use_cache_tags' => true
+            ],
+            $result
         );
 
         // Test config cleaning
@@ -468,6 +504,7 @@ final class ConfigurationTest extends TestCase
         $this->assertEquals(
             [
                 'redis_dsn' => 'redis_dsn_test',
+                'use_cache_tags' => false
             ],
             $result,
             'Should clean unexpected config'

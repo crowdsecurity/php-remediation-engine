@@ -21,20 +21,23 @@ $capiClient = new Watcher($clientConfigs, new FileStorage(__DIR__), null, $logge
 // Init PhpFiles cache storage
 $cacheFileConfigs = [
     'fs_cache_path' => __DIR__ . '/.cache/capi',
+    'use_cache_tags' => false,
 ];
 $phpFileCache = new PhpFiles($cacheFileConfigs, $logger);
 // Init Memcached cache storage
 $cacheMemcachedConfigs = [
     'memcached_dsn' => 'memcached://memcached:11211',
+    'use_cache_tags' => false,
 ];
 $memcachedCache = new Memcached($cacheMemcachedConfigs, $logger);
 // Init Redis cache storage
 $cacheRedisConfigs = [
     'redis_dsn' => 'redis://redis:6379',
+    'use_cache_tags' => true,
 ];
 $redisCache = new Redis($cacheRedisConfigs, $logger);
 // Init CAPI remediation
 $remediationConfigs = [];
-$remediationEngine = new CapiRemediation($remediationConfigs, $capiClient, $phpFileCache, $logger);
+$remediationEngine = new CapiRemediation($remediationConfigs, $capiClient, $redisCache, $logger);
 // Retrieve fresh decisions from CAPI and update the cache
 echo json_encode($remediationEngine->refreshDecisions()) . \PHP_EOL;

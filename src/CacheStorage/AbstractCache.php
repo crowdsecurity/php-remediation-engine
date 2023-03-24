@@ -15,6 +15,7 @@ use Monolog\Logger;
 use Psr\Cache\CacheException;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\InvalidArgumentException;
+use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Cache\Adapter\TagAwareAdapterInterface;
@@ -82,6 +83,9 @@ abstract class AbstractCache
             $logger->pushHandler(new NullHandler());
         }
         $this->logger = $logger;
+        if ($this->adapter instanceof LoggerAwareInterface) {
+            $this->adapter->setLogger($this->logger);
+        }
         $this->logger->debug('Instantiate cache', [
             'type' => 'CACHE_INIT',
             'configs' => $configs,
@@ -367,7 +371,7 @@ abstract class AbstractCache
         if ($duration > 0) {
             $cacheItem->expiresAt(new \DateTime("+$duration seconds"));
         }
-        if ($tags && $this->getAdapter() instanceof TagAwareAdapterInterface) {
+        if ($tags && $this->adapter instanceof TagAwareAdapterInterface) {
             $cacheItem->tag($tags);
         }
 

@@ -12,6 +12,21 @@ The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this libra
 
 ---
 
+## [3.1.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.1.0) - 2023-03-24
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.0.0...v3.1.0)
+
+### Changed
+
+- Instantiate provided Redis and PhpFiles caches without cache tags by default
+- Do not cache CAPI decision with `0h` duration
+- Pass logger in cache adapter to log Symfony cache log messages
+
+### Added
+
+- Add a boolean `use_cache_tags` settings for Redis and PhpFiles caches. Default to `false`.
+
+
+---
 
 ## [3.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.0.0) - 2023-03-09
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v2.1.0...v3.0.0)

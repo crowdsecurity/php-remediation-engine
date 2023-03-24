@@ -73,7 +73,6 @@ This kind of action is called a remediation and can be:
     - For LAPI in live mode, call LAPI if there is no cached decision
     - Use customizable remediation priorities
   
-
 - Overridable cache handler (built-in support for `Redis`, `Memcached` and `PhpFiles` caches)
 
 
@@ -578,7 +577,6 @@ In seconds. Must be greater or equal than 1. Default to 120 seconds if not set.
 
 If you use one of our provided cache storage handler (`PhpFiles`,  `Memcached` or 
 `Redis`), you will need to pass a `$cacheConfigs` array as first parameter:
-
 ### PhpFiles cache files directory
 
 ```php
@@ -614,3 +612,28 @@ $cacheConfigs = [
 ```
 
 This setting is required and cannot be empty.
+
+### Cache tags
+
+If you are using the provided PhpFiles or Redis cache, you may want to use the [Symfony cache tags invalidation 
+feature](https://symfony.com/doc/current/components/cache/cache_invalidation.html#using-cache-tags). In order to instantiate a tag aware adapter, you need to pass the value `true` for the setting `use_cache_tags`.
+
+Example:
+
+```php
+$cacheConfigs = [
+        ... 
+        'fs_cache_path' => __DIR__ . '/.cache',
+        'use_cache_tags' => true
+        ...
+];
+```
+
+This setting is not required and is `false` by default.
+
+Beware that there is a caveat with Symfony tagged caching and Redis: it doesn't support the max memory policy set to `allkeys-lru`. You need to change this to `noeviction` or `volatile-*` instead; otherwise the caching won't work at all.
+
+Cache tags is not supported for the provided Memcached cache.
+
+
+

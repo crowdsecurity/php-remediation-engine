@@ -32,6 +32,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\CacheStorage\PhpFiles::__construct
  * @uses \CrowdSec\RemediationEngine\CacheStorage\PhpFiles::configure
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
+ * @uses \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
  * @covers \CrowdSec\RemediationEngine\Geolocation::__construct()
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::saveItemWithDuration
