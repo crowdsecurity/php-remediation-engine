@@ -195,7 +195,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $this->phpFileStorage =
             $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
         $this->phpFileStorageWithTags =
-            $this->getCacheMock('PhpFilesAdapter', array_merge($cachePhpfilesConfigs,['use_cache_tags'=>true]),
+            $this->getCacheMock('PhpFilesAdapter', array_merge($cachePhpfilesConfigs, ['use_cache_tags' => true]),
                 $this->logger, $mockedMethods);
         $cacheMemcachedConfigs = [
             'memcached_dsn' => getenv('memcached_dsn') ?: 'memcached://memcached:11211',

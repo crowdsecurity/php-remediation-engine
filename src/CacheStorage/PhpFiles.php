@@ -21,6 +21,9 @@ class PhpFiles extends AbstractCache
         try {
             $fileAdapter = new PhpFilesAdapter('', 0, $this->configs['fs_cache_path']);
             $adapter = !empty($this->configs['use_cache_tags']) ? new TagAwareAdapter($fileAdapter) : $fileAdapter;
+            if ($logger) {
+                $adapter->setLogger($logger);
+            }
             // @codeCoverageIgnoreStart
         } catch (\Exception $e) {
             $message = 'Error when creating to PhpFiles cache adapter:' . $e->getMessage();

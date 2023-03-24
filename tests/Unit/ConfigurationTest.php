@@ -418,7 +418,7 @@ final class ConfigurationTest extends TestCase
         $this->assertEquals(
             [
                 'fs_cache_path' => 'fs_cache_path_test',
-                'use_cache_tags' => false
+                'use_cache_tags' => false,
             ],
             $result,
             'Should set default config'
@@ -430,12 +430,11 @@ final class ConfigurationTest extends TestCase
         $this->assertEquals(
             [
                 'fs_cache_path' => 'fs_cache_path_test',
-                'use_cache_tags' => true
+                'use_cache_tags' => true,
             ],
             $result,
             'Should set default config'
         );
-
 
         // Test missing path
         $error = '';
@@ -479,7 +478,7 @@ final class ConfigurationTest extends TestCase
         $this->assertEquals(
             [
                 'redis_dsn' => 'redis_dsn_test',
-                'use_cache_tags' => false
+                'use_cache_tags' => false,
             ],
             $result,
             'Should set default config'
@@ -490,7 +489,7 @@ final class ConfigurationTest extends TestCase
         $this->assertEquals(
             [
                 'redis_dsn' => 'redis_dsn_test',
-                'use_cache_tags' => true
+                'use_cache_tags' => true,
             ],
             $result
         );
@@ -504,7 +503,7 @@ final class ConfigurationTest extends TestCase
         $this->assertEquals(
             [
                 'redis_dsn' => 'redis_dsn_test',
-                'use_cache_tags' => false
+                'use_cache_tags' => false,
             ],
             $result,
             'Should clean unexpected config'
