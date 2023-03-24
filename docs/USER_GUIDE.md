@@ -46,6 +46,7 @@
   - [PhpFiles cache files directory](#phpfiles-cache-files-directory)
   - [Redis cache DSN](#redis-cache-dsn)
   - [Memcached cache DSN](#memcached-cache-dsn)
+  - [Cache tags](#cache-tags)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
