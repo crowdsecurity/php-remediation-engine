@@ -73,7 +73,7 @@ class CapiRemediation extends AbstractRemediation
             $scope = $rawDecision['scope'] ?? null;
             foreach ($capiDecisions as $capiDecision) {
                 // We exclude "new" Capi decision with a "0h" duration
-                if(isset($capiDecision['duration']) && $capiDecision['duration'] === '0h'){
+                if (isset($capiDecision['duration']) && '0h' === $capiDecision['duration']) {
                     continue;
                 }
                 // Deleted decision contains only the value of the deleted decision (an IP, a range, etc)

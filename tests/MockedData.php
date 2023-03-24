@@ -240,6 +240,25 @@ class MockedData
             ],
             'deleted' => [],
         ],
+        'new_ip_v4_with_0_duration' => [
+            'new' => [
+                [
+                    'scenario' => 'crowdsecurity/http-backdoors-attempts',
+                    'scope' => 'ip',
+                    'decisions' => [
+                        [
+                            'duration' => '0h',
+                            'value' => Constants::IP_V4_2,
+                        ],
+                        [
+                            'duration' => '147h',
+                            'value' => Constants::IP_V4,
+                        ],
+                    ],
+                ],
+            ],
+            'deleted' => [],
+        ],
         'new_ip_v4_and_list' => [
             'new' => [
                 [

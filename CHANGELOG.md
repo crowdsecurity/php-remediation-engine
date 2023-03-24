@@ -18,12 +18,11 @@ The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this libra
 ### Changed
 
 - Do not cache CAPI decision with `0h` duration
-- Set logger in cache adapter to avoid silent error
+- Pass logger in cache adapter to have Symfony cache logs
 
 ### Added
 
 - Add a `use_cache_tags` settings for cache storage. By default, we do not use cache tags.
-
 
 
 ---

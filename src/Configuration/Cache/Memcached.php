@@ -25,7 +25,6 @@ class Memcached extends AbstractCache
      */
     protected $keys = [
         'memcached_dsn',
-        'use_cache_tags'
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder
@@ -37,24 +36,7 @@ class Memcached extends AbstractCache
             ->scalarNode('memcached_dsn')->isRequired()->cannotBeEmpty()->end()
         ->end()
         ;
-        $this->addCommonNodes($rootNode);
-        $this->validate($rootNode);
 
         return $treeBuilder;
-    }
-
-    /**
-     * Conditional validation.
-     *
-     * @return void
-     */
-    protected function validate($rootNode)
-    {
-        $rootNode->validate()
-            ->ifTrue(function (array $v) {
-                return true === $v['use_cache_tags'];
-            })
-            ->thenInvalid('Cache tags is not supported by Memcached cache.')
-        ->end();
     }
 }

@@ -25,7 +25,7 @@ class Redis extends AbstractCache
      */
     protected $keys = [
         'redis_dsn',
-        'use_cache_tags'
+        'use_cache_tags',
     ];
 
     public function getConfigTreeBuilder(): TreeBuilder

@@ -18,13 +18,13 @@ use CrowdSec\Common\Configuration\AbstractConfiguration;
  */
 abstract class AbstractCache extends AbstractConfiguration
 {
-
     /**
      * @var string[]
      */
     protected $keys = [
         'use_cache_tags',
     ];
+
     /**
      * Common cache settings.
      *

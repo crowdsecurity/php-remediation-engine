@@ -60,6 +60,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\Geolocation::getMaxMindCountryResult
  * @uses \CrowdSec\RemediationEngine\Geolocation::handleCountryResultForIp
  * @uses \CrowdSec\RemediationEngine\CacheStorage\Memcached::getItem
+ * @uses \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::handleIpV6RangeDecisions
@@ -144,6 +145,10 @@ final class LapiRemediationTest extends AbstractRemediation
      */
     private $phpFileStorage;
     /**
+     * @var PhpFiles
+     */
+    private $phpFileStorageWithTags;
+    /**
      * @var string
      */
     private $prodFile;
@@ -151,6 +156,10 @@ final class LapiRemediationTest extends AbstractRemediation
      * @var Redis
      */
     private $redisStorage;
+    /**
+     * @var Redis
+     */
+    private $redisStorageWithTags;
     /**
      * @var vfsStreamDirectory
      */
@@ -166,6 +175,8 @@ final class LapiRemediationTest extends AbstractRemediation
             'PhpFilesAdapter' => ['PhpFilesAdapter'],
             'RedisAdapter' => ['RedisAdapter'],
             'MemcachedAdapter' => ['MemcachedAdapter'],
+            'PhpFilesAdapterWithTags' => ['PhpFilesAdapterWithTags'],
+            'RedisAdapterWithTags' => ['RedisAdapterWithTags'],
         ];
     }
 
@@ -185,6 +196,9 @@ final class LapiRemediationTest extends AbstractRemediation
         $mockedMethods = ['retrieveDecisionsForIp', 'retrieveDecisionsForCountry'];
         $this->phpFileStorage =
             $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
+        $this->phpFileStorageWithTags =
+            $this->getCacheMock('PhpFilesAdapter', array_merge($cachePhpfilesConfigs,['use_cache_tags'=>true]),
+                $this->logger, $mockedMethods);
         $cacheMemcachedConfigs = [
             'memcached_dsn' => getenv('memcached_dsn') ?: 'memcached://memcached:11211',
         ];
@@ -194,6 +208,10 @@ final class LapiRemediationTest extends AbstractRemediation
             'redis_dsn' => getenv('redis_dsn') ?: 'redis://redis:6379',
         ];
         $this->redisStorage = $this->getCacheMock('RedisAdapter', $cacheRedisConfigs, $this->logger, $mockedMethods);
+        $this->redisStorageWithTags = $this->getCacheMock('RedisAdapter', array_merge($cacheRedisConfigs,
+            ['use_cache_tags' => true]),
+            $this->logger,
+            $mockedMethods);
     }
 
     /**
@@ -481,8 +499,8 @@ final class LapiRemediationTest extends AbstractRemediation
             $cachedItem[0][AbstractCache::INDEX_MAIN],
             'Bypass should have been cached'
         );
-        $this->assertTrue(
-            $expectedCleanTime === $cachedItem[0][AbstractCache::INDEX_EXP],
+        $this->assertEquals(
+            $expectedCleanTime,$cachedItem[0][AbstractCache::INDEX_EXP],
             'Should return current time + clean ip duration config'
         );
         $this->assertEquals(
@@ -1196,6 +1214,12 @@ final class LapiRemediationTest extends AbstractRemediation
         switch ($type) {
             case 'PhpFilesAdapter':
                 $this->cacheStorage = $this->phpFileStorage;
+                break;
+            case 'PhpFilesAdapterWithTags':
+                $this->cacheStorage = $this->phpFileStorageWithTags;
+                break;
+            case 'RedisAdapterWithTags':
+                $this->cacheStorage = $this->redisStorageWithTags;
                 break;
             case 'RedisAdapter':
                 $this->cacheStorage = $this->redisStorage;

@@ -53,6 +53,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses   \CrowdSec\RemediationEngine\Decision::toArray
  * @uses   \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
+ * @uses \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  *
@@ -142,6 +143,10 @@ final class CapiRemediationTest extends AbstractRemediation
      */
     private $phpFileStorage;
     /**
+     * @var PhpFiles
+     */
+    private $phpFileStorageWithTags;
+    /**
      * @var string
      */
     private $prodFile;
@@ -149,6 +154,10 @@ final class CapiRemediationTest extends AbstractRemediation
      * @var Redis
      */
     private $redisStorage;
+    /**
+     * @var Redis
+     */
+    private $redisStorageWithTags;
     /**
      * @var vfsStreamDirectory
      */
@@ -164,6 +173,8 @@ final class CapiRemediationTest extends AbstractRemediation
             'PhpFilesAdapter' => ['PhpFilesAdapter'],
             'RedisAdapter' => ['RedisAdapter'],
             'MemcachedAdapter' => ['MemcachedAdapter'],
+            'PhpFilesAdapterWithTags' => ['PhpFilesAdapterWithTags'],
+            'RedisAdapterWithTags' => ['RedisAdapterWithTags'],
         ];
     }
 
@@ -183,6 +194,9 @@ final class CapiRemediationTest extends AbstractRemediation
         $mockedMethods = ['retrieveDecisionsForIp'];
         $this->phpFileStorage =
             $this->getCacheMock('PhpFilesAdapter', $cachePhpfilesConfigs, $this->logger, $mockedMethods);
+        $this->phpFileStorageWithTags =
+            $this->getCacheMock('PhpFilesAdapter', array_merge($cachePhpfilesConfigs,['use_cache_tags'=>true]),
+                $this->logger, $mockedMethods);
         $cacheMemcachedConfigs = [
             'memcached_dsn' => getenv('memcached_dsn') ?: 'memcached://memcached:11211',
         ];
@@ -192,6 +206,10 @@ final class CapiRemediationTest extends AbstractRemediation
             'redis_dsn' => getenv('redis_dsn') ?: 'redis://redis:6379',
         ];
         $this->redisStorage = $this->getCacheMock('RedisAdapter', $cacheRedisConfigs, $this->logger, $mockedMethods);
+        $this->redisStorageWithTags = $this->getCacheMock('RedisAdapter', array_merge($cacheRedisConfigs,
+            ['use_cache_tags' => true]),
+            $this->logger,
+            $mockedMethods);
     }
 
     /**
@@ -956,7 +974,8 @@ final class CapiRemediationTest extends AbstractRemediation
                 MockedData::DECISIONS_CAPI_V3['new_ip_v6_range'], // Test 10 : store IP V6 range
                 MockedData::DECISIONS_CAPI_V3['new_ip_v4_and_list'], // Test 11: IPv4 and list
                 MockedData::DECISIONS_CAPI_V3['new_ip_v4_and_list'], // Test 12: IPv4 and list
-                MockedData::DECISIONS_CAPI_V3['new_ip_v4_and_list'] // Test 13: IPv4 and list but error is thrown
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4_and_list'], // Test 13: IPv4 and list but error is thrown
+                MockedData::DECISIONS_CAPI_V3['new_ip_v4_with_0_duration'] // Test 14: IPv4 and 0h duration
             )
         );
         $this->watcher->method('getCapiHandler')->will(
@@ -1248,6 +1267,28 @@ final class CapiRemediationTest extends AbstractRemediation
             file_get_contents($this->root->url() . '/' . $this->prodFile),
             'Prod log content should be correct'
         );
+
+        // Test 14 : new + 1 new with 0h duration
+        $remediation->clearCache();
+        $result = $remediation->refreshDecisions();
+        $this->assertEquals(
+            ['new' => 1, 'deleted' => 0],
+            $result,
+            'Refresh count should be correct'
+        );
+        $adapter = $this->cacheStorage->getAdapter();
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_2_CACHE_KEY));
+        $this->assertEquals(
+            false,
+            $item->isHit(),
+            'Remediation should have been cached'
+        );
+        $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
+        $this->assertEquals(
+            true,
+            $item->isHit(),
+            'Remediation should have been cached'
+        );
     }
 
     protected function tearDown(): void
@@ -1260,6 +1301,12 @@ final class CapiRemediationTest extends AbstractRemediation
         switch ($type) {
             case 'PhpFilesAdapter':
                 $this->cacheStorage = $this->phpFileStorage;
+                break;
+            case 'PhpFilesAdapterWithTags':
+                $this->cacheStorage = $this->phpFileStorageWithTags;
+                break;
+            case 'RedisAdapterWithTags':
+                $this->cacheStorage = $this->redisStorageWithTags;
                 break;
             case 'RedisAdapter':
                 $this->cacheStorage = $this->redisStorage;

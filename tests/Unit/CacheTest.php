@@ -33,6 +33,7 @@ use Psr\Cache\CacheItemInterface;
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\Memcached::getConfigTreeBuilder
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\PhpFiles::getConfigTreeBuilder
  * @uses \CrowdSec\RemediationEngine\Configuration\Cache\Redis::getConfigTreeBuilder
+ * @covers \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
  * @covers \CrowdSec\RemediationEngine\CacheStorage\Memcached::clear
  * @covers \CrowdSec\RemediationEngine\CacheStorage\Memcached::commit
@@ -95,6 +96,10 @@ final class CacheTest extends TestCase
      */
     private $phpFileStorage;
     /**
+     * @var PhpFiles
+     */
+    private $phpFileStorageWithTags;
+    /**
      * @var string
      */
     private $prodFile;
@@ -102,6 +107,10 @@ final class CacheTest extends TestCase
      * @var Redis
      */
     private $redisStorage;
+    /**
+     * @var Redis
+     */
+    private $redisStorageWithTags;
     /**
      * @var vfsStreamDirectory
      */
@@ -113,6 +122,8 @@ final class CacheTest extends TestCase
             'PhpFilesAdapter' => ['PhpFilesAdapter'],
             'RedisAdapter' => ['RedisAdapter'],
             'MemcachedAdapter' => ['MemcachedAdapter'],
+            'PhpFilesAdapterWithTags' => ['PhpFilesAdapterWithTags'],
+            'RedisAdapterWithTags' => ['RedisAdapterWithTags'],
         ];
     }
 
@@ -126,6 +137,7 @@ final class CacheTest extends TestCase
 
         $cachePhpfilesConfigs = ['fs_cache_path' => $this->root->url()];
         $this->phpFileStorage = new PhpFiles($cachePhpfilesConfigs, $this->logger);
+        $this->phpFileStorageWithTags = new PhpFiles(array_merge($cachePhpfilesConfigs, ['use_cache_tags' => true]), $this->logger);
         $cacheMemcachedConfigs = [
             'memcached_dsn' => getenv('memcached_dsn') ?: 'memcached://memcached:11211',
         ];
@@ -134,6 +146,8 @@ final class CacheTest extends TestCase
             'redis_dsn' => getenv('redis_dsn') ?: 'redis://redis:6379',
         ];
         $this->redisStorage = new Redis($cacheRedisConfigs, $this->logger);
+        $this->redisStorageWithTags = new Redis(array_merge($cacheRedisConfigs, ['use_cache_tags' => true]),
+            $this->logger);
     }
 
     /**
@@ -144,7 +158,7 @@ final class CacheTest extends TestCase
         $this->setCache($cacheType);
 
         switch ($cacheType) {
-            case 'PhpFilesAdapter':
+            case 'PhpFilesAdapterWithTags':
                 $this->assertEquals(
                     'Symfony\Component\Cache\Adapter\TagAwareAdapter',
                     get_class($this->cacheStorage->getAdapter()),
@@ -163,8 +177,34 @@ final class CacheTest extends TestCase
                     $this->cacheStorage->getConfig('memcached_dsn'),
                     'Should get null config'
                 );
+                $this->assertTrue(
+                    $this->cacheStorage->getConfig('use_cache_tags')
+                );
                 break;
-            case 'RedisAdapter':
+            case 'PhpFilesAdapter':
+                $this->assertEquals(
+                    'Symfony\Component\Cache\Adapter\PhpFilesAdapter',
+                    get_class($this->cacheStorage->getAdapter()),
+                    'Adapter should be as expected'
+                );
+                $this->assertEquals(
+                    $this->root->url(),
+                    $this->cacheStorage->getConfig('fs_cache_path'),
+                    'Should get config'
+                );
+                $this->assertNull(
+                    $this->cacheStorage->getConfig('redis_dsn'),
+                    'Should get null config'
+                );
+                $this->assertNull(
+                    $this->cacheStorage->getConfig('memcached_dsn'),
+                    'Should get null config'
+                );
+                $this->assertFalse(
+                    $this->cacheStorage->getConfig('use_cache_tags')
+                );
+                break;
+            case 'RedisAdapterWithTags':
                 $this->assertEquals(
                     'Symfony\Component\Cache\Adapter\RedisTagAwareAdapter',
                     get_class($this->cacheStorage->getAdapter()),
@@ -181,6 +221,31 @@ final class CacheTest extends TestCase
                 $this->assertNotEmpty(
                     $this->cacheStorage->getConfig('redis_dsn'),
                     'Should get config'
+                );
+                $this->assertTrue(
+                    $this->cacheStorage->getConfig('use_cache_tags')
+                );
+                break;
+            case 'RedisAdapter':
+                $this->assertEquals(
+                    'Symfony\Component\Cache\Adapter\RedisAdapter',
+                    get_class($this->cacheStorage->getAdapter()),
+                    'Adapter should be as expected'
+                );
+                $this->assertNull(
+                    $this->cacheStorage->getConfig('fs_cache_path'),
+                    'Should get null config'
+                );
+                $this->assertNull(
+                    $this->cacheStorage->getConfig('memcached_dsn'),
+                    'Should get null config'
+                );
+                $this->assertNotEmpty(
+                    $this->cacheStorage->getConfig('redis_dsn'),
+                    'Should get config'
+                );
+                $this->assertFalse(
+                    $this->cacheStorage->getConfig('use_cache_tags')
                 );
                 break;
             case 'MemcachedAdapter':
@@ -200,6 +265,9 @@ final class CacheTest extends TestCase
                 $this->assertNotEmpty(
                     $this->cacheStorage->getConfig('memcached_dsn'),
                     'Should get config'
+                );
+                $this->assertNull(
+                    $this->cacheStorage->getConfig('use_cache_tags')
                 );
                 break;
             default:
@@ -231,7 +299,7 @@ final class CacheTest extends TestCase
         } catch (CacheStorageException $e) {
             $error = $e->getMessage();
         }
-        if ('PhpFilesAdapter' === $cacheType) {
+        if (in_array($cacheType, ['PhpFilesAdapter', 'PhpFilesAdapterWithTags'])) {
             $this->assertEquals(
                 '',
                 $error,
@@ -639,6 +707,12 @@ final class CacheTest extends TestCase
         switch ($type) {
             case 'PhpFilesAdapter':
                 $this->cacheStorage = $this->phpFileStorage;
+                break;
+            case 'PhpFilesAdapterWithTags':
+                $this->cacheStorage = $this->phpFileStorageWithTags;
+                break;
+            case 'RedisAdapterWithTags':
+                $this->cacheStorage = $this->redisStorageWithTags;
                 break;
             case 'RedisAdapter':
                 $this->cacheStorage = $this->redisStorage;
