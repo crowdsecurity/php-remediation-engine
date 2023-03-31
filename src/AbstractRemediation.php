@@ -26,6 +26,10 @@ abstract class AbstractRemediation
     public const CS_NEW = 'new';
     /** @var string Priority index */
     public const INDEX_PRIO = 'priority';
+    /** @var string Origin index */
+    public const INDEX_ORIGIN = 'origin';
+    /** @var string Remediation index */
+    public const INDEX_REM = 'remediation';
     /**
      * @var AbstractCache
      */
@@ -53,6 +57,30 @@ abstract class AbstractRemediation
             'configs' => $configs,
             'cache' => \get_class($cacheStorage),
         ]);
+    }
+
+    /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    protected function updateRemediationOriginCount(string $origin): int
+    {
+        $cacheStorage = $this->cacheStorage;
+        $cacheKey = $cacheStorage->getCacheKey(AbstractCache::ORIGIN_COUNT, $origin);
+        $originCountItem = $cacheStorage->getItem($cacheKey);
+        $cacheOriginCount = $originCountItem->isHit() ? $originCountItem->get() : [];
+        $count = isset($cacheOriginCount[AbstractCache::INDEX_MAIN]) ?
+            (int) $cacheOriginCount[AbstractCache::INDEX_MAIN] :
+            0;
+
+        $this->cacheStorage->upsertItem(
+            $cacheKey,
+            [AbstractCache::INDEX_MAIN => ++$count],
+            0,
+            [AbstractCache::ORIGIN_COUNT]
+        );
+
+        return $count;
     }
 
     /**
@@ -161,11 +189,14 @@ abstract class AbstractRemediation
         );
     }
 
+    /**
+     * @deprecated since 3.2.0 . Will be removed in 4.0.0. Use handleRemediationFromDecisions instead.
+     */
     protected function getRemediationFromDecisions(array $decisions): string
     {
         $cleanDecisions = $this->cacheStorage->cleanCachedValues($decisions);
 
-        $sortedDecisions = $this->sortDecisionsByRemediationPriority($cleanDecisions);
+        $sortedDecisions = $this->sortDecisionsByPriority($cleanDecisions);
         $this->logger->debug('Decisions have been sorted by priority', [
             'type' => 'REM_SORTED_DECISIONS',
             'decisions' => $sortedDecisions,
@@ -173,6 +204,23 @@ abstract class AbstractRemediation
 
         // Return only a remediation with the highest priority
         return $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS;
+    }
+
+    protected function handleRemediationFromDecisions(array $decisions): array
+    {
+        $cleanDecisions = $this->cacheStorage->cleanCachedValues($decisions);
+
+        $sortedDecisions = $this->sortDecisionsByPriority($cleanDecisions);
+        $this->logger->debug('Decisions have been sorted by priority', [
+            'type' => 'REM_SORTED_DECISIONS',
+            'decisions' => $sortedDecisions,
+        ]);
+
+        // Return only a remediation with the highest priority
+        return [
+            self::INDEX_REM => $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS,
+            self::INDEX_ORIGIN => $sortedDecisions[0][AbstractCache::INDEX_ORIGIN] ?? '',
+        ];
     }
 
     /**
@@ -207,6 +255,8 @@ abstract class AbstractRemediation
 
     /**
      * Sort the decision array of a cache item, by remediation priorities.
+     *
+     * @deprecated since 3.2.0 . Will be removed in 4.0.0 (Replaced by private method sortDecisionsByPriority)
      */
     protected function sortDecisionsByRemediationPriority(array $decisions): array
     {
@@ -221,6 +271,40 @@ abstract class AbstractRemediation
             $priority = array_search($decision[AbstractCache::INDEX_MAIN], $orderedRemediations);
             // Use fallback for unknown remediation
             if (false === $priority) {
+                $priority = array_search($fallback, $orderedRemediations);
+                $decision[AbstractCache::INDEX_MAIN] = $fallback;
+            }
+            $decision[self::INDEX_PRIO] = $priority;
+            $decisionsWithPriority[] = $decision;
+        }
+        // Sort by priorities.
+        /** @var callable $compareFunction */
+        $compareFunction = self::class . '::comparePriorities';
+        usort($decisionsWithPriority, $compareFunction);
+
+        return $decisionsWithPriority;
+    }
+
+    /**
+     * Sort the decision array of a cache item, by remediation priorities.
+     */
+    private function sortDecisionsByPriority(array $decisions): array
+    {
+        if (!$decisions) {
+            return $decisions;
+        }
+        // Add priorities
+        $orderedRemediations = (array) $this->getConfig('ordered_remediations');
+        $fallback = $this->getConfig('fallback_remediation');
+        $decisionsWithPriority = [];
+        foreach ($decisions as $decision) {
+            $priority = array_search($decision[AbstractCache::INDEX_MAIN], $orderedRemediations);
+            // Use fallback for unknown remediation
+            if (false === $priority) {
+                $this->logger->debug('Fallback used to handle unknown remediation', [
+                    'unknown_remediation' => $decision[AbstractCache::INDEX_MAIN],
+                    'fallback' => $fallback,
+                ]);
                 $priority = array_search($fallback, $orderedRemediations);
                 $decision[AbstractCache::INDEX_MAIN] = $fallback;
             }
