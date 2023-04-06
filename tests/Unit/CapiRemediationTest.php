@@ -55,6 +55,11 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
  * @uses \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleRemediationFromDecisions
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
+ *
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
+ *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  *
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::getIpType
@@ -114,7 +119,6 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\CacheStorage\AbstractCache::prune
  * @covers \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::getDefaultOrderedRemediations
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getAllCachedDecisions
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getRemediationFromDecisions
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::getClient
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::validateBlocklist
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::shouldAddModifiedSince
@@ -339,23 +343,27 @@ final class CapiRemediationTest extends AbstractRemediation
                 [AbstractCache::STORED => [[
                     'bypass',
                     999999999999,
-                    'remediation-engine-bypass-ip-1.2.3.4',
+                    'clean-bypass-ip-1.2.3.4',
+                    'clean',
                 ]]], // Test 2 : retrieve cached bypass
                 [AbstractCache::STORED => []],  // Test 2 : retrieve empty range
                 [AbstractCache::STORED => [[
                     'bypass',
                     999999999999,
-                    'remediation-engine-bypass-ip-1.2.3.4',
+                    'clean-bypass-ip-1.2.3.4',
+                    'clean',
                 ]]], // Test 3 : retrieve bypass for ip
                 [AbstractCache::STORED => [[
                     'ban',
                     999999999999,
-                    'remediation-engine-ban-ip-1.2.3.4',
+                    'capi-ban-ip-1.2.3.4',
+                    'capi',
                 ]]],  // Test 3 : retrieve ban for range
                 [AbstractCache::STORED => [[
                     'ban',
                     311738199, //  Sunday 18 November 1979
-                    'remediation-engine-ban-ip-1.2.3.4',
+                    'capi-ban-ip-1.2.3.4',
+                    'capi',
                 ]]], // Test 4 : retrieve expired ban ip
                 [AbstractCache::STORED => []]  // Test 4 : retrieve empty range
             )
@@ -669,6 +677,93 @@ final class CapiRemediationTest extends AbstractRemediation
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'sortDecisionsByRemediationPriority',
+            [$decisions]
+        );
+        $this->assertCount(
+            0,
+            $result,
+            'Should return empty'
+        );
+        // sortDecisionsByPriority
+        // Test 1 : default
+        $decisions = [
+            [
+                'bypass',
+                1668577960,
+                'CAPI-bypass-range-52.3.230.0/24',
+            ],
+            [
+                'ban',
+                1668577960,
+                'CAPI-ban-range-52.3.230.0/24',
+            ],
+        ];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'sortDecisionsByPriority',
+            [$decisions]
+        );
+        $this->assertEquals(
+            'ban',
+            $result[0][0],
+            'Should return highest priority (ban > bypass)'
+        );
+        // Test 2 : custom ordered priorities
+        $remediationConfigs = [
+            'ordered_remediations' => ['captcha', Constants::REMEDIATION_BAN],
+            'fallback_remediation' => 'captcha',
+        ];
+        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
+        $decisions = [
+            [
+                'captcha',
+                1668577960,
+                'CAPI-captcha-range-52.3.230.0/24',
+            ],
+            [
+                'ban',
+                1668577960,
+                'CAPI-ban-range-52.3.230.0/24',
+            ],
+        ];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'sortDecisionsByPriority',
+            [$decisions]
+        );
+        $this->assertEquals(
+            'captcha',
+            $result[0][0],
+            'Should return highest priority (captcha > ban)'
+        );
+        // Test 3 : fallback
+        $decisions = [
+            [
+                'unknown',
+                1668577960,
+                'CAPI-unknown-range-52.3.230.0/24',
+            ],
+            [
+                'ban',
+                1668577960,
+                'CAPI-ban-range-52.3.230.0/24',
+            ],
+        ];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'sortDecisionsByPriority',
+            [$decisions]
+        );
+        $this->assertEquals(
+            'captcha',
+            $result[0][0],
+            'Should return highest priority (fallback captcha > ban)'
+        );
+        // Test 4 : empty
+        $decisions = [];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertCount(
