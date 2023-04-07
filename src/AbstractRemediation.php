@@ -88,6 +88,16 @@ abstract class AbstractRemediation
     abstract public function getIpRemediation(string $ip): string;
 
     /**
+     * @throws InvalidArgumentException
+     */
+    public function getOriginsCount(): array
+    {
+        $originsCountItem = $this->cacheStorage->getItem(AbstractCache::ORIGINS_COUNT);
+
+        return $originsCountItem->isHit() ? $originsCountItem->get() : [];
+    }
+
+    /**
      * Prune cache.
      *
      * @throws CacheStorage\CacheStorageException
@@ -358,19 +368,17 @@ abstract class AbstractRemediation
      */
     protected function updateRemediationOriginCount(string $origin): int
     {
-        $cacheStorage = $this->cacheStorage;
-        $cacheKey = $cacheStorage->getCacheKey(AbstractCache::ORIGIN_COUNT, $origin);
-        $originCountItem = $cacheStorage->getItem($cacheKey);
+        $originCountItem = $this->cacheStorage->getItem(AbstractCache::ORIGINS_COUNT);
         $cacheOriginCount = $originCountItem->isHit() ? $originCountItem->get() : [];
-        $count = isset($cacheOriginCount[AbstractCache::INDEX_MAIN]) ?
-            (int) $cacheOriginCount[AbstractCache::INDEX_MAIN] :
+        $count = isset($cacheOriginCount[$origin]) ?
+            (int) $cacheOriginCount[$origin] :
             0;
 
         $this->cacheStorage->upsertItem(
-            $cacheKey,
-            [AbstractCache::INDEX_MAIN => ++$count],
+            AbstractCache::ORIGINS_COUNT,
+            [$origin => ++$count],
             0,
-            [AbstractCache::ORIGIN_COUNT]
+            [AbstractCache::ORIGINS_COUNT]
         );
 
         return $count;

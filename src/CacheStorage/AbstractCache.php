@@ -45,7 +45,7 @@ abstract class AbstractCache
     /** @var string Internal name for list */
     public const LIST = 'list';
     /** @var string Internal name for cache remediation origin count item */
-    public const ORIGIN_COUNT = 'origin_count';
+    public const ORIGINS_COUNT = 'origins_count';
     /** @var string Internal name for cache clean item */
     public const CLEAN = 'clean';
     /** @var string Internal name for removed item index */

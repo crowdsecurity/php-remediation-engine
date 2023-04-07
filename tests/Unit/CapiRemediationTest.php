@@ -1281,6 +1281,8 @@ final class CapiRemediationTest extends AbstractRemediation
 
         // Test 11 : new + list
         $result = $remediation->refreshDecisions();
+        $time = time();
+        $listExpiration = $time + 24 * 60 * 60;
         $this->assertEquals(
             ['new' => 2, 'deleted' => 0],
             $result,
@@ -1297,13 +1299,11 @@ final class CapiRemediationTest extends AbstractRemediation
             true,
             $lastPullItem->isHit()
         );
-
-        $time = time();
-        $listExpiration = $time + 24 * 60 * 60;
-        $this->assertEquals(
-            [AbstractCache::INDEX_EXP => $listExpiration, AbstractCache::LAST_PULL => $time],
-            $lastPullItem->get()
-        );
+        $lastPullItemContent = $lastPullItem->get();
+        // Avoid false positive with tme manipulation (strict equality sometimes leads to error of 1 second)
+        $this->assertTrue($lastPullItemContent[1] <= $listExpiration && $listExpiration - 1 <= $lastPullItemContent[1]);
+        $this->assertTrue($lastPullItemContent['last_pull'] <= $time && $time - 1 <=
+                                                                        $lastPullItemContent['last_pull']);
 
         $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_2_CACHE_KEY));
         $cachedValue = $item->get();

@@ -13,8 +13,7 @@ The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this libra
 ---
 
 
-## [3.2.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.2.0) - 2023-04-??
-[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.1.1...v3.2.0)
+## Unreleased
 
 ### Changed
 
@@ -22,7 +21,7 @@ The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this libra
 
 ### Added
 
-- Store origin count of `getIpRemediation` in cache
+- Store origin count of `getIpRemediation` in cache and provide a `getOriginsCount` helper method
 
 ### Deprecated
 

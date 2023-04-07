@@ -63,6 +63,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleRemediationFromDecisions
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCount
  *
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
  *
@@ -429,7 +430,21 @@ final class LapiRemediationTest extends AbstractRemediation
                 [AbstractCache::STORED => []],  // Test 3 : retrieve empty IP decisions
                 [AbstractCache::STORED => []],  // Test 3 : retrieve empty range decisions
                 [AbstractCache::STORED => []],  // Test 4 : retrieve empty IP decisions
-                [AbstractCache::STORED => []]   // Test 4 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 4 : retrieve empty range decisions
+                [AbstractCache::STORED => [[
+                    'bypass',
+                    $expectedCleanTime,
+                    'clean-bypass-ip-1.2.3.4',
+                    'clean',
+                ]]],                            // Test 5 : retrieve cached bypass
+                [AbstractCache::STORED => []],  // Test 5 : retrieve empty range
+                [AbstractCache::STORED => [[
+                    'bypass',
+                    $expectedCleanTime,
+                    'clean-bypass-ip-1.2.3.4',
+                    'clean',
+                ]]],                            // Test 6 : retrieve cached bypass
+                [AbstractCache::STORED => []]  // Test 6 : retrieve empty range
             )
         );
         $this->bouncer->method('getFilteredDecisions')->will(
@@ -487,12 +502,11 @@ final class LapiRemediationTest extends AbstractRemediation
         $this->bouncer->expects($this->exactly(3))->method('getFilteredDecisions');
 
         // Test 1 (No cached items and no active decision)
-        $cleanOriginKey = $this->cacheStorage->getCacheKey(AbstractCache::ORIGIN_COUNT, 'clean');
-        $item = $this->cacheStorage->getItem($cleanOriginKey);
+        $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            false,
-            $item->isHit(),
-            'Clean origin count should not be cached'
+            [],
+            $originsCount,
+            'Origins count should be empty'
         );
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
 
@@ -517,7 +531,7 @@ final class LapiRemediationTest extends AbstractRemediation
         );
         $this->assertTrue(
             $expectedCleanTime <= $cachedItem[0][AbstractCache::INDEX_EXP] &&
-            $cachedItem[0][AbstractCache::INDEX_EXP] <= $expectedCleanTime+1,
+            $cachedItem[0][AbstractCache::INDEX_EXP] <= $expectedCleanTime + 1,
             'Should return current time + clean ip duration config'
         );
         $this->assertEquals(
@@ -530,17 +544,11 @@ final class LapiRemediationTest extends AbstractRemediation
             $cachedItem[0][AbstractCache::INDEX_ORIGIN],
             'Should return correct origin'
         );
-        $item = $this->cacheStorage->getItem($cleanOriginKey);
+        $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            true,
-            $item->isHit(),
-            'Clean origin count should be cached'
-        );
-        $cleanCount = $item->get()[0];
-        $this->assertEquals(
-            1,
-            $cleanCount,
-            'Clean count should be 1'
+            ['clean' => 1],
+            $originsCount,
+            'Origin count should be cached'
         );
         // Test 2 (cached decisions)
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
@@ -549,39 +557,26 @@ final class LapiRemediationTest extends AbstractRemediation
             $result,
             'Cached (clean) should return a bypass remediation'
         );
-        $item = $this->cacheStorage->getItem($cleanOriginKey);
+        $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            true,
-            $item->isHit(),
-            'Clean origin count should be cached'
-        );
-        $cleanCount = $item->get()[0];
-        $this->assertEquals(
-            2,
-            $cleanCount,
+            ['clean' => 2],
+            $originsCount,
             'Clean count should be 2'
         );
         // Test 3 (no cached decision and 2 actives IP decisions)
         $this->cacheStorage->clear();
-        $lapiOriginKey = $this->cacheStorage->getCacheKey(AbstractCache::ORIGIN_COUNT, 'lapi');
-        $item = $this->cacheStorage->getItem($lapiOriginKey);
+        $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            false,
-            $item->isHit(),
-            'Lapi origin count should not be cached'
+            [],
+            $originsCount,
+            'Origin count should not be cached'
         );
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
-        $item = $this->cacheStorage->getItem($lapiOriginKey);
+        $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            true,
-            $item->isHit(),
-            'Lapi origin count should be cached'
-        );
-        $lapiCount = $item->get()[0];
-        $this->assertEquals(
-            1,
-            $lapiCount,
-            'Lapi count should be 1'
+            ['lapi' => 1],
+            $originsCount,
+            'Origin count should be cached'
         );
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
@@ -591,6 +586,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
         $cachedItem = $item->get();
         $this->assertCount(2, $cachedItem, 'Should have cache 2 decisions for IP');
+
         // Test 4 (no cached decision and 1 active IPv6 range decision)
         $this->cacheStorage->clear();
         $result = $remediation->getIpRemediation(TestConstants::IP_V6);
@@ -603,6 +599,32 @@ final class LapiRemediationTest extends AbstractRemediation
         $cachedItem = $item->get();
         $this->assertCount(1, $cachedItem, 'Should have cache 1 decisions for IP');
         $this->assertEquals($cachedItem[0][0], 'ban', 'Should be a ban');
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            ['lapi' => 1],
+            $originsCount,
+            'Origin count should be cached'
+        );
+        // Test 5 : merge origins count
+        $remediation->getIpRemediation(TestConstants::IP_V4);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            ['clean' => 1,
+                'lapi' => 1,
+            ],
+            $originsCount,
+            'Origin count should be updated'
+        );
+        // Test 5 : merge origins count
+        $remediation->getIpRemediation(TestConstants::IP_V4);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            ['clean' => 2,
+                'lapi' => 1,
+            ],
+            $originsCount,
+            'Origin count should be updated'
+        );
     }
 
     /**
