@@ -47,6 +47,8 @@
   - [Redis cache DSN](#redis-cache-dsn)
   - [Memcached cache DSN](#memcached-cache-dsn)
   - [Cache tags](#cache-tags)
+- [Helpers](#helpers)
+  - [Origins count](#origins-count)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
