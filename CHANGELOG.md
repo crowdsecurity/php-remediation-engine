@@ -12,7 +12,7 @@ The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this libra
 
 ---
 
-## [3.3.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.3.0) - 202?-??-??
+## [3.3.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.3.0) - 2023-12-14
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.2.0...v3.3.0)
 
 ### Changed
