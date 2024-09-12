@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The [public API](https://semver.org/spec/v2.0.0.html#spec-item-1)  of this library consists of all public or protected methods, properties and constants belonging to the `src` folder.
 
+As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com/doc/current/contributing/code/bc.html#working-on-symfony-code) when deciding whether a change is a breaking change or not.
+
+
 ---
 
 ## [3.3.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.3.0) - 2023-12-14

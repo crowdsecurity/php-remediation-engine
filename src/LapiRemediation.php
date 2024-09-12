@@ -88,7 +88,7 @@ class LapiRemediation extends AbstractRemediation
                     'value' => $ip,
                     'type' => Constants::REMEDIATION_BYPASS,
                     'origin' => AbstractCache::CLEAN,
-                    'duration' => sprintf('%ss', (int) $this->getConfig('clean_ip_cache_duration')),
+                    'duration' => sprintf('%ss', (int)$this->getConfig('clean_ip_cache_duration')),
                 ]]);
             // Store decision(s) even if bypass
             $stored = $this->storeDecisions($finalDecisions);
@@ -97,7 +97,34 @@ class LapiRemediation extends AbstractRemediation
 
         $remediationData = $this->handleRemediationFromDecisions($cachedDecisions);
         if (!empty($remediationData[self::INDEX_ORIGIN])) {
-            $this->updateRemediationOriginCount((string) $remediationData[self::INDEX_ORIGIN]);
+            $this->updateRemediationOriginCount((string)$remediationData[self::INDEX_ORIGIN]);
+        }
+
+        return $remediationData[self::INDEX_REM];
+    }
+
+    /**
+     * @param array $headers
+     * @param string $rawBody
+     * @return string
+     * @throws CacheException
+     * @throws ClientException
+     * @throws InvalidArgumentException
+     */
+    public function getAppSecRemediation(array $headers, string $rawBody = ''): string
+    {
+        $rawAppSecDecision = $this->client->getAppSecDecision($headers, $rawBody);
+        $rawRemediation = !isset($rawAppSecDecision['action']) || $rawAppSecDecision['action'] === 'allow' ?
+            Constants::REMEDIATION_BYPASS : $rawAppSecDecision['action'];
+        // We do not store AppSec decisions in cache, but we use cached decision format to retrieve final remediation
+        $fakeCachedDecisions = [[
+            AbstractCache::INDEX_MAIN => $rawRemediation,
+            AbstractCache::INDEX_ORIGIN => $rawRemediation === Constants::REMEDIATION_BYPASS ?
+                AbstractCache::CLEAN_APPSEC : Constants::ORIGIN_APPSEC,
+        ]];
+        $remediationData = $this->handleRemediationFromDecisions($fakeCachedDecisions);
+        if (!empty($remediationData[self::INDEX_ORIGIN])) {
+            $this->updateRemediationOriginCount((string)$remediationData[self::INDEX_ORIGIN]);
         }
 
         return $remediationData[self::INDEX_REM];
@@ -147,7 +174,7 @@ class LapiRemediation extends AbstractRemediation
     {
         if (null === $this->scopes) {
             $finalScopes = [Constants::SCOPE_IP, Constants::SCOPE_RANGE];
-            $geolocConfigs = (array) $this->getConfig('geolocation');
+            $geolocConfigs = (array)$this->getConfig('geolocation');
             if (!empty($geolocConfigs['enabled'])) {
                 $finalScopes[] = Constants::SCOPE_COUNTRY;
             }
@@ -213,7 +240,7 @@ class LapiRemediation extends AbstractRemediation
         $cacheConfig = $cacheConfigItem->get();
 
         return \is_array($cacheConfig) && isset($cacheConfig[AbstractCache::WARMUP])
-                && true === $cacheConfig[AbstractCache::WARMUP];
+               && true === $cacheConfig[AbstractCache::WARMUP];
     }
 
     /**

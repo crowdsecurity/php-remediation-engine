@@ -48,6 +48,8 @@ abstract class AbstractCache
     public const ORIGINS_COUNT = 'origins_count';
     /** @var string Internal name for cache clean item */
     public const CLEAN = 'clean';
+    /** @var string Internal name for cache clean appsec item */
+    public const CLEAN_APPSEC = 'clean_appsec';
     /** @var string Internal name for removed item index */
     public const REMOVED = 'removed';
     /** @var string Cache symbol */
@@ -100,7 +102,7 @@ abstract class AbstractCache
         foreach ($cachedValues as $key => $cachedValue) {
             // Remove expired value
             $currentTime = time();
-            if ($currentTime > $cachedValue[self::INDEX_EXP]) {
+            if (isset($cachedValue[self::INDEX_EXP]) && $currentTime > $cachedValue[self::INDEX_EXP]) {
                 unset($cachedValues[$key]);
             }
         }

@@ -431,7 +431,7 @@ abstract class AbstractRemediation
     }
 
     /**
-     * Sort the decision array of a cache item, by remediation priorities.
+     * Sort the decision array of a cache item, by remediation priorities, using fallback if needed.
      */
     private function sortDecisionsByPriority(array $decisions): array
     {
