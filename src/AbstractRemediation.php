@@ -43,7 +43,7 @@ abstract class AbstractRemediation
      */
     protected $logger;
 
-    public function __construct(array $configs, AbstractCache $cacheStorage, LoggerInterface $logger = null)
+    public function __construct(array $configs, AbstractCache $cacheStorage, ?LoggerInterface $logger = null)
     {
         $this->configs = $configs;
         $this->cacheStorage = $cacheStorage;
@@ -100,7 +100,7 @@ abstract class AbstractRemediation
     /**
      * Prune cache.
      *
-     * @throws CacheStorage\CacheStorageException
+     * @throws CacheStorageException
      */
     public function pruneCache(): bool
     {

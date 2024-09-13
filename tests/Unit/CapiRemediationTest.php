@@ -421,11 +421,11 @@ final class CapiRemediationTest extends AbstractRemediation
             [
                 'scope' => 'ip',
                 'decisions' => [
-                        [
-                            'value' => '1.2.3.4',
-                            'duration' => '147h',
-                        ],
+                    [
+                        'value' => '1.2.3.4',
+                        'duration' => '147h',
                     ],
+                ],
             ],
         ];
         $result = PHPUnitUtil::callMethod(
@@ -462,8 +462,8 @@ final class CapiRemediationTest extends AbstractRemediation
             [
                 'scope' => 'range',
                 'decisions' => [
-                        '1.2.3.4/24', '5.6.7.8/24',
-                    ],
+                    '1.2.3.4/24', '5.6.7.8/24',
+                ],
             ],
         ];
         $result = PHPUnitUtil::callMethod(

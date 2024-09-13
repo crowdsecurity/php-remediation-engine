@@ -81,7 +81,7 @@ abstract class AbstractCache
      */
     private $cacheKeys = [];
 
-    public function __construct(array $configs, AdapterInterface $adapter, LoggerInterface $logger = null)
+    public function __construct(array $configs, AdapterInterface $adapter, ?LoggerInterface $logger = null)
     {
         $this->configs = $configs;
         $this->adapter = $adapter;
@@ -391,7 +391,7 @@ abstract class AbstractCache
     /**
      * Format decision to use a minimal amount of data (less cache data consumption).
      */
-    private function format(Decision $decision, int $bucketInt = null): array
+    private function format(Decision $decision, ?int $bucketInt = null): array
     {
         $mainValue = $bucketInt ? $decision->getValue() : $decision->getType();
 
@@ -463,7 +463,7 @@ abstract class AbstractCache
     /**
      * @return array|string[]
      */
-    private function getTags(Decision $decision, int $bucketInt = null): array
+    private function getTags(Decision $decision, ?int $bucketInt = null): array
     {
         return $bucketInt ? [self::RANGE_BUCKET_TAG] : [self::CACHE_TAG_REM, $decision->getScope()];
     }
@@ -521,7 +521,7 @@ abstract class AbstractCache
      * @throws InvalidArgumentException
      * @throws CacheException
      */
-    private function remove(Decision $decision, int $bucketInt = null): array
+    private function remove(Decision $decision, ?int $bucketInt = null): array
     {
         $result = [self::DONE => 0, self::DEFER => 0, self::REMOVED => []];
         $cacheKey = $bucketInt ? $this->getCacheKey(self::IPV4_BUCKET_KEY, (string) $bucketInt) :
@@ -598,7 +598,7 @@ abstract class AbstractCache
      * @throws CacheException
      * @throws \Exception
      */
-    private function store(Decision $decision, int $bucketInt = null): array
+    private function store(Decision $decision, ?int $bucketInt = null): array
     {
         $cacheKey = $bucketInt ? $this->getCacheKey(self::IPV4_BUCKET_KEY, (string) $bucketInt) :
             $this->getCacheKey($decision->getScope(), $decision->getValue());

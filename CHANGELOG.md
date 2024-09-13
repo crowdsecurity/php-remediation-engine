@@ -15,6 +15,24 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ---
 
+## [3.4.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.3.0) - 2024-??-??
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.3.0...v3.4.0)
+
+### Added
+
+- Add AppSec requests support with `getAppSecRemediation` public method in `LapiRemediation` class
+
+
+### Changed
+
+- Update `crowdsec/common` dependency to `v2.3.0`
+- Update `crowdsec/capi-client` dependency to `v3.2.0`
+- Update `crowdsec/lapi-client` dependency to `v3.3.0`
+
+
+---
+
+
 ## [3.3.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.3.0) - 2023-12-14
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.2.0...v3.3.0)
 

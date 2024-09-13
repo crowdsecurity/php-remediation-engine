@@ -2,9 +2,8 @@
 
 require_once __DIR__ . '/../../vendor/autoload.php';
 
-use CrowdSec\Common\Logger\FileLog;
-use CrowdSec\Common\Client\HttpMessage\AppSecRequest;
 use CrowdSec\Common\Constants;
+use CrowdSec\Common\Logger\FileLog;
 use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
@@ -19,12 +18,11 @@ $verb = $argv[5] ?? null;
 $bouncerKey = $argv[6] ?? false;
 $userAgent = $argv[7] ?? '';
 
-
 if (!$ip || !$uri || !$host || !$verb || !$bouncerKey || !$appSecUrl || !$userAgent) {
     exit(
         'Usage: php get-remediation-appsec.php <APPSEC_URL> <IP> <URI> <HOST> <VERB> <API_KEY> <USER_AGENT> <HEADERS_JSON> [<RAW_BODY>]' . \PHP_EOL .
         'Example: php get-remediation-appsec.php http://crowdsec:7422  172.0.0.24 /login example.com POST c580ebdff45da6e01415ed0e9bc9c06b ' .
-        '\'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0\' '.
+        '\'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0\' ' .
         '\'{"Content-Type":"application/x-www-form-urlencoded","Accept-Language":"en-US,en;q=0.5"}\' ' .
         '\'username=admin\'' . \PHP_EOL
     );
@@ -79,8 +77,6 @@ $appSecHeaders = array_merge($headers, [
     Constants::HEADER_APPSEC_HOST => $host,
     Constants::HEADER_APPSEC_VERB => $verb,
 ]);
-
-
 
 // Determine the remediation for the given IP
 echo 'Calling AppSec: ' . $lapiClient->getConfig('app_sec_url') . ' ...' . \PHP_EOL;

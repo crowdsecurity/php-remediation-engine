@@ -27,7 +27,7 @@ class CapiRemediation extends AbstractRemediation
         array $configs,
         Watcher $client,
         AbstractCache $cacheStorage,
-        LoggerInterface $logger = null
+        ?LoggerInterface $logger = null
     ) {
         // Force stream mode for CAPI remediation
         $configs['stream_mode'] = true;

@@ -498,7 +498,7 @@ final class ConfigurationTest extends TestCase
         $configs = [
             'redis_dsn' => 'redis_dsn_test',
             'some_useless_conf' => 'what-ever',
-            ];
+        ];
         $result = $processor->processConfiguration($configuration, [$configuration->cleanConfigs($configs)]);
         $this->assertEquals(
             [
