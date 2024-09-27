@@ -17,6 +17,7 @@ namespace CrowdSec\RemediationEngine\Tests\Unit;
 
 use CrowdSec\Common\Logger\FileLog;
 use CrowdSec\LapiClient\Bouncer;
+use CrowdSec\LapiClient\TimeoutException;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
 use CrowdSec\RemediationEngine\CacheStorage\Memcached;
 use CrowdSec\RemediationEngine\CacheStorage\PhpFiles;
@@ -124,6 +125,14 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::warmUp
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getClient
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getAppSecRemediation
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::processCachedDecisions
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::retrieveRemediationFromCachedDecisions
+ * @covers \CrowdSec\RemediationEngine\Configuration\Lapi::addAppSecNodes
+ * @covers \CrowdSec\RemediationEngine\Configuration\Lapi::validateAppSec
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::parseAppSecDecision
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::validateAppSecHeaders
+ *
+ *
  */
 final class AppSecLapiRemediationTest extends AbstractRemediation
 {
@@ -219,10 +228,20 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
 
     /**
      * @dataProvider cacheTypeProvider
+     *
+     * @group appsec
      */
     public function testGetAppSecRemediation($cacheType)
     {
         $this->setCache($cacheType);
+
+        $appSecHeaders = [
+            Constants::HEADER_APPSEC_USER_AGENT => 'test',
+            Constants::HEADER_APPSEC_VERB => 'GET',
+            Constants::HEADER_APPSEC_URI => '/test',
+            Constants::HEADER_APPSEC_IP => '1.2.3.4',
+            Constants::HEADER_APPSEC_HOST => 'test.com',
+        ];
 
         $remediationConfigs = [];
 
@@ -231,7 +250,9 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
                 ['action' => 'allow', 'http_status' => 202],  // Test 1 : clean request
                 ['action' => 'ban', 'http_status' => 403],  // Test 2 : ban request
                 ['action' => 'unknown', 'http_status' => 403], // Test 3 : unknown request
-                ['action' => 'unknown', 'http_status' => 403] // Test 4 : unknown request with captcha fallback
+                ['action' => 'unknown', 'http_status' => 403], // Test 4 : unknown request with captcha fallback
+                $this->throwException(new TimeoutException('Test timeout exception')), // Test 5 : exception
+                ['key' => 'value'] // Test 6 : response with no action
             )
         );
 
@@ -249,6 +270,16 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
             'Default ordered remediation should be as expected'
         );
 
+        // Test 0: bad header
+        unset($appSecHeaders[Constants::HEADER_APPSEC_IP]);
+        $result = $remediation->getAppSecRemediation($appSecHeaders, '');
+        $this->assertEquals(
+            Constants::REMEDIATION_BYPASS,
+            $result,
+            'Bad header should early return a bypass remediation'
+        );
+        $appSecHeaders[Constants::HEADER_APPSEC_IP] = '1.2.3.4';
+
         // Test 1 (AppSec response: clean request)
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
@@ -256,8 +287,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
             $originsCount,
             'Origins count should be empty'
         );
-        // As we mock the Lapi Client getAppSecDecision method, we can pass empty headers and rawBody
-        $result = $remediation->getAppSecRemediation([], '');
+        $result = $remediation->getAppSecRemediation($appSecHeaders, '');
 
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
@@ -272,7 +302,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
             'Origin count should be cached'
         );
         // Test 2 (AppSec response: bad request)
-        $result = $remediation->getAppSecRemediation([], '');
+        $result = $remediation->getAppSecRemediation($appSecHeaders, '');
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
             $result,
@@ -285,7 +315,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
             'Origin count should be cached'
         );
         // Test 3 (AppSec response: unknown request)
-        $result = $remediation->getAppSecRemediation([], '');
+        $result = $remediation->getAppSecRemediation($appSecHeaders, '');
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
             $result,
@@ -300,7 +330,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         // Test 4 (AppSec response: unknown request with captcha fallback)
         $remediationConfigs = ['fallback_remediation' => Constants::REMEDIATION_CAPTCHA];
         $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
-        $result = $remediation->getAppSecRemediation([], '');
+        $result = $remediation->getAppSecRemediation($appSecHeaders, '');
         $this->assertEquals(
             Constants::REMEDIATION_CAPTCHA,
             $result,
@@ -311,6 +341,20 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
             ['clean_appsec' => 1, 'appsec' => 3],
             $originsCount,
             'Origin count should be cached (original appsec response was not a bypass, so it does not increase clean_appsec counter)'
+        );
+        // Test 5 (AppSec response: timeout)
+        $result = $remediation->getAppSecRemediation($appSecHeaders, '');
+        $this->assertEquals(
+            Constants::REMEDIATION_CAPTCHA,
+            $result,
+            'Timeout should return a captcha remediation (default appsec fallback)')
+        ;
+        // Test 6 (AppSec response: no action)
+        $result = $remediation->getAppSecRemediation($appSecHeaders, '');
+        $this->assertEquals(
+            Constants::REMEDIATION_BYPASS,
+            $result,
+            'No action should return a bypass remediation'
         );
     }
 

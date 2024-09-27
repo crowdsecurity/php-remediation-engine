@@ -216,10 +216,19 @@ abstract class AbstractRemediation
         return $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS;
     }
 
-    protected function handleRemediationFromDecisions(array $decisions): array
+    /**
+     * @deprecated since 3.4.0 . Will be removed in 4.0.0. Use private retrieveRemediationFromCachedDecisions instead.
+     *
+     * @codeCoverageIgnore
+     */
+    protected function handleRemediationFromDecisions(array $cacheFormattedDecisions): array
     {
-        $cleanDecisions = $this->cacheStorage->cleanCachedValues($decisions);
+        return $this->retrieveRemediationFromCachedDecisions($cacheFormattedDecisions);
+    }
 
+    private function retrieveRemediationFromCachedDecisions(array $cacheDecisions): array
+    {
+        $cleanDecisions = $this->cacheStorage->cleanCachedValues($cacheDecisions);
         $sortedDecisions = $this->sortDecisionsByPriority($cleanDecisions);
         $this->logger->debug('Decisions have been sorted by priority', [
             'type' => 'REM_SORTED_DECISIONS',
@@ -231,6 +240,20 @@ abstract class AbstractRemediation
             self::INDEX_REM => $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS,
             self::INDEX_ORIGIN => $sortedDecisions[0][AbstractCache::INDEX_ORIGIN] ?? '',
         ];
+    }
+
+    /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    protected function processCachedDecisions(array $cacheDecisions): string
+    {
+        $remediationData = $this->retrieveRemediationFromCachedDecisions($cacheDecisions);
+        if (!empty($remediationData[self::INDEX_ORIGIN])) {
+            $this->updateRemediationOriginCount((string) $remediationData[self::INDEX_ORIGIN]);
+        }
+
+        return $remediationData[self::INDEX_REM];
     }
 
     protected function parseDurationToSeconds(string $duration): int
@@ -334,6 +357,13 @@ abstract class AbstractRemediation
 
     /**
      * Add decisions in cache.
+     * If decisions are already in cache, result will be [AbstractCache::DONE => 0, AbstractCache::STORED => []].
+     *
+     * @return array
+     *               [
+     *               AbstractCache::DONE => (int): number of stored decisions by the current call,
+     *               AbstractCache::STORED => (array): cached decisions stored by the current call
+     *               ]
      *
      * @throws CacheStorageException
      * @throws InvalidArgumentException

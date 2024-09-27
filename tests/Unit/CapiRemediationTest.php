@@ -123,6 +123,8 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::validateBlocklist
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::shouldAddModifiedSince
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::handleListResponse
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::processCachedDecisions
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::retrieveRemediationFromCachedDecisions
  */
 final class CapiRemediationTest extends AbstractRemediation
 {

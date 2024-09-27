@@ -605,6 +605,7 @@ abstract class AbstractCache
         $item = $this->getItem($cacheKey);
         $cachedValues = $item->isHit() ? $item->get() : [];
         $indexToStore = $this->getCachedIndex($decision->getIdentifier(), $cachedValues);
+        // Early return if already in cache
         if (null !== $indexToStore) {
             return [self::DONE => 0, self::DEFER => 0, self::STORED => []];
         }
