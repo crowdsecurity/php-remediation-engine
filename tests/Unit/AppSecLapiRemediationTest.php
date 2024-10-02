@@ -252,7 +252,8 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
                 ['action' => 'unknown', 'http_status' => 403], // Test 3 : unknown request
                 ['action' => 'unknown', 'http_status' => 403], // Test 4 : unknown request with captcha fallback
                 $this->throwException(new TimeoutException('Test timeout exception')), // Test 5 : exception
-                ['key' => 'value'] // Test 6 : response with no action
+                $this->throwException(new TimeoutException('Test timeout exception')), // Test 6 : exception
+                ['key' => 'value'] // Test 7 : response with no action
             )
         );
 
@@ -349,7 +350,16 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
             $result,
             'Timeout should return a captcha remediation (default appsec fallback)')
         ;
-        // Test 6 (AppSec response: no action)
+        // Test 6 (AppSec response: timeout with configured fallback)
+        $remediationConfigs = ['appsec_fallback_remediation' => Constants::REMEDIATION_BAN];
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
+        $result = $remediation->getAppSecRemediation($appSecHeaders, '');
+        $this->assertEquals(
+            Constants::REMEDIATION_BAN,
+            $result,
+            'Timeout should return a ban remediation (appsec_remediation_fallback setting)')
+        ;
+        // Test 7 (AppSec response: no action)
         $result = $remediation->getAppSecRemediation($appSecHeaders, '');
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
