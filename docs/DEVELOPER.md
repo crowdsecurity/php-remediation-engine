@@ -305,14 +305,7 @@ Then, you have to [run the action manually from the GitHub repository](https://g
 
 
 Alternatively, you could use the [GitHub CLI](https://github.com/cli/cli): 
-- create a draft release: 
-```
-gh workflow run release.yml -f tag_name=vx.y.z -f draft=true
-```
-- publish a prerelease:  
-```
-gh workflow run release.yml -f tag_name=vx.y.z -f prerelease=true
-```
+
 - publish a release: 
 ```
 gh workflow run release.yml -f tag_name=vx.y.z

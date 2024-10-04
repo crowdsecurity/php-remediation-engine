@@ -15,13 +15,14 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ---
 
-## [3.4.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.3.0) - 2024-??-??
+## [3.4.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.4.0) - 2024-10-04
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.3.0...v3.4.0)
 
 ### Added
 
 - Add AppSec requests support with `getAppSecRemediation` public method in `LapiRemediation` class
-
+- Add `appsec_fallback_remediation` configuration for Lapi remediation
+ 
 
 ### Changed
 

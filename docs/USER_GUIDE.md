@@ -29,6 +29,7 @@
   - [Stream mode](#stream-mode)
   - [Clean IP cache duration](#clean-ip-cache-duration)
   - [Bad IP cache duration](#bad-ip-cache-duration)
+  - [AppSec fallback remediation](#appsec-fallback-remediation)
 - [Cache configurations](#cache-configurations)
   - [PhpFiles cache files directory](#phpfiles-cache-files-directory)
   - [Redis cache DSN](#redis-cache-dsn)
@@ -595,6 +596,23 @@ minimum between this setting and the decision duration.
 This is only useful in live mode. In stream mode, the cache duration depends only on the decision duration. 
 
 In seconds. Must be greater or equal than 1. Default to 120 seconds if not set.
+
+### AppSec fallback remediation
+
+```php
+$configs = [
+        ... 
+        'appsec_fallback_remediation' => 'captcha'
+        ...
+];
+```
+Will be used as remediation in case of AppSec failure (timeout).
+
+Select from `bypass` (minimum remediation), `captcha` (recommended) or `ban` (maximum remediation).
+
+This setting is not required. If you don't set any value, `captcha` will be used by default.
+
+If you set some value, be aware to include this value in the `ordered_remediations` setting too.
 
 
 ## Cache configurations

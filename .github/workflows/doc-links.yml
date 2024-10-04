@@ -37,5 +37,5 @@ jobs:
         run: |
           gem install awesome_bot
           cd extension
-          awesome_bot --files README.md --allow-dupe --allow-redirect --allow 401 --skip-save-results --white-list ddev.site --base-url http://localhost:8080/
-          awesome_bot docs/*.md --allow-dupe --allow-redirect --allow 401 --skip-save-results --white-list crowdsec.net/v2,ddev.site,your-lapi-url,your-appsec-url,https://crowdsec,http://crowdsec --base-url http://localhost:8080/docs/
+          awesome_bot --files README.md --allow-dupe --allow-redirect --allow 401,301 --skip-save-results --white-list ddev.site --base-url http://localhost:8080/
+          awesome_bot docs/*.md --allow-dupe --allow-redirect --allow 401,301 --skip-save-results --white-list crowdsec.net/v2,ddev.site,your-lapi-url,your-appsec-url,https://crowdsec,http://crowdsec,http://localhost:7422 --base-url http://localhost:8080/docs/
