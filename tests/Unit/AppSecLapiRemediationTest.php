@@ -131,8 +131,6 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\Configuration\Lapi::validateAppSec
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::parseAppSecDecision
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::validateAppSecHeaders
- *
- *
  */
 final class AppSecLapiRemediationTest extends AbstractRemediation
 {
