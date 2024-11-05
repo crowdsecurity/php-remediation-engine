@@ -125,7 +125,7 @@ final class CapiRemediationTest extends TestCase
         // Empty log file
         file_put_contents($this->root->url() . '/' . $this->debugFile, '');
         $result = $remediationEngine->refreshDecisions();
-        $this->assertTrue(in_array((int) $result['new'], [0, 1]));
+        $this->assertTrue(in_array((int) $result['new'], [0, 1]), 'New decision should be 0 or 1: ' . $result['new']);
 
         PHPUnitUtil::assertRegExp(
             $this,
