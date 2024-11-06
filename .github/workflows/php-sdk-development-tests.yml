@@ -213,6 +213,7 @@ jobs:
           ddev composer validate --strict --working-dir ./${{env.CAPI_CLIENT_PATH}}
           # LAPI client
           cat ./${{env.LAPI_CLIENT_PATH}}/composer.json
+          ddev composer validate --strict --working-dir ./${{env.LAPI_CLIENT_PATH}}
 
       - name: Install CrowdSec lib dependencies
         run: |
