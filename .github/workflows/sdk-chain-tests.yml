@@ -18,18 +18,20 @@ jobs:
   test-standalone-bouncer:
     name: Run Standalone Bouncer tests
     if: ${{ !contains(github.event.head_commit.message, 'chore(') }}
-    uses: crowdsecurity/cs-standalone-php-bouncer/.github/workflows/php-sdk-development-tests.yml@736a2971d93dc6a7e9dc3a73051986b8f7e0b41a
+    uses: crowdsecurity/cs-standalone-php-bouncer/.github/workflows/php-sdk-development-tests.yml@21a85d5696ba607e2028330c4ddda4b5e361547a
     with:
       php_common_json: '["main"]'
       lapi_client_json: '["main"]'
+      capi_client_json: '["main"]'
       remediation_engine_json: '["${{ github.ref_name }}"]'
       bouncer_lib_json: '["main"]'
 
   test-bouncer-lib:
     name: Run Bouncer lib tests
     if: ${{ !contains(github.event.head_commit.message, 'chore(') }}
-    uses: crowdsecurity/php-cs-bouncer/.github/workflows/php-sdk-development-tests.yml@95e5f6b50b517215898356b548a0c15d2d79bed0
+    uses: crowdsecurity/php-cs-bouncer/.github/workflows/php-sdk-development-tests.yml@c2aaf185542d56c4731822e833aa4613b0143a5e
     with:
       php_common_json: '["main"]'
       lapi_client_json: '["main"]'
+      capi_client_json: '["main"]'
       remediation_engine_json: '["${{ github.ref_name }}"]'
