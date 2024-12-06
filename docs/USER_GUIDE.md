@@ -72,7 +72,7 @@ This kind of action is called a remediation and can be:
 - Overridable cache handler (built-in support for `Redis`, `Memcached` and `PhpFiles` caches)
 
 
-- Large PHP matrix compatibility: 7.2, 7.3, 7.4, 8.0, 8.1, 8.2 and 8.3
+- Large PHP matrix compatibility: from 7.2 to 8.4
 
 
 ## Quick start
