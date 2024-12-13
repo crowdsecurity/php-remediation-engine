@@ -66,6 +66,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCount
  *
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionOrigin
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
@@ -447,8 +448,10 @@ final class LapiRemediationTest extends AbstractRemediation
                     $expectedCleanTime,
                     'clean-bypass-ip-1.2.3.4',
                     'clean',
-                ]]],                            // Test 6 : retrieve cached bypass
-                [AbstractCache::STORED => []]  // Test 6 : retrieve empty range
+                ]]],                            // Test 5 bis : retrieve cached bypass
+                [AbstractCache::STORED => []],  // Test 5 bis : retrieve empty range
+                [AbstractCache::STORED => []],  // Test 6 : retrieve empty IP decisions
+                [AbstractCache::STORED => []]  // Test 6 : retrieve empty range decisions
             )
         );
         $this->bouncer->method('getFilteredDecisions')->will(
@@ -478,7 +481,17 @@ final class LapiRemediationTest extends AbstractRemediation
                         'origin' => 'lapi',
                         'duration' => '1h',
                     ],
-                ]   // Test 4 : IPv6 range scoped
+                ],   // Test 4 : IPv6 range scoped
+                [
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4_4,
+                        'type' => 'ban',
+                        'origin' => 'lists',
+                        'scenario' => 'crowdsec_proxy',
+                        'duration' => '1h',
+                    ],
+                ] // Test 6 : origin lists
             )
         );
 
@@ -502,8 +515,8 @@ final class LapiRemediationTest extends AbstractRemediation
             'Default ordered remediation should be as expected'
         );
 
-        // Direct LAPI call will be done only if there is no cached decisions (Test1, Test 3)
-        $this->bouncer->expects($this->exactly(3))->method('getFilteredDecisions');
+        // Direct LAPI call will be done only if there is no cached decisions (Test1, Test 3, Test 6)
+        $this->bouncer->expects($this->exactly(4))->method('getFilteredDecisions');
 
         // Test 1 (No cached items and no active decision)
         $originsCount = $remediation->getOriginsCount();
@@ -619,11 +632,28 @@ final class LapiRemediationTest extends AbstractRemediation
             $originsCount,
             'Origin count should be updated'
         );
-        // Test 5 : merge origins count
+        // Test 5 bis : merge origins count
         $remediation->getIpRemediation(TestConstants::IP_V4);
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
             ['clean' => 2,
+                'lapi' => 1,
+            ],
+            $originsCount,
+            'Origin count should be updated'
+        );
+        // Test 6 : origin lists
+        $result = $remediation->getIpRemediation(TestConstants::IP_V4_4);
+        $this->assertEquals(
+            Constants::REMEDIATION_BAN,
+            $result,
+            'Should return a ban remediation'
+        );
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [
+                'lists:crowdsec_proxy' => 1,
+                'clean' => 2,
                 'lapi' => 1,
             ],
             $originsCount,
@@ -1293,6 +1323,67 @@ final class LapiRemediationTest extends AbstractRemediation
             'unit-ban-ip-1.2.3.4',
             $decision->getIdentifier(),
             'Should have created a correct decision even with id'
+        );
+        // Test 4: bad raw decision for lists
+        $rawDecisions = [
+            [
+                'value' => '1.2.3.4',
+                'origin' => 'lists',
+                'duration' => '147h',
+                'type' => 'ban',
+                'scope' => 'ip',
+            ],
+        ];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'convertRawDecisionsToDecisions',
+            [$rawDecisions]
+        );
+        $this->assertCount(
+            0,
+            $result,
+            'Should return empty array'
+        );
+
+        PHPUnitUtil::assertRegExp(
+            $this,
+            '/.*400.*"type":"REM_RAW_DECISION_NOT_AS_EXPECTED"/',
+            file_get_contents($this->root->url() . '/' . $this->prodFile),
+            'Prod log content should be correct'
+        );
+        // Test 5 : with lists and scenario
+        $rawDecisions = [
+            [
+                'scope' => 'IP',
+                'value' => '1.2.3.4',
+                'type' => 'ban',
+                'origin' => 'lists',
+                'scenario' => 'crowdsec_proxy',
+                'duration' => '147h',
+            ],
+        ];
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'convertRawDecisionsToDecisions',
+            [$rawDecisions]
+        );
+
+        $this->assertCount(
+            1,
+            $result,
+            'Should return array'
+        );
+
+        $decision = $result[0];
+        $this->assertEquals(
+            'lists:crowdsec_proxy-ban-ip-1.2.3.4',
+            $decision->getIdentifier(),
+            'Should have created a correct decision even with lists'
+        );
+        $this->assertEquals(
+            'lists:crowdsec_proxy',
+            $decision->getOrigin(),
+            'Should have created a correct decision origin'
         );
     }
 

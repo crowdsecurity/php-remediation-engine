@@ -154,6 +154,7 @@ class CapiRemediation extends AbstractRemediation
                         'type' => $type,
                         'origin' => $origin,
                         'duration' => $duration,
+                        'scenario' => $listName,
                     ];
 
                     $lastPullCacheKey = $this->getCacheStorage()->getCacheKey(
