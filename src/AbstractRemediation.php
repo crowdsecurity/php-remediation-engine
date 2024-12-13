@@ -113,6 +113,17 @@ abstract class AbstractRemediation
      */
     abstract public function refreshDecisions(): array;
 
+    private function handleDecisionOrigin(array $rawDecision): string
+    {
+        $origin = $this->normalize($rawDecision['origin']);
+        if (Constants::ORIGIN_LISTS === $origin) {
+            // The existence of the $rawDecision['scenario'] must be guaranteed by the validateRawDecision method
+            $origin .= Constants::ORIGIN_LISTS_SEPARATOR . $this->normalize($rawDecision['scenario']);
+        }
+
+        return $origin;
+    }
+
     protected function convertRawDecision(array $rawDecision): ?Decision
     {
         if (!$this->validateRawDecision($rawDecision)) {
@@ -121,7 +132,7 @@ abstract class AbstractRemediation
         // The existence of the following indexes must be guaranteed by the validateRawDecision method
         $value = $rawDecision['value'];
         $type = $this->normalize($rawDecision['type']);
-        $origin = $this->normalize($rawDecision['origin']);
+        $origin = $this->handleDecisionOrigin($rawDecision);
         $duration = $rawDecision['duration'];
         $scope = $this->normalize($rawDecision['scope']);
 
@@ -158,8 +169,7 @@ abstract class AbstractRemediation
         // Ask cache for Range scoped decision
         $rangeDecisions = Type::T_IPv4 === $this->getIpType($ip)
             ? $this->cacheStorage->retrieveDecisionsForIp(Constants::SCOPE_RANGE, $ip)
-            : []
-        ;
+            : [];
         // Ask cache for Country scoped decision
         $countryDecisions = $country ? $this->cacheStorage->retrieveDecisionsForCountry($country) : [];
 
@@ -499,6 +509,8 @@ abstract class AbstractRemediation
 
     private function validateRawDecision(array $rawDecision): bool
     {
+        $result = false;
+
         if (
             !empty($rawDecision['scope'])
             && !empty($rawDecision['value'])
@@ -506,14 +518,23 @@ abstract class AbstractRemediation
             && !empty($rawDecision['origin'])
             && !empty($rawDecision['duration'])
         ) {
-            return true;
+            $result = true;
+            // We don't want blocklists decisions without a scenario
+            if (
+                Constants::ORIGIN_LISTS === $rawDecision['origin']
+                && empty($rawDecision['scenario'])
+            ) {
+                $result = false;
+            }
         }
 
-        $this->logger->error('Retrieved raw decision is not as expected', [
-            'type' => 'REM_RAW_DECISION_NOT_AS_EXPECTED',
-            'raw_decision' => json_encode($rawDecision),
-        ]);
+        if (false === $result) {
+            $this->logger->error('Retrieved raw decision is not as expected', [
+                'type' => 'REM_RAW_DECISION_NOT_AS_EXPECTED',
+                'raw_decision' => json_encode($rawDecision),
+            ]);
+        }
 
-        return false;
+        return $result;
     }
 }

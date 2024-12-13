@@ -66,4 +66,8 @@ class Constants extends CommonConstants
      * @var string The current version of this library
      */
     public const VERSION = 'v3.5.0';
+    /**
+     * @var string The separator between the origin and scenario for the stored origin
+     */
+    public const ORIGIN_LISTS_SEPARATOR = ':';
 }

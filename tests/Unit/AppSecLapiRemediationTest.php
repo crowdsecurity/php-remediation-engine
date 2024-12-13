@@ -284,7 +284,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         // Test 0.2: exceeded body and allow action
         $remediationConfigs = ['appsec_body_size_exceeded_action' => 'allow', 'appsec_max_body_size_kb' => 1024];
         $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
-        $result = $remediation->getAppSecRemediation($appSecHeaders, str_repeat('a', 1024*1024+1));
+        $result = $remediation->getAppSecRemediation($appSecHeaders, str_repeat('a', 1024 * 1024 + 1));
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
             $result,
@@ -293,7 +293,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         // Test 0.3: exceeded body and block action
         $remediationConfigs = ['appsec_body_size_exceeded_action' => 'block', 'appsec_max_body_size_kb' => 12];
         $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
-        $result = $remediation->getAppSecRemediation($appSecHeaders, str_repeat('a', 12*1024+1));
+        $result = $remediation->getAppSecRemediation($appSecHeaders, str_repeat('a', 12 * 1024 + 1));
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
             $result,
@@ -308,7 +308,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
             $originsCount,
             'Origins count should be empty'
         );
-        $result = $remediation->getAppSecRemediation($appSecHeaders, str_repeat('a', 1024*1024+1));
+        $result = $remediation->getAppSecRemediation($appSecHeaders, str_repeat('a', 1024 * 1024 + 1));
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
             $result,

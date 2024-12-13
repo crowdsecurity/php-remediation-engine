@@ -69,6 +69,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers   \CrowdSec\RemediationEngine\CapiRemediation::handleListDecisions
  *
  * @uses \CrowdSec\RemediationEngine\Configuration\Capi::addCapiNodes
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionOrigin
  *
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::formatIfModifiedSinceHeader
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::handleListPullHeaders
