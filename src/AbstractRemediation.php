@@ -113,17 +113,6 @@ abstract class AbstractRemediation
      */
     abstract public function refreshDecisions(): array;
 
-    private function handleDecisionOrigin(array $rawDecision): string
-    {
-        $origin = $rawDecision['origin'];
-        if (Constants::ORIGIN_LISTS === $origin) {
-            // The existence of the $rawDecision['scenario'] must be guaranteed by the validateRawDecision method
-            $origin .= Constants::ORIGIN_LISTS_SEPARATOR . $rawDecision['scenario'];
-        }
-
-        return $origin;
-    }
-
     protected function convertRawDecision(array $rawDecision): ?Decision
     {
         if (!$this->validateRawDecision($rawDecision)) {
@@ -236,39 +225,6 @@ abstract class AbstractRemediation
         return $this->retrieveRemediationFromCachedDecisions($cacheFormattedDecisions);
     }
 
-    private function retrieveRemediationFromCachedDecisions(array $cacheDecisions): array
-    {
-        $cleanDecisions = $this->cacheStorage->cleanCachedValues($cacheDecisions);
-        $sortedDecisions = $this->sortDecisionsByPriority($cleanDecisions);
-        $this->logger->debug('Decisions have been sorted by priority', [
-            'type' => 'REM_SORTED_DECISIONS',
-            'decisions' => $sortedDecisions,
-        ]);
-
-        // Return only a remediation with the highest priority
-        return [
-            self::INDEX_REM => $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS,
-            self::INDEX_ORIGIN => $sortedDecisions[0][AbstractCache::INDEX_ORIGIN] ?? '',
-        ];
-    }
-
-    /**
-     * Retrieve only the remediation with the highest priority from decisions.
-     * It also updates the origin count if needed.
-     *
-     * @throws CacheException
-     * @throws InvalidArgumentException
-     */
-    protected function processCachedDecisions(array $cacheDecisions): string
-    {
-        $remediationData = $this->retrieveRemediationFromCachedDecisions($cacheDecisions);
-        if (!empty($remediationData[self::INDEX_ORIGIN])) {
-            $this->updateRemediationOriginCount((string) $remediationData[self::INDEX_ORIGIN]);
-        }
-
-        return $remediationData[self::INDEX_REM];
-    }
-
     protected function parseDurationToSeconds(string $duration): int
     {
         /**
@@ -286,14 +242,14 @@ abstract class AbstractRemediation
         }
         $seconds = 0;
         if (isset($matches[2])) {
-            $seconds += ((int) $matches[2]) * 3600; // hours
+            $seconds += ((int)$matches[2]) * 3600; // hours
         }
         if (isset($matches[3])) {
-            $seconds += ((int) $matches[3]) * 60; // minutes
+            $seconds += ((int)$matches[3]) * 60; // minutes
         }
         $secondsPart = 0;
         if (isset($matches[4])) {
-            $secondsPart += ((int) $matches[4]); // seconds
+            $secondsPart += ((int)$matches[4]); // seconds
         }
         if (isset($matches[5]) && 'm' === $matches[5]) { // units in milliseconds
             $secondsPart *= 0.001;
@@ -303,7 +259,28 @@ abstract class AbstractRemediation
             $seconds *= -1;
         }
 
-        return (int) round($seconds);
+        return (int)round($seconds);
+    }
+
+    /**
+     * Retrieve only the remediation with the highest priority from decisions.
+     * It will remove expired decisions.
+     * It will use fallback for unknown remediation.
+     * It will cap the remediation level if needed.
+     *
+     * It also updates the origin count if possible.
+     *
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    protected function processCachedDecisions(array $cacheDecisions): string
+    {
+        $remediationData = $this->retrieveRemediationFromCachedDecisions($cacheDecisions);
+        if (!empty($remediationData[self::INDEX_ORIGIN])) {
+            $this->updateRemediationOriginCount((string)$remediationData[self::INDEX_ORIGIN]);
+        }
+
+        return $remediationData[self::INDEX_REM];
     }
 
     /**
@@ -347,7 +324,7 @@ abstract class AbstractRemediation
             return $decisions;
         }
         // Add priorities
-        $orderedRemediations = (array) $this->getConfig('ordered_remediations');
+        $orderedRemediations = (array)$this->getConfig('ordered_remediations');
         $fallback = $this->getConfig('fallback_remediation');
         $decisionsWithPriority = [];
         foreach ($decisions as $decision) {
@@ -414,7 +391,7 @@ abstract class AbstractRemediation
         $originCountItem = $this->cacheStorage->getItem(AbstractCache::ORIGINS_COUNT);
         $cacheOriginCount = $originCountItem->isHit() ? $originCountItem->get() : [];
         $count = isset($cacheOriginCount[$origin]) ?
-            (int) $cacheOriginCount[$origin] :
+            (int)$cacheOriginCount[$origin] :
             0;
 
         $this->cacheStorage->upsertItem(
@@ -425,6 +402,56 @@ abstract class AbstractRemediation
         );
 
         return $count;
+    }
+
+    /**
+     * Cap the remediation to a fixed value given by the bouncing level configuration.
+     *
+     * @param string $remediation (ex: 'ban', 'captcha', 'bypass')
+     *
+     * @return string $remediation The resulting remediation to use (ex: 'ban', 'captcha', 'bypass')
+     */
+    private function capRemediationLevel(string $remediation): string
+    {
+        if ($remediation === Constants::REMEDIATION_BYPASS) {
+            return Constants::REMEDIATION_BYPASS;
+        }
+
+        $orderedRemediations = (array)$this->getConfig('ordered_remediations');
+
+        $bouncingLevel = $this->getConfig('bouncing_level') ?? Constants::BOUNCING_LEVEL_NORMAL;
+        // Compute max remediation level
+        switch ($bouncingLevel) {
+            case Constants::BOUNCING_LEVEL_DISABLED:
+                $maxRemediationLevel = Constants::REMEDIATION_BYPASS;
+                break;
+            case Constants::BOUNCING_LEVEL_FLEX:
+                $maxRemediationLevel = Constants::REMEDIATION_CAPTCHA;
+                break;
+            case Constants::BOUNCING_LEVEL_NORMAL:
+            default:
+                $maxRemediationLevel = Constants::REMEDIATION_BAN;
+                break;
+        }
+
+        $currentIndex = (int)array_search($remediation, $orderedRemediations);
+        $maxIndex = (int)array_search(
+            $maxRemediationLevel,
+            $orderedRemediations
+        );
+        $finalRemediation = $remediation;
+        if ($currentIndex < $maxIndex) {
+            $finalRemediation = $orderedRemediations[$maxIndex];
+            $this->logger->debug('Original remediation has been capped', [
+                'origin' => $remediation,
+                'final' => $finalRemediation,
+            ]);
+        }
+        $this->logger->info('Final remediation', [
+            'remediation' => $finalRemediation,
+        ]);
+
+        return $finalRemediation;
     }
 
     /**
@@ -449,7 +476,7 @@ abstract class AbstractRemediation
     {
         $duration = $this->parseDurationToSeconds($duration);
         if (Constants::REMEDIATION_BYPASS !== $type && !$this->getConfig('stream_mode')) {
-            $duration = min((int) $this->getConfig('bad_ip_cache_duration'), $duration);
+            $duration = min((int)$this->getConfig('bad_ip_cache_duration'), $duration);
         }
 
         return time() + $duration;
@@ -468,9 +495,40 @@ abstract class AbstractRemediation
             $value;
     }
 
+    private function handleDecisionOrigin(array $rawDecision): string
+    {
+        $origin = $rawDecision['origin'];
+        if (Constants::ORIGIN_LISTS === $origin) {
+            // The existence of the $rawDecision['scenario'] must be guaranteed by the validateRawDecision method
+            $origin .= Constants::ORIGIN_LISTS_SEPARATOR . $rawDecision['scenario'];
+        }
+
+        return $origin;
+    }
+
     private function normalize(string $value): string
     {
         return strtolower($value);
+    }
+
+    private function retrieveRemediationFromCachedDecisions(array $cacheDecisions): array
+    {
+        $cleanDecisions = $this->cacheStorage->cleanCachedValues($cacheDecisions);
+        $sortedDecisions = $this->sortDecisionsByPriority($cleanDecisions);
+        $this->logger->debug('Decisions have been sorted by priority', [
+            'type' => 'REM_SORTED_DECISIONS',
+            'decisions' => $sortedDecisions,
+        ]);
+        // Keep only a remediation with the highest priority
+        $highestRemediation = $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS;
+        $origin = $sortedDecisions[0][AbstractCache::INDEX_ORIGIN] ?? '';
+        // Cap the remediation level
+        $cappedRemediation = $this->capRemediationLevel($highestRemediation);
+
+        return [
+            self::INDEX_REM => $cappedRemediation,
+            self::INDEX_ORIGIN => $cappedRemediation === Constants::REMEDIATION_BYPASS ? AbstractCache::CLEAN : $origin,
+        ];
     }
 
     /**
@@ -482,7 +540,7 @@ abstract class AbstractRemediation
             return $decisions;
         }
         // Add priorities
-        $orderedRemediations = (array) $this->getConfig('ordered_remediations');
+        $orderedRemediations = (array)$this->getConfig('ordered_remediations');
         $fallback = $this->getConfig('fallback_remediation');
         $decisionsWithPriority = [];
         foreach ($decisions as $decision) {

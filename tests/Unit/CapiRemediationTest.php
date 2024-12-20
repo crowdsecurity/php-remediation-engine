@@ -455,7 +455,7 @@ final class CapiRemediationTest extends AbstractRemediation
             'Should have created a normalized scope'
         );
         $this->assertEquals(
-            'capi',
+            'CAPI',
             $decision->getOrigin(),
             'Should have created a normalized origin'
         );
@@ -493,7 +493,7 @@ final class CapiRemediationTest extends AbstractRemediation
             'Should have created a normalized scope'
         );
         $this->assertEquals(
-            'capi',
+            'CAPI',
             $decision->getOrigin(),
             'Should have created a normalized origin'
         );

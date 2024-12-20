@@ -35,6 +35,18 @@ class Constants extends CommonConstants
      */
     public const APPSEC_DEFAULT_MAX_BODY_SIZE = 1024;
     /**
+     * @var string The "disabled" bouncing level
+     */
+    public const BOUNCING_LEVEL_DISABLED = 'bouncing_disabled';
+    /**
+     * @var string The "flex" bouncing level
+     */
+    public const BOUNCING_LEVEL_FLEX = 'flex_bouncing';
+    /**
+     * @var string The "normal" bouncing level
+     */
+    public const BOUNCING_LEVEL_NORMAL = 'normal_bouncing';
+    /**
      * @var int The default duration we keep a bad IP in cache (in seconds)
      */
     public const CACHE_EXPIRATION_FOR_BAD_IP = 120;

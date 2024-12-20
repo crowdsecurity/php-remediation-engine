@@ -360,13 +360,13 @@ final class LapiRemediationTest extends AbstractRemediation
                     'ban',
                     999999999999,
                     'capi-ban-ip-1.2.3.4',
-                    'capi',
+                    'CAPI',
                 ]]],                            // Test 3 : retrieve ban for range
                 [AbstractCache::STORED => [[
                     'ban',
                     311738199, //  Sunday 18 November 1979
                     'capi-ban-ip-1.2.3.4',
-                    'capi',
+                    'CAPI',
                 ]]],                            // Test 4 : retrieve expired ban ip
                 [AbstractCache::STORED => []]   // Test 4 : retrieve empty range
             )

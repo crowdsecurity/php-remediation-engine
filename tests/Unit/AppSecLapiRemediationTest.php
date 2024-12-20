@@ -357,9 +357,10 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean_appsec' => 2, 'appsec' => 2],
+            ['clean_appsec' => 2, 'appsec' => 1, 'clean' => 1],
             $originsCount,
-            'Origin count should be cached (original appsec response was not a bypass, so it does not increase clean_appsec counter)'
+            'Origin count should be cached (original appsec response was not a bypass, 
+            so it does not increase clean_appsec counter. But as the result is a bypass, it increases clean counter)'
         );
         // Test 4 (AppSec response: unknown request with captcha fallback)
         $remediationConfigs = ['fallback_remediation' => Constants::REMEDIATION_CAPTCHA];
@@ -372,9 +373,9 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean_appsec' => 2, 'appsec' => 3],
+            ['clean_appsec' => 2, 'appsec' => 2, 'clean' => 1],
             $originsCount,
-            'Origin count should be cached (original appsec response was not a bypass, so it does not increase clean_appsec counter)'
+            'Origin count should be cached (final response is not a bypass, so it does not increase neither clean_appsec neither clean counter)'
         );
         // Test 5 (AppSec response: timeout)
         $result = $remediation->getAppSecRemediation($appSecHeaders, '');

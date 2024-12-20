@@ -20,6 +20,10 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 **This release is not published yet.**
 
+### Added
+
+- Add `bouncing_level` configuration to cap maximum remediation level
+
 ### Changed
 
 - For `lists` origin, store also the list name (scenario) in origins count cache item
