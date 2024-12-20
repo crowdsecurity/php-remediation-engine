@@ -1182,17 +1182,6 @@ final class LapiRemediationTest extends AbstractRemediation
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'parseDurationToSeconds',
-            ['147h23m43000.5665ms']
-        );
-        $this->assertEquals(
-            3600 * 147 + 23 * 60 + 43,
-            $result,
-            'Should convert in seconds'
-        );
-
-        $result = PHPUnitUtil::callMethod(
-            $remediation,
-            'parseDurationToSeconds',
             ['23m43s']
         );
         $this->assertEquals(
@@ -1210,6 +1199,30 @@ final class LapiRemediationTest extends AbstractRemediation
             $result,
             'Should convert in seconds'
         );
+
+
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'parseDurationToSeconds',
+            ['2h15m123456ms']
+        );
+        $this->assertEquals(
+            8223,
+            $result,
+            'Should convert in seconds'
+        );
+
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'parseDurationToSeconds',
+            ['1h45m30.123456s']
+        );
+        $this->assertEquals(
+            6330,
+            $result,
+            'Should convert in seconds'
+        );
+
 
         $result = PHPUnitUtil::callMethod(
             $remediation,

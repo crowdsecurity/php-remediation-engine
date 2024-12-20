@@ -15,7 +15,7 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ---
 
-## [?.?.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v?.?.0) - 2024-??-??
+## [4.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v4.0.0) - 2024-??-??
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.5.0...HEAD)
 
 **This release is not published yet.**
@@ -27,6 +27,14 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 ### Changed
 
 - For `lists` origin, store also the list name (scenario) in origins count cache item
+- **Breaking change**: Add `$remediation` argument to `AbstractRemediation::updateRemediationOriginCount` method
+- **Breaking change**: Store `clean` as origin in cache for `bypass` remediation even if 
+  original retrieved remediation was not a bypass (unhandled or capped remediation ). If `bypass` is the result of 
+  AppSec remediation, we continue to store `clean_appsec` as origin in cache.
+
+### Removed
+
+- Removed deprecated methods
 
 ---
 

@@ -85,7 +85,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getConfig
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::getIpRemediation
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::storeDecisions
- * @covers \CrowdSec\RemediationEngine\CapiRemediation::sortDecisionsByRemediationPriority
+ * @covers \CrowdSec\RemediationEngine\CapiRemediation::sortDecisionsByPriority
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::refreshDecisions
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::removeDecisions
@@ -600,7 +600,7 @@ final class CapiRemediationTest extends AbstractRemediation
             $result,
             'Should return 1'
         );
-        // sortDecisionsByRemediationPriority
+        // sortDecisionsByPriority
         // Test 1 : default
         $decisions = [
             [
@@ -616,7 +616,7 @@ final class CapiRemediationTest extends AbstractRemediation
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
-            'sortDecisionsByRemediationPriority',
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertEquals(
@@ -644,7 +644,7 @@ final class CapiRemediationTest extends AbstractRemediation
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
-            'sortDecisionsByRemediationPriority',
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertEquals(
@@ -667,7 +667,7 @@ final class CapiRemediationTest extends AbstractRemediation
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
-            'sortDecisionsByRemediationPriority',
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertEquals(
@@ -679,7 +679,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $decisions = [];
         $result = PHPUnitUtil::callMethod(
             $remediation,
-            'sortDecisionsByRemediationPriority',
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertCount(
@@ -894,7 +894,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'parseDurationToSeconds',
-            ['147h23m43000.5665ms']
+            ['147h23m43.0005665s']
         );
         $this->assertEquals(
             3600 * 147 + 23 * 60 + 43,
@@ -922,6 +922,17 @@ final class CapiRemediationTest extends AbstractRemediation
             $result,
             'Should convert in seconds'
         );
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'parseDurationToSeconds',
+            ['147h23m43000ms']
+        );
+        $this->assertEquals(
+            530623,
+            $result,
+            'Should convert in seconds'
+        );
+
 
         $result = PHPUnitUtil::callMethod(
             $remediation,

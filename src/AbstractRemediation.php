@@ -197,70 +197,53 @@ abstract class AbstractRemediation
     }
 
     /**
-     * @deprecated since 3.2.0 . Will be removed in 4.0.0. Use handleRemediationFromDecisions instead.
-     *
-     * @codeCoverageIgnore
+     * Converts durations like 3h24m59.5565s, 3h24m5957ms, 149h, etc. in seconds.
      */
-    protected function getRemediationFromDecisions(array $decisions): string
-    {
-        $cleanDecisions = $this->cacheStorage->cleanCachedValues($decisions);
-
-        $sortedDecisions = $this->sortDecisionsByPriority($cleanDecisions);
-        $this->logger->debug('Decisions have been sorted by priority', [
-            'type' => 'REM_SORTED_DECISIONS',
-            'decisions' => $sortedDecisions,
-        ]);
-
-        // Return only a remediation with the highest priority
-        return $sortedDecisions[0][AbstractCache::INDEX_MAIN] ?? Constants::REMEDIATION_BYPASS;
-    }
-
-    /**
-     * @deprecated since 3.4.0 . Will be removed in 4.0.0. Use private retrieveRemediationFromCachedDecisions instead.
-     *
-     * @codeCoverageIgnore
-     */
-    protected function handleRemediationFromDecisions(array $cacheFormattedDecisions): array
-    {
-        return $this->retrieveRemediationFromCachedDecisions($cacheFormattedDecisions);
-    }
-
     protected function parseDurationToSeconds(string $duration): int
     {
-        /**
-         * 3h24m59.5565s or 3h24m5957ms or 149h, etc.
-         */
-        $re = '/(-?)(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)(?:\.\d+)?(m?)s)?/m';
+        $re = '/(-?)((\d+)h)?((\d+)m)?((\d+)(\.\d+)?s|(\d+)ms)?/m';
         preg_match($re, $duration, $matches);
-        if (empty($matches[0])) {
+
+        if (empty($matches[2]) && empty($matches[4]) && empty($matches[7]) && empty($matches[9])) {
             $this->logger->error('An error occurred during duration parsing', [
                 'type' => 'REM_DECISION_DURATION_PARSE_ERROR',
                 'duration' => $duration,
             ]);
-
             return 0;
         }
+
         $seconds = 0;
-        if (isset($matches[2])) {
-            $seconds += ((int)$matches[2]) * 3600; // hours
-        }
+
+        // Parse hours
         if (isset($matches[3])) {
-            $seconds += ((int)$matches[3]) * 60; // minutes
+            $seconds += ((int)$matches[3]) * 3600;
         }
+
+        // Parse minutes
+        if (isset($matches[5])) {
+            $seconds += ((int)$matches[5]) * 60;
+        }
+
+        // Parse seconds and milliseconds
         $secondsPart = 0;
-        if (isset($matches[4])) {
-            $secondsPart += ((int)$matches[4]); // seconds
+        if (isset($matches[7])) { // seconds part
+            $secondsPart += (float)$matches[7];
         }
-        if (isset($matches[5]) && 'm' === $matches[5]) { // units in milliseconds
-            $secondsPart *= 0.001;
+        if (isset($matches[9])) { // milliseconds part
+            $secondsPart += ((int)$matches[9]) * 0.001;
         }
+
         $seconds += $secondsPart;
-        if ('-' === $matches[1]) { // negative
+
+        // Handle negative durations
+        if ('-' === $matches[1]) {
             $seconds *= -1;
         }
 
         return (int)round($seconds);
     }
+
+
 
     /**
      * Retrieve only the remediation with the highest priority from decisions.
@@ -311,38 +294,6 @@ abstract class AbstractRemediation
             AbstractCache::DONE => $doneCount + ($this->cacheStorage->commit() ? $deferCount : 0),
             AbstractCache::REMOVED => $removed,
         ];
-    }
-
-    /**
-     * Sort the decision array of a cache item, by remediation priorities.
-     *
-     * @deprecated since 3.2.0 . Will be removed in 4.0.0 (Replaced by private method sortDecisionsByPriority)
-     */
-    protected function sortDecisionsByRemediationPriority(array $decisions): array
-    {
-        if (!$decisions) {
-            return $decisions;
-        }
-        // Add priorities
-        $orderedRemediations = (array)$this->getConfig('ordered_remediations');
-        $fallback = $this->getConfig('fallback_remediation');
-        $decisionsWithPriority = [];
-        foreach ($decisions as $decision) {
-            $priority = array_search($decision[AbstractCache::INDEX_MAIN], $orderedRemediations);
-            // Use fallback for unknown remediation
-            if (false === $priority) {
-                $priority = array_search($fallback, $orderedRemediations);
-                $decision[AbstractCache::INDEX_MAIN] = $fallback;
-            }
-            $decision[self::INDEX_PRIO] = $priority;
-            $decisionsWithPriority[] = $decision;
-        }
-        // Sort by priorities.
-        /** @var callable $compareFunction */
-        $compareFunction = self::class . '::comparePriorities';
-        usort($decisionsWithPriority, $compareFunction);
-
-        return $decisionsWithPriority;
     }
 
     /**
