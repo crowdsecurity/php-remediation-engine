@@ -59,15 +59,15 @@ class Constants extends CommonConstants
      */
     public const MAXMIND_COUNTRY = 'country';
     /**
+     * @var string The separator between the origin and scenario for the stored origin
+     */
+    public const ORIGIN_LISTS_SEPARATOR = ':';
+    /**
      * @var int The default refresh frequency (in seconds)
      */
     public const REFRESH_FREQUENCY = 14400;
     /**
      * @var string The current version of this library
      */
-    public const VERSION = 'v3.5.0';
-    /**
-     * @var string The separator between the origin and scenario for the stored origin
-     */
-    public const ORIGIN_LISTS_SEPARATOR = ':';
+    public const VERSION = 'v3.6.0';
 }

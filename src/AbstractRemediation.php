@@ -115,10 +115,10 @@ abstract class AbstractRemediation
 
     private function handleDecisionOrigin(array $rawDecision): string
     {
-        $origin = $this->normalize($rawDecision['origin']);
+        $origin = $rawDecision['origin'];
         if (Constants::ORIGIN_LISTS === $origin) {
             // The existence of the $rawDecision['scenario'] must be guaranteed by the validateRawDecision method
-            $origin .= Constants::ORIGIN_LISTS_SEPARATOR . $this->normalize($rawDecision['scenario']);
+            $origin .= Constants::ORIGIN_LISTS_SEPARATOR . $rawDecision['scenario'];
         }
 
         return $origin;
@@ -462,7 +462,7 @@ abstract class AbstractRemediation
         string $value
     ): string {
         return
-            $origin . Decision::ID_SEP .
+            $this->normalize($origin) . Decision::ID_SEP .
             $type . Decision::ID_SEP .
             $scope . Decision::ID_SEP .
             $value;

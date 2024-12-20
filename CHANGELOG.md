@@ -15,6 +15,17 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ---
 
+## [?.?.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v?.?.0) - 2024-??-??
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.5.0...HEAD)
+
+**This release is not published yet.**
+
+### Changed
+
+- For `lists` origin, store also the list name (scenario) in origins count cache item
+
+---
+
 ## [3.5.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v3.5.0) - 2024-10-18
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.4.0...v3.5.0)
 

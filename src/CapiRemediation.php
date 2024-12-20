@@ -83,7 +83,7 @@ class CapiRemediation extends AbstractRemediation
                 }
                 $capiDecision['scope'] = $scope;
                 $capiDecision['type'] = Constants::REMEDIATION_BAN;
-                $capiDecision['origin'] = Constants::ORIGIN_CAPI;
+                $capiDecision['origin'] = strtoupper(Constants::ORIGIN_CAPI); // CrowdSec convention is CAPI
                 $decision = $this->convertRawDecision($capiDecision);
                 if ($decision) {
                     $decisions[] = $decision;
