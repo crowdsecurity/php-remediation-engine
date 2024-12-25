@@ -60,10 +60,11 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses   \CrowdSec\RemediationEngine\CacheStorage\Memcached::getItem
  * @uses   \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleRemediationFromDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCount
  *
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::capRemediationLevel
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCountItem
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
@@ -82,7 +83,6 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getConfig
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getIpRemediation
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::storeDecisions
- * @covers \CrowdSec\RemediationEngine\LapiRemediation::sortDecisionsByRemediationPriority
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::refreshDecisions
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getStreamDecisions
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::getConfigTreeBuilder

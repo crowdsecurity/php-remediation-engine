@@ -62,10 +62,14 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\CacheStorage\Memcached::getItem
  * @uses \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
  *
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleRemediationFromDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCount
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::resetRemediationOriginCount
  *
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::capRemediationLevel
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCountItem
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::getFirstCall
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::storeFirstCall
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionOrigin
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
@@ -85,7 +89,6 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getConfig
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getIpRemediation
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::storeDecisions
- * @covers \CrowdSec\RemediationEngine\LapiRemediation::sortDecisionsByRemediationPriority
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::refreshDecisions
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getStreamDecisions
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::getConfigTreeBuilder
@@ -573,14 +576,17 @@ final class LapiRemediationTest extends AbstractRemediation
             $item->isHit(),
             'Config item should be cached'
         );
+        $configItem = $item->get();
         $this->assertEqualsWithDelta(
             [
                 AbstractCache::FIRST_LAPI_CALL => time(),
             ],
-            $item->get(),
+            $configItem,
             1000, // 1 second delta to avoid false negative
             'Config cache item should be as expected'
         );
+        $originalFirstCall = $configItem[AbstractCache::FIRST_LAPI_CALL];
+        sleep(1); // To test that first LAPI call is cached and do not change
         // Test 2 (cached decisions)
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
@@ -593,6 +599,20 @@ final class LapiRemediationTest extends AbstractRemediation
             ['clean' => ['bypass' => 2]],
             $originsCount,
             'Clean count should be 2'
+        );
+        // Additional tests
+        $item = $adapter->getItem(base64_encode(AbstractCache::CONFIG));
+        $this->assertEquals(
+            true,
+            $item->isHit(),
+            'First LAPI call should be cached'
+        );
+        $finalConfigItem = $item->get();
+        $finalFirstCall = $finalConfigItem[AbstractCache::FIRST_LAPI_CALL];
+        $this->assertEquals(
+            $originalFirstCall,
+            $finalFirstCall,
+            'First LAPI call should be the same as at beginning'
         );
         // Test 3 (no cached decision and 2 actives IP decisions)
         $this->cacheStorage->clear();
@@ -675,7 +695,101 @@ final class LapiRemediationTest extends AbstractRemediation
             $originsCount,
             'Origin count should be updated'
         );
+
     }
+
+    /**
+     * @dataProvider cacheTypeProvider
+     */
+    public function testResetRemediationOriginCount($cacheType)
+    {
+        $this->setCache($cacheType);
+
+        $remediationConfigs = ['stream_mode' => false];
+        // Prepare next tests
+        $currentTime = time();
+        $expectedCleanTime = $currentTime + Constants::CACHE_EXPIRATION_FOR_CLEAN_IP;
+        $this->cacheStorage->method('retrieveDecisionsForIp')->will(
+            $this->onConsecutiveCalls(
+                [AbstractCache::STORED => []],  // Test 1 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 1 : retrieve empty range decisions
+                [AbstractCache::STORED => [[
+                    'bypass',
+                    $expectedCleanTime,
+                    'clean-bypass-ip-1.2.3.4',
+                    'clean',
+                ]]],                            // Test 2 : retrieve cached bypass
+                [AbstractCache::STORED => []]  // Test 2 : retrieve empty range
+            )
+        );
+        $this->bouncer->method('getFilteredDecisions')->will(
+            $this->onConsecutiveCalls(
+                [],  // Test 1 : retrieve empty IP decisions
+                [
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4,
+                        'type' => 'captcha',
+                        'origin' => 'lapi',
+                        'duration' => '1h',
+                    ],
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4,
+                        'type' => 'ban',
+                        'origin' => 'lapi',
+                        'duration' => '1h',
+                    ],
+                ],
+            )
+        );
+
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
+        $result = $remediation->resetRemediationOriginCount('clean', 'bypass');
+        $this->assertEquals(
+            false,
+            $result,
+            'Should not reset origin count as not existing'
+        );
+
+        // Call 1 (No cached items and no active decision)
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [],
+            $originsCount,
+            'Origins count should be empty'
+        );
+        $remediation->getIpRemediation(TestConstants::IP_V4);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            ['clean' => ['bypass' => 1]],
+            $originsCount,
+            'Origin count should be cached'
+        );
+        // Call 2 (cached decisions)
+        $remediation->getIpRemediation(TestConstants::IP_V4);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            ['clean' => ['bypass' => 2]],
+            $originsCount,
+            'Clean count should be 2'
+        );
+        // Test resetting
+        $result = $remediation->resetRemediationOriginCount('clean', 'bypass');
+        $this->assertEquals(
+            true,
+            $result,
+            'Should reset origin count'
+        );
+
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            ['clean' => ['bypass' => 0]],
+            $originsCount,
+            'Clean count should be reset to 0'
+        );
+    }
+
 
     /**
      * @dataProvider cacheTypeProvider
@@ -1416,6 +1530,35 @@ final class LapiRemediationTest extends AbstractRemediation
             $decision->getOrigin(),
             'Should have created a correct decision origin'
         );
+        // capRemediationLevel
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'capRemediationLevel',
+            ['ban']
+        );
+        $this->assertEquals('ban', $result, 'Remediation should be capped as ban');
+
+        $remediationConfigs = ['bouncing_level' => Constants::BOUNCING_LEVEL_DISABLED];
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
+
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'capRemediationLevel',
+            ['ban']
+        );
+        $this->assertEquals('bypass', $result, 'Remediation should be capped as bypass');
+
+        $remediationConfigs = ['bouncing_level' =>
+            Constants::BOUNCING_LEVEL_FLEX];
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
+
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'capRemediationLevel',
+            ['ban']
+        );
+        $this->assertEquals('captcha', $result, 'Remediation should be capped as captcha');
+
     }
 
     protected function tearDown(): void
