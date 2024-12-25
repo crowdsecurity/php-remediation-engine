@@ -360,6 +360,7 @@ abstract class AbstractCache
 
     /**
      * Create or update an item; Only passed content is updated.
+     * With this method, we can only add or update keys to the content, not remove them.
      *
      * @throws InvalidArgumentException|CacheException
      */

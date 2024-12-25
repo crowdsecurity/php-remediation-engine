@@ -92,9 +92,7 @@ abstract class AbstractRemediation
      */
     public function getOriginsCount(): array
     {
-        $originsCountItem = $this->cacheStorage->getItem(AbstractCache::ORIGINS_COUNT);
-
-        return $originsCountItem->isHit() ? $originsCountItem->get() : [];
+        return $this->getOriginsCountItem();
     }
 
     /**
@@ -209,6 +207,7 @@ abstract class AbstractRemediation
                 'type' => 'REM_DECISION_DURATION_PARSE_ERROR',
                 'duration' => $duration,
             ]);
+
             return 0;
         }
 
@@ -243,8 +242,6 @@ abstract class AbstractRemediation
         return (int)round($seconds);
     }
 
-
-
     /**
      * Retrieve only the remediation with the highest priority from decisions.
      * It will remove expired decisions.
@@ -259,11 +256,14 @@ abstract class AbstractRemediation
     protected function processCachedDecisions(array $cacheDecisions): string
     {
         $remediationData = $this->retrieveRemediationFromCachedDecisions($cacheDecisions);
-        if (!empty($remediationData[self::INDEX_ORIGIN])) {
-            $this->updateRemediationOriginCount((string)$remediationData[self::INDEX_ORIGIN]);
+        $origin = !empty($remediationData[self::INDEX_ORIGIN]) ? (string)$remediationData[self::INDEX_ORIGIN] : '';
+        $remediation = !empty($remediationData[self::INDEX_REM]) ? (string)$remediationData[self::INDEX_REM] :
+            Constants::REMEDIATION_BYPASS;
+        if ($origin) {
+            $this->incrementRemediationOriginCount($origin, $remediation);
         }
 
-        return $remediationData[self::INDEX_REM];
+        return $remediation;
     }
 
     /**
@@ -337,22 +337,48 @@ abstract class AbstractRemediation
      * @throws CacheException
      * @throws InvalidArgumentException
      */
-    protected function updateRemediationOriginCount(string $origin): int
+    public function incrementRemediationOriginCount(string $origin, string $remediation): int
     {
-        $originCountItem = $this->cacheStorage->getItem(AbstractCache::ORIGINS_COUNT);
-        $cacheOriginCount = $originCountItem->isHit() ? $originCountItem->get() : [];
-        $count = isset($cacheOriginCount[$origin]) ?
-            (int)$cacheOriginCount[$origin] :
+        $cacheOriginCount = $this->getOriginsCountItem();
+        $count = isset($cacheOriginCount[$origin][$remediation]) ?
+            (int)$cacheOriginCount[$origin][$remediation] :
             0;
 
         $this->cacheStorage->upsertItem(
             AbstractCache::ORIGINS_COUNT,
-            [$origin => ++$count],
+            [
+                $origin => [
+                    $remediation => ++$count
+                ]
+            ],
             0,
             [AbstractCache::ORIGINS_COUNT]
         );
 
         return $count;
+    }
+
+    /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    public function resetRemediationOriginCount(string $origin, string $remediation): bool
+    {
+        $cacheOriginCount = $this->getOriginsCountItem();
+        if (!isset($cacheOriginCount[$origin][$remediation])) {
+            return false;
+        }
+
+        return $this->cacheStorage->upsertItem(
+            AbstractCache::ORIGINS_COUNT,
+            [
+                $origin => [
+                    $remediation => 0
+                ]
+            ],
+            0,
+            [AbstractCache::ORIGINS_COUNT]
+        );
     }
 
     /**
@@ -421,6 +447,16 @@ abstract class AbstractRemediation
         }
 
         return ($a < $b) ? -1 : 1;
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function getOriginsCountItem(): array
+    {
+        $originsCountItem = $this->cacheStorage->getItem(AbstractCache::ORIGINS_COUNT);
+
+        return $originsCountItem->isHit() ? $originsCountItem->get() : [];
     }
 
     private function handleDecisionExpiresAt(string $type, string $duration): int

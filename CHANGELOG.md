@@ -23,11 +23,13 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 ### Added
 
 - Add `bouncing_level` configuration to cap maximum remediation level
+- Add `AbstractRemediation::resetRemediationOriginCount` method to reset origin count cache item for a remediation
 
 ### Changed
 
 - For `lists` origin, store also the list name (scenario) in origins count cache item
-- **Breaking change**: Add `$remediation` argument to `AbstractRemediation::updateRemediationOriginCount` method
+- **Breaking change**: Rename `AbstractRemediation::updateRemediationOriginCount` method to 
+  `incrementRemediationOriginCount` and add a `$remediation` parameter.
 - **Breaking change**: Store `clean` as origin in cache for `bypass` remediation even if 
   original retrieved remediation was not a bypass (unhandled or capped remediation ). If `bypass` is the result of 
   AppSec remediation, we continue to store `clean_appsec` as origin in cache.

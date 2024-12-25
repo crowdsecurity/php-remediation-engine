@@ -55,11 +55,11 @@ class CapiRemediation extends AbstractRemediation
                 'type' => 'CAPI_REM_NO_CACHED_DECISIONS',
                 'ip' => $ip,
             ]);
-
-            $this->updateRemediationOriginCount(AbstractCache::CLEAN);
+            $remediation = Constants::REMEDIATION_BYPASS;
+            $this->incrementRemediationOriginCount(AbstractCache::CLEAN, $remediation);
 
             // As CAPI is always in stream_mode, we do not store this bypass
-            return Constants::REMEDIATION_BYPASS;
+            return $remediation;
         }
 
         return $this->processCachedDecisions($cachedDecisions);

@@ -65,7 +65,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  *
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
  *
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::handleIpV6RangeDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getIpType
@@ -316,7 +316,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean_appsec' => 1],
+            ['clean_appsec' => ['bypass' =>1]],
             $originsCount,
             'Origin count should be cached'
         );
@@ -331,7 +331,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean_appsec' => 2],
+            ['clean_appsec' => ['bypass'=>2]],
             $originsCount,
             'Origin count should be cached'
         );
@@ -344,7 +344,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean_appsec' => 2, 'appsec' => 1],
+            ['clean_appsec' => ['bypass'=>2], 'appsec' => ['ban' =>1]],
             $originsCount,
             'Origin count should be cached'
         );
@@ -357,7 +357,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean_appsec' => 2, 'appsec' => 1, 'clean' => 1],
+            ['clean_appsec' => ['bypass' => 2], 'appsec' => ['ban'=>1], 'clean' => ['bypass' => 1]],
             $originsCount,
             'Origin count should be cached (original appsec response was not a bypass, 
             so it does not increase clean_appsec counter. But as the result is a bypass, it increases clean counter)'
@@ -373,7 +373,7 @@ final class AppSecLapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean_appsec' => 2, 'appsec' => 2, 'clean' => 1],
+            ['clean_appsec' => ['bypass' => 2], 'appsec' => ['ban'=>1, 'captcha' => 1], 'clean' => ['bypass' => 1]],
             $originsCount,
             'Origin count should be cached (final response is not a bypass, so it does not increase neither clean_appsec neither clean counter)'
         );

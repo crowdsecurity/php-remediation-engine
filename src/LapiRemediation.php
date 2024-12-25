@@ -64,9 +64,10 @@ class LapiRemediation extends AbstractRemediation
         if (!$cachedDecisions) {
             // In stream_mode, we do not store this bypass, and we do not call LAPI directly
             if ($this->getConfig('stream_mode')) {
-                $this->updateRemediationOriginCount(AbstractCache::CLEAN);
+                $remediation = Constants::REMEDIATION_BYPASS;
+                $this->incrementRemediationOriginCount(AbstractCache::CLEAN, $remediation);
 
-                return Constants::REMEDIATION_BYPASS;
+                return $remediation;
             }
             // In live mode, ask LAPI (Retrieve Ip AND Range scoped decisions)
             $rawIpDecisions = $this->client->getFilteredDecisions(['ip' => $ip]);
@@ -192,9 +193,9 @@ class LapiRemediation extends AbstractRemediation
         }
         $rawRemediation = $this->parseAppSecDecision($rawAppSecDecision);
         if (Constants::REMEDIATION_BYPASS === $rawRemediation) {
-            $this->updateRemediationOriginCount(AbstractCache::CLEAN_APPSEC);
+            $this->incrementRemediationOriginCount(AbstractCache::CLEAN_APPSEC, $rawRemediation);
 
-            return Constants::REMEDIATION_BYPASS;
+            return $rawRemediation;
         }
         // We only set required indexes for the processCachedDecisions method
         $fakeCachedDecisions = [[

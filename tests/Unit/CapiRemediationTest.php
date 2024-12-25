@@ -58,7 +58,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleRemediationFromDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
  *
- * @uses \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  *

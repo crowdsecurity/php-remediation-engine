@@ -68,7 +68,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionOrigin
  *
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::handleIpV6RangeDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getIpType
@@ -563,7 +563,7 @@ final class LapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean' => 1],
+            ['clean' => ['bypass' => 1]],
             $originsCount,
             'Origin count should be cached'
         );
@@ -576,7 +576,7 @@ final class LapiRemediationTest extends AbstractRemediation
         );
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean' => 2],
+            ['clean' => ['bypass' => 2]],
             $originsCount,
             'Clean count should be 2'
         );
@@ -591,7 +591,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['lapi' => 1],
+            ['lapi' => ['ban' =>1]],
             $originsCount,
             'Origin count should be cached'
         );
@@ -618,7 +618,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $this->assertEquals($cachedItem[0][0], 'ban', 'Should be a ban');
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['lapi' => 1],
+            ['lapi' => ['ban' =>1]],
             $originsCount,
             'Origin count should be cached'
         );
@@ -626,8 +626,9 @@ final class LapiRemediationTest extends AbstractRemediation
         $remediation->getIpRemediation(TestConstants::IP_V4);
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean' => 1,
-                'lapi' => 1,
+            [
+                'clean' => ['bypass' =>1],
+                'lapi' => ['ban' => 1],
             ],
             $originsCount,
             'Origin count should be updated'
@@ -636,8 +637,9 @@ final class LapiRemediationTest extends AbstractRemediation
         $remediation->getIpRemediation(TestConstants::IP_V4);
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['clean' => 2,
-                'lapi' => 1,
+            [
+                'clean' => ['bypass' =>2],
+                'lapi' => ['ban' => 1],
             ],
             $originsCount,
             'Origin count should be updated'
@@ -652,9 +654,9 @@ final class LapiRemediationTest extends AbstractRemediation
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
             [
-                'lists:crowdsec_proxy' => 1,
-                'clean' => 2,
-                'lapi' => 1,
+                'lists:crowdsec_proxy' => ['ban' =>1],
+                'clean' => ['bypass'=>2],
+                'lapi' => ['ban'=>1],
             ],
             $originsCount,
             'Origin count should be updated'
