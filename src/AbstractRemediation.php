@@ -96,6 +96,31 @@ abstract class AbstractRemediation
     }
 
     /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    public function incrementRemediationOriginCount(string $origin, string $remediation): int
+    {
+        $cacheOriginCount = $this->getOriginsCountItem();
+        $count = isset($cacheOriginCount[$origin][$remediation]) ?
+            (int) $cacheOriginCount[$origin][$remediation] :
+            0;
+
+        $this->cacheStorage->upsertItem(
+            AbstractCache::ORIGINS_COUNT,
+            [
+                $origin => [
+                    $remediation => ++$count,
+                ],
+            ],
+            0,
+            [AbstractCache::ORIGINS_COUNT]
+        );
+
+        return $count;
+    }
+
+    /**
      * Prune cache.
      *
      * @throws CacheStorageException
@@ -110,6 +135,29 @@ abstract class AbstractRemediation
      * Return the total of added and removed records. // ['new' => x, 'deleted' => y].
      */
     abstract public function refreshDecisions(): array;
+
+    /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    public function resetRemediationOriginCount(string $origin, string $remediation): bool
+    {
+        $cacheOriginCount = $this->getOriginsCountItem();
+        if (!isset($cacheOriginCount[$origin][$remediation])) {
+            return false;
+        }
+
+        return $this->cacheStorage->upsertItem(
+            AbstractCache::ORIGINS_COUNT,
+            [
+                $origin => [
+                    $remediation => 0,
+                ],
+            ],
+            0,
+            [AbstractCache::ORIGINS_COUNT]
+        );
+    }
 
     protected function convertRawDecision(array $rawDecision): ?Decision
     {
@@ -199,10 +247,10 @@ abstract class AbstractRemediation
      */
     protected function parseDurationToSeconds(string $duration): int
     {
-        $re = '/(-?)((\d+)h)?((\d+)m)?((\d+)(\.\d+)?s|(\d+)ms)?/m';
+        $re = '/(-)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)(\.\d+)?s)?(?:(\d+)ms)?/';
         preg_match($re, $duration, $matches);
 
-        if (empty($matches[2]) && empty($matches[4]) && empty($matches[7]) && empty($matches[9])) {
+        if (empty($matches[0])) {
             $this->logger->error('An error occurred during duration parsing', [
                 'type' => 'REM_DECISION_DURATION_PARSE_ERROR',
                 'duration' => $duration,
@@ -212,34 +260,37 @@ abstract class AbstractRemediation
         }
 
         $seconds = 0;
-
         // Parse hours
-        if (isset($matches[3])) {
-            $seconds += ((int)$matches[3]) * 3600;
+        if (!empty($matches[2])) {
+            $seconds += ((int) $matches[2]) * 3600;
         }
 
         // Parse minutes
-        if (isset($matches[5])) {
-            $seconds += ((int)$matches[5]) * 60;
+        if (!empty($matches[3])) {
+            $seconds += ((int) $matches[3]) * 60;
         }
 
-        // Parse seconds and milliseconds
-        $secondsPart = 0;
-        if (isset($matches[7])) { // seconds part
-            $secondsPart += (float)$matches[7];
-        }
-        if (isset($matches[9])) { // milliseconds part
-            $secondsPart += ((int)$matches[9]) * 0.001;
+        // Parse seconds
+        if (!empty($matches[4])) {
+            $seconds += (int) $matches[4];
         }
 
-        $seconds += $secondsPart;
+        // Parse fractional seconds
+        if (!empty($matches[5])) {
+            $seconds += (float) $matches[5];
+        }
+
+        // Parse milliseconds
+        if (!empty($matches[6])) {
+            $seconds += ((int) $matches[6]) * 0.001;
+        }
 
         // Handle negative durations
         if ('-' === $matches[1]) {
             $seconds *= -1;
         }
 
-        return (int)round($seconds);
+        return (int) round($seconds);
     }
 
     /**
@@ -256,8 +307,8 @@ abstract class AbstractRemediation
     protected function processCachedDecisions(array $cacheDecisions): string
     {
         $remediationData = $this->retrieveRemediationFromCachedDecisions($cacheDecisions);
-        $origin = !empty($remediationData[self::INDEX_ORIGIN]) ? (string)$remediationData[self::INDEX_ORIGIN] : '';
-        $remediation = !empty($remediationData[self::INDEX_REM]) ? (string)$remediationData[self::INDEX_REM] :
+        $origin = !empty($remediationData[self::INDEX_ORIGIN]) ? (string) $remediationData[self::INDEX_ORIGIN] : '';
+        $remediation = !empty($remediationData[self::INDEX_REM]) ? (string) $remediationData[self::INDEX_REM] :
             Constants::REMEDIATION_BYPASS;
         if ($origin) {
             $this->incrementRemediationOriginCount($origin, $remediation);
@@ -334,54 +385,6 @@ abstract class AbstractRemediation
     }
 
     /**
-     * @throws CacheException
-     * @throws InvalidArgumentException
-     */
-    public function incrementRemediationOriginCount(string $origin, string $remediation): int
-    {
-        $cacheOriginCount = $this->getOriginsCountItem();
-        $count = isset($cacheOriginCount[$origin][$remediation]) ?
-            (int)$cacheOriginCount[$origin][$remediation] :
-            0;
-
-        $this->cacheStorage->upsertItem(
-            AbstractCache::ORIGINS_COUNT,
-            [
-                $origin => [
-                    $remediation => ++$count
-                ]
-            ],
-            0,
-            [AbstractCache::ORIGINS_COUNT]
-        );
-
-        return $count;
-    }
-
-    /**
-     * @throws CacheException
-     * @throws InvalidArgumentException
-     */
-    public function resetRemediationOriginCount(string $origin, string $remediation): bool
-    {
-        $cacheOriginCount = $this->getOriginsCountItem();
-        if (!isset($cacheOriginCount[$origin][$remediation])) {
-            return false;
-        }
-
-        return $this->cacheStorage->upsertItem(
-            AbstractCache::ORIGINS_COUNT,
-            [
-                $origin => [
-                    $remediation => 0
-                ]
-            ],
-            0,
-            [AbstractCache::ORIGINS_COUNT]
-        );
-    }
-
-    /**
      * Cap the remediation to a fixed value given by the bouncing level configuration.
      *
      * @param string $remediation (ex: 'ban', 'captcha', 'bypass')
@@ -390,11 +393,11 @@ abstract class AbstractRemediation
      */
     private function capRemediationLevel(string $remediation): string
     {
-        if ($remediation === Constants::REMEDIATION_BYPASS) {
+        if (Constants::REMEDIATION_BYPASS === $remediation) {
             return Constants::REMEDIATION_BYPASS;
         }
 
-        $orderedRemediations = (array)$this->getConfig('ordered_remediations');
+        $orderedRemediations = (array) $this->getConfig('ordered_remediations');
 
         $bouncingLevel = $this->getConfig('bouncing_level') ?? Constants::BOUNCING_LEVEL_NORMAL;
         // Compute max remediation level
@@ -411,8 +414,8 @@ abstract class AbstractRemediation
                 break;
         }
 
-        $currentIndex = (int)array_search($remediation, $orderedRemediations);
-        $maxIndex = (int)array_search(
+        $currentIndex = (int) array_search($remediation, $orderedRemediations);
+        $maxIndex = (int) array_search(
             $maxRemediationLevel,
             $orderedRemediations
         );
@@ -463,7 +466,7 @@ abstract class AbstractRemediation
     {
         $duration = $this->parseDurationToSeconds($duration);
         if (Constants::REMEDIATION_BYPASS !== $type && !$this->getConfig('stream_mode')) {
-            $duration = min((int)$this->getConfig('bad_ip_cache_duration'), $duration);
+            $duration = min((int) $this->getConfig('bad_ip_cache_duration'), $duration);
         }
 
         return time() + $duration;
@@ -514,7 +517,7 @@ abstract class AbstractRemediation
 
         return [
             self::INDEX_REM => $cappedRemediation,
-            self::INDEX_ORIGIN => $cappedRemediation === Constants::REMEDIATION_BYPASS ? AbstractCache::CLEAN : $origin,
+            self::INDEX_ORIGIN => Constants::REMEDIATION_BYPASS === $cappedRemediation ? AbstractCache::CLEAN : $origin,
         ];
     }
 
@@ -527,7 +530,7 @@ abstract class AbstractRemediation
             return $decisions;
         }
         // Add priorities
-        $orderedRemediations = (array)$this->getConfig('ordered_remediations');
+        $orderedRemediations = (array) $this->getConfig('ordered_remediations');
         $fallback = $this->getConfig('fallback_remediation');
         $decisionsWithPriority = [];
         foreach ($decisions as $decision) {

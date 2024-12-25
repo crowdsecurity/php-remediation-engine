@@ -66,8 +66,8 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCount
  *
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionOrigin
  *
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionOrigin
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::handleIpV6RangeDecisions
@@ -567,6 +567,20 @@ final class LapiRemediationTest extends AbstractRemediation
             $originsCount,
             'Origin count should be cached'
         );
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $this->assertEquals(
+            true,
+            $item->isHit(),
+            'Config item should be cached'
+        );
+        $this->assertEqualsWithDelta(
+            [
+                AbstractCache::FIRST_LAPI_CALL => time(),
+            ],
+            $item->get(),
+            1000, // 1 second delta to avoid false negative
+            'Config cache item should be as expected'
+        );
         // Test 2 (cached decisions)
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
@@ -591,7 +605,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['lapi' => ['ban' =>1]],
+            ['lapi' => ['ban' => 1]],
             $originsCount,
             'Origin count should be cached'
         );
@@ -618,7 +632,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $this->assertEquals($cachedItem[0][0], 'ban', 'Should be a ban');
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
-            ['lapi' => ['ban' =>1]],
+            ['lapi' => ['ban' => 1]],
             $originsCount,
             'Origin count should be cached'
         );
@@ -627,7 +641,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
             [
-                'clean' => ['bypass' =>1],
+                'clean' => ['bypass' => 1],
                 'lapi' => ['ban' => 1],
             ],
             $originsCount,
@@ -638,7 +652,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
             [
-                'clean' => ['bypass' =>2],
+                'clean' => ['bypass' => 2],
                 'lapi' => ['ban' => 1],
             ],
             $originsCount,
@@ -654,9 +668,9 @@ final class LapiRemediationTest extends AbstractRemediation
         $originsCount = $remediation->getOriginsCount();
         $this->assertEquals(
             [
-                'lists:crowdsec_proxy' => ['ban' =>1],
-                'clean' => ['bypass'=>2],
-                'lapi' => ['ban'=>1],
+                'lists:crowdsec_proxy' => ['ban' => 1],
+                'clean' => ['bypass' => 2],
+                'lapi' => ['ban' => 1],
             ],
             $originsCount,
             'Origin count should be updated'
@@ -931,10 +945,14 @@ final class LapiRemediationTest extends AbstractRemediation
             $item->isHit(),
             'Cached should be warmed up'
         );
-        $this->assertEquals(
-            [AbstractCache::WARMUP => true],
+        $this->assertEqualsWithDelta(
+            [
+                AbstractCache::WARMUP => true,
+                AbstractCache::FIRST_LAPI_CALL => time(),
+            ],
             $item->get(),
-            'Warmup cache item should be as expected'
+            1000, // 1 second delta to avoid false negative
+            'Config cache item should be as expected'
         );
 
         $adapter = $this->cacheStorage->getAdapter();
@@ -1202,7 +1220,6 @@ final class LapiRemediationTest extends AbstractRemediation
             'Should convert in seconds'
         );
 
-
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'parseDurationToSeconds',
@@ -1224,7 +1241,6 @@ final class LapiRemediationTest extends AbstractRemediation
             $result,
             'Should convert in seconds'
         );
-
 
         $result = PHPUnitUtil::callMethod(
             $remediation,

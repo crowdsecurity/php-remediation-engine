@@ -933,7 +933,6 @@ final class CapiRemediationTest extends AbstractRemediation
             'Should convert in seconds'
         );
 
-
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'parseDurationToSeconds',
