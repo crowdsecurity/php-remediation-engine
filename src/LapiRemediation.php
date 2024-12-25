@@ -70,6 +70,7 @@ class LapiRemediation extends AbstractRemediation
                 return $remediation;
             }
             // In live mode, ask LAPI (Retrieve Ip AND Range scoped decisions)
+            $this->storeFirstCall();
             $rawIpDecisions = $this->client->getFilteredDecisions(['ip' => $ip]);
             $ipDecisions = $this->convertRawDecisionsToDecisions($rawIpDecisions);
             // IPV6 range scoped decisions are not yet stored in cache, so we store it as IP scoped decisions
@@ -90,7 +91,7 @@ class LapiRemediation extends AbstractRemediation
                     'value' => $ip,
                     'type' => Constants::REMEDIATION_BYPASS,
                     'origin' => AbstractCache::CLEAN,
-                    'duration' => sprintf('%ss', (int) $this->getConfig('clean_ip_cache_duration')),
+                    'duration' => sprintf('%ss', (int)$this->getConfig('clean_ip_cache_duration')),
                 ]]);
             // Store decision(s) even if bypass
             $stored = $this->storeDecisions($finalDecisions);
@@ -174,7 +175,7 @@ class LapiRemediation extends AbstractRemediation
                     return Constants::REMEDIATION_BAN;
                 case Constants::APPSEC_ACTION_ALLOW:
                     return Constants::REMEDIATION_BYPASS;
-                    // Default to headers only action
+                // Default to headers only action
                 default:
                     $rawBody = '';
                     break;
@@ -250,7 +251,7 @@ class LapiRemediation extends AbstractRemediation
     {
         if (null === $this->scopes) {
             $finalScopes = [Constants::SCOPE_IP, Constants::SCOPE_RANGE];
-            $geolocConfigs = (array) $this->getConfig('geolocation');
+            $geolocConfigs = (array)$this->getConfig('geolocation');
             if (!empty($geolocConfigs['enabled'])) {
                 $finalScopes[] = Constants::SCOPE_COUNTRY;
             }
@@ -331,13 +332,63 @@ class LapiRemediation extends AbstractRemediation
         $result = $this->getStreamDecisions(true, $filter);
         // Store the fact that the cache has been warmed up.
         $this->logger->info('Flag cache warmup', ['type' => 'LAPI_REM_CACHE_WARMUP']);
+        $content = [AbstractCache::WARMUP => true];
+        if (0 === $this->getFirstCall()) {
+            $time = time();
+            $content[AbstractCache::FIRST_LAPI_CALL] = $time;
+            $this->logger->info('Flag LAPI first call',
+                [
+                    'type' => 'LAPI_REM_CACHE_FIRST_CALL',
+                    'time' => $time
+                ]
+            );
+        }
         $this->cacheStorage->upsertItem(
             AbstractCache::CONFIG,
-            [AbstractCache::WARMUP => true],
+            $content,
             0,
             [AbstractCache::CONFIG]
         );
 
         return $result;
+    }
+
+    /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    private function getFirstCall(): int
+    {
+        $cacheConfigItem = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $cacheConfig = $cacheConfigItem->isHit() ? $cacheConfigItem->get() : [];
+
+        return $cacheConfig[AbstractCache::FIRST_LAPI_CALL] ?? 0;
+    }
+
+    /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    private function storeFirstCall(): void
+    {
+        $firstCall = $this->getFirstCall();
+        if (0 !== $firstCall) {
+            return;
+        }
+        $time = time();
+        $content = [AbstractCache::FIRST_LAPI_CALL => $time];
+        $this->logger->info('Flag LAPI first call',
+            [
+                'type' => 'LAPI_REM_CACHE_FIRST_CALL',
+                'time' => $time
+            ]
+        );
+
+        $this->cacheStorage->upsertItem(
+            AbstractCache::CONFIG,
+            $content,
+            0,
+            [AbstractCache::CONFIG]
+        );
     }
 }

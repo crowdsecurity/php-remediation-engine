@@ -456,7 +456,7 @@ abstract class AbstractRemediation
     {
         $originsCountItem = $this->cacheStorage->getItem(AbstractCache::ORIGINS_COUNT);
 
-        return $originsCountItem->isHit() ? $originsCountItem->get() : [];
+        return $originsCountItem->isHit() ? (array) $originsCountItem->get() : [];
     }
 
     private function handleDecisionExpiresAt(string $type, string $duration): int

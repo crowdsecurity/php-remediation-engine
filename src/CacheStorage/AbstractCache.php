@@ -28,6 +28,8 @@ abstract class AbstractCache
     public const DEFER = 'deferred';
     /** @var string Internal name for effective saved cache item (not deferred) */
     public const DONE = 'done';
+    /** @var string Internal name for first lapi call config item */
+    public const FIRST_LAPI_CALL = 'first_lapi_call';
     /** @var string The cache key prefix or tag for a geolocation */
     public const GEOLOCATION = 'geolocation';
     /** @var int Cache item content array expiration index */
