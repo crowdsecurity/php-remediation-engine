@@ -22,6 +22,7 @@
     - [Example scripts](#example-scripts)
 - [CAPI remediation engine configurations](#capi-remediation-engine-configurations)
   - [Remediation priorities](#remediation-priorities)
+  - [Bouncing level](#bouncing-level)
   - [Remediation fallback](#remediation-fallback)
   - [Geolocation](#geolocation)
   - [Refresh frequency indicator](#refresh-frequency-indicator)
@@ -491,6 +492,18 @@ This setting is not required. If you don't set any value, `['ban']` will be used
 
 In the example above, priorities can be summarized as `ban > captcha > bypass`.
 
+### Bouncing level
+
+```php
+$configs = [
+        ... 
+        'bouncing_level' => 'normal_bouncing'
+        ...
+];
+```
+
+- `bouncing_level`:  Select from `bouncing_disabled`, `normal_bouncing` or `flex_bouncing`. Choose if you want to apply CrowdSec directives (Normal bouncing) or be more permissive (Flex bouncing). With the `Flex mode`, it is impossible to accidentally block access to your site to people who don’t deserve it. This mode makes it possible to never ban an IP but only to offer a captcha, in the worst-case scenario.
+
 
 ### Remediation fallback
 
@@ -565,8 +578,7 @@ This setting is not required. If you don't set any value, `14400` (4h) will be u
 
 The first parameter `$configs` of the `LapiRemediation` constructor can be used to pass some settings.
 
-As for the CAPI remediation engine above, you can pass `ordered_remediations`, `fallback_remediation` and 
-`geolocation` settings.
+As for the CAPI remediation engine above, you can pass `ordered_remediations`, `bouncing_level`, `fallback_remediation` and `geolocation` settings.
 
 In addition, LAPI remediation engine handles the following settings:
 
