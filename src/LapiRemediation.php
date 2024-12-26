@@ -175,6 +175,7 @@ class LapiRemediation extends AbstractRemediation
      * Returns the metrics items sent to LAPI.
      *
      * @throws CacheException
+     * @throws ClientException
      * @throws InvalidArgumentException
      */
     public function pushUsageMetrics(
