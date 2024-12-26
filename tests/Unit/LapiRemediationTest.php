@@ -66,13 +66,13 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::resetRemediationOriginCount
  *
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
+ *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::capRemediationLevel
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCountItem
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::getFirstCall
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::storeFirstCall
- *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleDecisionOrigin
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::handleIpV6RangeDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getIpType
@@ -134,6 +134,12 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\Configuration\Lapi::validateAppSec
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::processCachedDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::retrieveRemediationFromCachedDecisions
+ *
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::buildMetricsItems
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::pushUsageMetrics
+ * @covers \CrowdSec\RemediationEngine\LapiRemediation::storeMetricsLastSent
+ *
+ *
  */
 final class LapiRemediationTest extends AbstractRemediation
 {
@@ -695,6 +701,332 @@ final class LapiRemediationTest extends AbstractRemediation
             $originsCount,
             'Origin count should be updated'
         );
+    }
+
+    /**
+     * @dataProvider cacheTypeProvider
+     */
+    public function testPushUsageMetricsInLiveMode($cacheType)
+    {
+        $this->setCache($cacheType);
+        $remediationConfigs = ['stream_mode' => false];
+        // Prepare next tests
+        $currentTime = time();
+        $this->cacheStorage->method('retrieveDecisionsForIp')->will(
+            // We simulate that cache never contains any decision
+            $this->onConsecutiveCalls(
+                [AbstractCache::STORED => []],  // Test 1 / Call1 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 1 / Call1 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 1 / Call2 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 1 / Call2 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 1 / Call3 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 1 / Call3 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 2 / Call1 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 2 / Call1 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 3 / Call1 : retrieve empty IP decisions
+                [AbstractCache::STORED => []],  // Test 3 / Call1 : retrieve empty range decisions
+                [AbstractCache::STORED => []],  // Test 3 / Call2 : retrieve empty IP decisions
+                [AbstractCache::STORED => []]  // Test 3 / Call2 : retrieve empty range decisions
+            )
+        );
+        $this->bouncer->method('getFilteredDecisions')->will(
+            $this->onConsecutiveCalls(
+                [],  // Test 1 / Call1 : retrieve empty IP decisions (final metrics count will be a bypass)
+                [
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4,
+                        'type' => 'captcha',
+                        'origin' => 'cscli',
+                        'duration' => '1h',
+                    ],
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4,
+                        'type' => 'ban',
+                        'origin' => 'CAPI',
+                        'duration' => '1h',
+                    ], // Test 1 / Call2 : retrieve ban and captcha (final metrics count will be a ban from CAPI)
+                ],
+                [
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4_2,
+                        'type' => 'captcha',
+                        'origin' => 'lists:tor',
+                        'duration' => '1h',
+                    ], // Test 1 / Call3 : retrieve captcha (final metrics count will be a captcha from lists-tor)
+                ],
+                [
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4_3,
+                        'type' => 'captcha',
+                        'origin' => 'lists:tor',
+                        'duration' => '1h',
+                    ], // Test 2 / Call1 : retrieve captcha (final metrics count will be a captcha from lists-tor)
+                ],
+                [
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4_4,
+                        'type' => 'captcha',
+                        'origin' => 'lists:tor',
+                        'duration' => '1h',
+                    ], // Test 3 / Call1 : retrieve captcha (final metrics count will be a captcha from lists-tor)
+                ],
+                [
+                    [
+                        'scope' => 'ip',
+                        'value' => TestConstants::IP_V4_5,
+                        'type' => 'captcha',
+                        'origin' => 'lists:tor',
+                        'duration' => '1h',
+                    ], // Test 3 / Call2 : retrieve captcha (final metrics count will be a captcha from lists-tor)
+                ]
+            )
+        );
+        // Test 1 : push metrics
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
+        // Call 1
+        $remediation->getIpRemediation(TestConstants::IP_V4);
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $configItem = $item->get();
+        $this->assertEqualsWithDelta(
+            [
+                AbstractCache::FIRST_LAPI_CALL => $currentTime,
+            ],
+            $configItem,
+            1, // 1 second delta to avoid false negative
+            'First call should have been cached'
+        );
+        $originalFirstCall = $configItem[AbstractCache::FIRST_LAPI_CALL];
+        $this->assertArrayNotHasKey(
+            AbstractCache::LAST_METRICS_SENT,
+            $configItem,
+            'Last sent Usage metrics should not be cached');
+        // Call 2
+        $remediation->getIpRemediation(TestConstants::IP_V4);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            ['clean' => ['bypass' => 1], 'CAPI' => ['ban' => 1]],
+            $originsCount,
+            'Origin count should be cached'
+        );
+        // Call 3
+        $remediation->getIpRemediation(TestConstants::IP_V4_2);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [
+                'clean' => ['bypass' => 1],
+                'CAPI' => ['ban' => 1],
+                'lists:tor' => ['captcha' => 1],
+            ],
+            $originsCount,
+            'Origin count should be cached'
+        );
+
+        $result = $remediation->pushUsageMetrics('test-remediation-php-unit', 'v0.0.0', 'crowdsec-php-bouncer-unit-test');
+        $this->assertArrayHasKey('remediation_components', $result, 'Should return a remediation_components key');
+
+        $firstPushTime = time();
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $configItem = $item->get();
+        $this->assertEqualsWithDelta(
+            [
+                AbstractCache::LAST_METRICS_SENT => $firstPushTime,
+                AbstractCache::FIRST_LAPI_CALL => $originalFirstCall,
+            ],
+            $configItem,
+            1, // 1 second delta to avoid false negative
+            'Last sent should have been cached'
+        );
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [
+                'clean' => ['bypass' => 0],
+                'CAPI' => ['ban' => 0],
+                'lists:tor' => ['captcha' => 0],
+            ],
+            $originsCount,
+            'Origin count should be reset'
+        );
+
+        // Test 2 : push metrics again after some delay
+        // Call 1
+        sleep(1);
+        $remediation->getIpRemediation(TestConstants::IP_V4_3);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [
+                'clean' => ['bypass' => 0],
+                'CAPI' => ['ban' => 0],
+                'lists:tor' => ['captcha' => 1],
+            ],
+            $originsCount,
+            'Origin count should be updated'
+        );
+        $secondPushTime = time();
+        $result = $remediation->pushUsageMetrics('test-remediation-php-unit', 'v0.0.0', 'crowdsec-php-bouncer-unit-test');
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $configItem = $item->get();
+        $this->assertEqualsWithDelta(
+            [
+                AbstractCache::LAST_METRICS_SENT => $secondPushTime,
+                AbstractCache::FIRST_LAPI_CALL => $originalFirstCall,
+            ],
+            $configItem,
+            1, // 1 second delta to avoid false negative
+            'Last sent should have been cached'
+        );
+        $this->assertEqualsWithDelta(
+            1,
+            $result['remediation_components'][0]['metrics'][0]['meta']['window_size_seconds'],
+            1, // 1s to avoid false negative
+            'window_size_seconds should be 1 seconds'
+        );
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [
+                'clean' => ['bypass' => 0],
+                'CAPI' => ['ban' => 0],
+                'lists:tor' => ['captcha' => 0],
+            ],
+            $originsCount,
+            'Origin count should be reset'
+        );
+        // Test 3 : push metrics and concurrent getRemediationIp call
+        $remediation->getIpRemediation(TestConstants::IP_V4_4);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [
+                'clean' => ['bypass' => 0],
+                'CAPI' => ['ban' => 0],
+                'lists:tor' => ['captcha' => 1],
+            ],
+            $originsCount,
+            'Origin count should be updated'
+        );
+        $thirdPushTime = time();
+        // Trying to test simultaneous call
+        $result = $remediation->pushUsageMetrics('test-remediation-php-unit', 'v0.0.0', 'crowdsec-php-bouncer-unit-test');
+        $remediation->getIpRemediation(TestConstants::IP_V4_5);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [
+                'clean' => ['bypass' => 0],
+                'CAPI' => ['ban' => 0],
+                'lists:tor' => ['captcha' => 1],
+            ],
+            $originsCount,
+            'Origin count should be updated with -1 + 1 (i.e same as before)'
+        );
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $configItem = $item->get();
+        $this->assertEqualsWithDelta(
+            [
+                AbstractCache::LAST_METRICS_SENT => $thirdPushTime,
+                AbstractCache::FIRST_LAPI_CALL => $originalFirstCall,
+            ],
+            $configItem,
+            1, // 1 second delta to avoid false negative
+            'Last sent should have been cached'
+        );
+    }
+
+    /**
+     * @dataProvider cacheTypeProvider
+     */
+    public function testPushUsageMetricsInStreamMode($cacheType)
+    {
+        $this->setCache($cacheType);
+        $remediationConfigs = ['stream_mode' => true];
+        // Prepare next tests
+        $currentTime = time();
+        $this->cacheStorage->method('retrieveDecisionsForIp')->will(
+            $this->onConsecutiveCalls(
+                [AbstractCache::STORED => [[
+                    'bypass',
+                    999999999999,
+                    'clean-bypass-ip-' . TestConstants::IP_V4,
+                    'clean',
+                ]]],                            // Test 1/Call 1 : retrieve cached bypass
+                [AbstractCache::STORED => []],  // Test 1/Call 1 : retrieve empty range
+                [AbstractCache::STORED => [[
+                    'bypass',
+                    999999999999,
+                    'clean-bypass-ip-' . TestConstants::IP_V4,
+                    'clean',
+                ]]],                            // Test 1/Call 2 : retrieve cached bypass
+                [AbstractCache::STORED => []]  // Test 1/Call 2 : retrieve empty range
+            )
+        );
+        $this->bouncer->method('getStreamDecisions')->will(
+            $this->onConsecutiveCalls(
+                MockedData::DECISIONS['new_ip_v4']           // Test 1 : new IP decision (ban)
+            )
+        );
+
+        // Test 1 : push metrics
+        $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, null);
+        // Call 1
+        $remediation->refreshDecisions();
+        $remediation->getIpRemediation(TestConstants::IP_V4);
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $configItem = $item->get();
+        $this->assertEqualsWithDelta(
+            [
+                AbstractCache::FIRST_LAPI_CALL => $currentTime,
+                AbstractCache::WARMUP => true,
+            ],
+            $configItem,
+            1, // 1 second delta to avoid false negative
+            'First call should have been cached'
+        );
+        $originalFirstCall = $configItem[AbstractCache::FIRST_LAPI_CALL];
+        $this->assertArrayNotHasKey(
+            AbstractCache::LAST_METRICS_SENT,
+            $configItem,
+            'Last sent Usage metrics should not be cached');
+        // Call 2
+        $remediation->getIpRemediation(TestConstants::IP_V4);
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            ['clean' => ['bypass' => 2]],
+            $originsCount,
+            'Origin count should be cached'
+        );
+        $result = $remediation->pushUsageMetrics('test-remediation-php-unit', 'v0.0.0', 'crowdsec-php-bouncer-unit-test');
+        $this->assertArrayHasKey('remediation_components', $result, 'Should return a remediation_components key');
+
+        $firstPushTime = time();
+        $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $configItem = $item->get();
+        $this->assertEqualsWithDelta(
+            [
+                AbstractCache::LAST_METRICS_SENT => $firstPushTime,
+                AbstractCache::FIRST_LAPI_CALL => $originalFirstCall,
+                AbstractCache::WARMUP => true,
+            ],
+            $configItem,
+            1, // 1 second delta to avoid false negative
+            'Last sent should have been cached'
+        );
+        $originsCount = $remediation->getOriginsCount();
+        $this->assertEquals(
+            [
+                'clean' => ['bypass' => 0],
+            ],
+            $originsCount,
+            'Origin count should be reset'
+        );
+        // Test 2: nothing to send
+        $result = $remediation->pushUsageMetrics('test-remediation-php-unit', 'v0.0.0', 'crowdsec-php-bouncer-unit-test');
+        $this->assertEquals(
+            [],
+            $result,
+            'Should return an empty array'
+        );
 
     }
 
@@ -789,7 +1121,6 @@ final class LapiRemediationTest extends AbstractRemediation
             'Clean count should be reset to 0'
         );
     }
-
 
     /**
      * @dataProvider cacheTypeProvider
@@ -1548,8 +1879,7 @@ final class LapiRemediationTest extends AbstractRemediation
         );
         $this->assertEquals('bypass', $result, 'Remediation should be capped as bypass');
 
-        $remediationConfigs = ['bouncing_level' =>
-            Constants::BOUNCING_LEVEL_FLEX];
+        $remediationConfigs = ['bouncing_level' => Constants::BOUNCING_LEVEL_FLEX];
         $remediation = new LapiRemediation($remediationConfigs, $this->bouncer, $this->cacheStorage, $this->logger);
 
         $result = PHPUnitUtil::callMethod(
@@ -1558,7 +1888,6 @@ final class LapiRemediationTest extends AbstractRemediation
             ['ban']
         );
         $this->assertEquals('captcha', $result, 'Remediation should be capped as captcha');
-
     }
 
     protected function tearDown(): void

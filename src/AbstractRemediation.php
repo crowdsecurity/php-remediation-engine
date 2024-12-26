@@ -99,25 +99,27 @@ abstract class AbstractRemediation
      * @throws CacheException
      * @throws InvalidArgumentException
      */
-    public function incrementRemediationOriginCount(string $origin, string $remediation): int
+    public function updateRemediationOriginCount(string $origin, string $remediation, int $delta = 1): int
     {
         $cacheOriginCount = $this->getOriginsCountItem();
         $count = isset($cacheOriginCount[$origin][$remediation]) ?
             (int) $cacheOriginCount[$origin][$remediation] :
             0;
 
+        $count += $delta;
+        $finalCount = max(0, $count);
         $this->cacheStorage->upsertItem(
             AbstractCache::ORIGINS_COUNT,
             [
                 $origin => [
-                    $remediation => ++$count,
+                    $remediation => $finalCount,
                 ],
             ],
             0,
             [AbstractCache::ORIGINS_COUNT]
         );
 
-        return $count;
+        return $finalCount;
     }
 
     /**
@@ -311,7 +313,7 @@ abstract class AbstractRemediation
         $remediation = !empty($remediationData[self::INDEX_REM]) ? (string) $remediationData[self::INDEX_REM] :
             Constants::REMEDIATION_BYPASS;
         if ($origin) {
-            $this->incrementRemediationOriginCount($origin, $remediation);
+            $this->updateRemediationOriginCount($origin, $remediation);
         }
 
         return $remediation;

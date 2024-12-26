@@ -42,6 +42,8 @@ abstract class AbstractCache
     public const INDEX_ORIGIN = 3;
     /** @var string The cache key prefix for a IPV4 range bucket */
     public const IPV4_BUCKET_KEY = 'range_bucket_ipv4';
+    /** @var string Internal name for last metrics sent timestamp */
+    public const LAST_METRICS_SENT = 'last_metrics_sent';
     /** @var string Internal name for last pull */
     public const LAST_PULL = 'last_pull';
     /** @var string Internal name for list */

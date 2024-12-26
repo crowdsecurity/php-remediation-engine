@@ -54,8 +54,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses   \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
  * @uses \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
- *
- * @uses \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  *
@@ -124,9 +123,8 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::retrieveRemediationFromCachedDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::capRemediationLevel
+ *
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCountItem
- *
- *
  */
 final class CapiRemediationTest extends AbstractRemediation
 {

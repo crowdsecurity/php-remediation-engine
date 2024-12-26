@@ -67,10 +67,12 @@ This kind of action is called a remediation and can be:
     - Use the cached decisions for CAPI and for LAPI in stream mode
     - For LAPI in live mode, call LAPI if there is no cached decision
     - Use customizable remediation priorities
-  - Determine AppSec (LAPI) remediation for a given request 
+  - Determine AppSec (LAPI) remediation for a given request
+  
+- CrowdSec metrics
+  - Push usage metrics to LAPI
   
 - Overridable cache handler (built-in support for `Redis`, `Memcached` and `PhpFiles` caches)
-
 
 - Large PHP matrix compatibility: from 7.2 to 8.4
 
@@ -341,6 +343,16 @@ The `$rawBody` parameter is optional and must be used if the forwarded request c
 
 Please see the [CrowdSec AppSec documentation](https://docs.crowdsec.net/docs/appsec/intro) for more details.
 
+##### Push usage metrics to LAPI
+
+To push usage metrics to LAPI, you can do the following call:
+
+```php
+    $remediationEngine->pushUsageMetrics($bouncerName, $bouncerVersion, $bouncerType);
+```
+
+Metrics are retrieved from the cache and sent to LAPI.
+
 
 #### Example scripts
 
@@ -435,6 +447,20 @@ php tests/scripts/get-remediation-appsec.php <APPSEC_URL> <IP> <URI> <HOST> <VER
 
 ```bash
 php tests/scripts/get-appsec-remediation http://crowdsec:7422  172.0.0.24 /login example.com POST c580eb*********de541 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:68.0) Gecko/20100101 Firefox/68.0' '{"Content-Type":"application/x-www-form-urlencoded","Accept-Language":"en-US,en;q=0.5"}' 'class.module.classLoader.resources.'
+```
+
+##### Push usage metrics to LAPI
+
+###### Command usage
+
+```php
+php tests/scripts/push-lapi-usage-metrics.php <BOUNCER_KEY> <LAPI_URL>
+```
+
+###### Example usage
+
+```bash
+  php tests/scripts/push-lapi-usage-metrics.php 68c2b479830c89bfd48926f9d764da39  https://crowdsec:8080
 ```
 
 
@@ -744,10 +770,11 @@ the origin. When the retrieved remediation is a `bypass` (i.e. no active decisio
 $originsCount = $remediation->getOriginsCount();
 
 /*$originsCount = [
-    'appsec' => 6,
-    'clean' => 150,
-    'clean_appsec' => 2, 
-    'capi' => 28,
-    'lists' => 16,
+    'appsec' => ['ban' => 10],
+    'clean' => ['bypass' =>150],
+    'clean_appsec' => ['bypass' =>2], 
+    'CAPI' => ['ban' => 28],
+    'cscli' => ['ban' => 5, 'captcha' => 3],
+    'lists:tor' => ['custom' => 16],
 ]*/
 ```

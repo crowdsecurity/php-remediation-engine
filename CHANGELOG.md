@@ -22,6 +22,7 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ### Added
 
+- Add `LapiRemediation::pushUsageMetrics` method to push usage metrics to LAPI
 - Add `bouncing_level` configuration to cap maximum remediation level
 - Add `AbstractRemediation::resetRemediationOriginCount` method to reset origin count cache item for a remediation
 
@@ -29,7 +30,7 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 - For `lists` origin, store also the list name (scenario) in origins count cache item
 - **Breaking change**: Rename `AbstractRemediation::updateRemediationOriginCount` method to 
-  `incrementRemediationOriginCount` and add a `$remediation` parameter.
+  `updateRemediationOriginCount` with new `$remediation` and `$delta` parameters.
 - **Breaking change**: Store `clean` as origin in cache for `bypass` remediation even if 
   original retrieved remediation was not a bypass (unhandled or capped remediation ). If `bypass` is the result of 
   AppSec remediation, we continue to store `clean_appsec` as origin in cache.

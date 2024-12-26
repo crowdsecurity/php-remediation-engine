@@ -56,7 +56,7 @@ class CapiRemediation extends AbstractRemediation
                 'ip' => $ip,
             ]);
             $remediation = Constants::REMEDIATION_BYPASS;
-            $this->incrementRemediationOriginCount(AbstractCache::CLEAN, $remediation);
+            $this->updateRemediationOriginCount(AbstractCache::CLEAN, $remediation);
 
             // As CAPI is always in stream_mode, we do not store this bypass
             return $remediation;

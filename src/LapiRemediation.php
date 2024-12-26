@@ -6,6 +6,7 @@ namespace CrowdSec\RemediationEngine;
 
 use CrowdSec\LapiClient\Bouncer;
 use CrowdSec\LapiClient\ClientException;
+use CrowdSec\LapiClient\Constants as LapiConstants;
 use CrowdSec\LapiClient\TimeoutException;
 use CrowdSec\RemediationEngine\CacheStorage\AbstractCache;
 use CrowdSec\RemediationEngine\CacheStorage\CacheStorageException;
@@ -86,7 +87,7 @@ class LapiRemediation extends AbstractRemediation
         }
         $rawRemediation = $this->parseAppSecDecision($rawAppSecDecision);
         if (Constants::REMEDIATION_BYPASS === $rawRemediation) {
-            $this->incrementRemediationOriginCount(AbstractCache::CLEAN_APPSEC, $rawRemediation);
+            $this->updateRemediationOriginCount(AbstractCache::CLEAN_APPSEC, $rawRemediation);
 
             return $rawRemediation;
         }
@@ -105,6 +106,13 @@ class LapiRemediation extends AbstractRemediation
     }
 
     /**
+     * Retrieve the remediation for a given IP.
+     *
+     * It will first check the cache for the IP decisions.
+     * If no decisions are found, it will call LAPI to get the decisions.
+     * The decisions are then stored in the cache.
+     * The remediation is then processed and returned.
+     *
      * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws RemediationException
@@ -123,12 +131,12 @@ class LapiRemediation extends AbstractRemediation
             // In stream_mode, we do not store this bypass, and we do not call LAPI directly
             if ($this->getConfig('stream_mode')) {
                 $remediation = Constants::REMEDIATION_BYPASS;
-                $this->incrementRemediationOriginCount(AbstractCache::CLEAN, $remediation);
+                $this->updateRemediationOriginCount(AbstractCache::CLEAN, $remediation);
 
                 return $remediation;
             }
             // In live mode, ask LAPI (Retrieve Ip AND Range scoped decisions)
-            $this->storeFirstCall();
+            $this->storeFirstCall(time());
             $rawIpDecisions = $this->client->getFilteredDecisions(['ip' => $ip]);
             $ipDecisions = $this->convertRawDecisionsToDecisions($rawIpDecisions);
             // IPV6 range scoped decisions are not yet stored in cache, so we store it as IP scoped decisions
@@ -160,6 +168,74 @@ class LapiRemediation extends AbstractRemediation
     }
 
     /**
+     * Push usage metrics to LAPI.
+     *
+     * The metrics are built from the cache and then sent to LAPI.
+     * The cache is then updated to reflect the metrics sent.
+     * Returns the metrics items sent to LAPI.
+     *
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    public function pushUsageMetrics(
+        string $bouncerName,
+        string $bouncerVersion,
+        string $bouncerType = LapiConstants::METRICS_TYPE
+    ): array {
+        $cacheConfigItem = $this->cacheStorage->getItem(AbstractCache::CONFIG);
+        $cacheConfig = $cacheConfigItem->isHit() ? $cacheConfigItem->get() : [];
+        $start = $cacheConfig[AbstractCache::FIRST_LAPI_CALL] ?? 0;
+        $now = time();
+        $lastSent = $cacheConfig[AbstractCache::LAST_METRICS_SENT] ?? $start;
+
+        $originsCount = $this->getOriginsCount();
+        $build = $this->buildMetricsItems($originsCount);
+        $metricsItems = $build['items'] ?? [];
+        $originsToUpdate = $build['origins'] ?? [];
+        if (empty($metricsItems)) {
+            $this->logger->info('No metrics to send', [
+                'type' => 'LAPI_REM_NO_METRICS',
+            ]);
+
+            return [];
+        }
+
+        $properties = [
+            'name' => $bouncerName,
+            'type' => $bouncerType,
+            'version' => $bouncerVersion,
+            'utc_startup_timestamp' => $start,
+        ];
+        $meta = [
+            'window_size_seconds' => max(0, $now - $lastSent),
+            'utc_now_timestamp' => $now,
+        ];
+
+        $metrics = $this->client->buildUsageMetrics($properties, $meta, $metricsItems);
+
+        $this->client->pushUsageMetrics($metrics);
+
+        // Decrement the count of each origin/remediation
+        foreach ($originsToUpdate as $origin => $remediationCount) {
+            foreach ($remediationCount as $remediation => $delta) {
+                // We update the count of each origin/remediation, one by one
+                // because we want to handle the case where an origin/remediation/count has been updated
+                // between the time we get the count and the time we update it
+                $this->updateRemediationOriginCount($origin, $remediation, $delta);
+            }
+        }
+
+        $this->storeMetricsLastSent($now);
+
+        return $metrics;
+    }
+
+    /**
+     * Refresh the decisions from LAPI.
+     *
+     * This method is only available in stream mode.
+     * Depending on the warmup status, it will either process a startup or a regular refresh.
+     *
      * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
      *
      * @throws CacheException
@@ -187,6 +263,46 @@ class LapiRemediation extends AbstractRemediation
         }
 
         return $this->getStreamDecisions(false, $filter);
+    }
+
+    private function buildMetricsItems(array $originsCount): array
+    {
+        $metricsItems = [];
+        $processed = 0;
+        $originsToUpdate = [];
+        foreach ($originsCount as $origin => $remediationCount) {
+            foreach ($remediationCount as $remediation => $count) {
+                if ($count <= 0) {
+                    continue;
+                }
+                // Count all processed metrics, even clean ones
+                $processed += $count;
+                // Prepare data to update origins count item after processing
+                $originsToUpdate[$origin][$remediation] = -$count;
+                if (Constants::REMEDIATION_BYPASS === $remediation) {
+                    continue;
+                }
+                // Create "dropped" metrics
+                $metricsItems[] = [
+                    'name' => 'dropped',
+                    'value' => $count,
+                    'unit' => 'request',
+                    'labels' => [
+                        'origin' => $origin,
+                        'remediation' => $remediation,
+                    ],
+                ];
+            }
+        }
+        if ($processed > 0) {
+            $metricsItems[] = [
+                'name' => 'processed',
+                'value' => $processed,
+                'unit' => 'request',
+            ];
+        }
+
+        return ['items' => $metricsItems, 'origins' => $originsToUpdate];
     }
 
     /**
@@ -235,6 +351,7 @@ class LapiRemediation extends AbstractRemediation
      */
     private function getStreamDecisions(bool $startup = false, array $filter = []): array
     {
+        $this->storeFirstCall(time());
         $rawDecisions = $this->client->getStreamDecisions($startup, $filter);
         $newDecisions = $this->convertRawDecisionsToDecisions($rawDecisions[self::CS_NEW] ?? []);
         $deletedDecisions = $this->convertRawDecisionsToDecisions($rawDecisions[self::CS_DEL] ?? []);
@@ -299,19 +416,41 @@ class LapiRemediation extends AbstractRemediation
      * @throws CacheException
      * @throws InvalidArgumentException
      */
-    private function storeFirstCall(): void
+    private function storeFirstCall(int $timestamp): void
     {
         $firstCall = $this->getFirstCall();
         if (0 !== $firstCall) {
             return;
         }
-        $time = time();
-        $content = [AbstractCache::FIRST_LAPI_CALL => $time];
+        $content = [AbstractCache::FIRST_LAPI_CALL => $timestamp];
         $this->logger->info(
             'Flag LAPI first call',
             [
                 'type' => 'LAPI_REM_CACHE_FIRST_CALL',
-                'time' => $time,
+                'time' => $timestamp,
+            ]
+        );
+
+        $this->cacheStorage->upsertItem(
+            AbstractCache::CONFIG,
+            $content,
+            0,
+            [AbstractCache::CONFIG]
+        );
+    }
+
+    /**
+     * @throws CacheException
+     * @throws InvalidArgumentException
+     */
+    private function storeMetricsLastSent(int $timestamp): void
+    {
+        $content = [AbstractCache::LAST_METRICS_SENT => $timestamp];
+        $this->logger->debug(
+            'Flag metrics last sent',
+            [
+                'type' => 'LAPI_REM_CACHE_METRICS_LAST_SENT',
+                'time' => $timestamp,
             ]
         );
 
@@ -372,21 +511,9 @@ class LapiRemediation extends AbstractRemediation
         $result = $this->getStreamDecisions(true, $filter);
         // Store the fact that the cache has been warmed up.
         $this->logger->info('Flag cache warmup', ['type' => 'LAPI_REM_CACHE_WARMUP']);
-        $content = [AbstractCache::WARMUP => true];
-        if (0 === $this->getFirstCall()) {
-            $time = time();
-            $content[AbstractCache::FIRST_LAPI_CALL] = $time;
-            $this->logger->info(
-                'Flag LAPI first call',
-                [
-                    'type' => 'LAPI_REM_CACHE_FIRST_CALL',
-                    'time' => $time,
-                ]
-            );
-        }
         $this->cacheStorage->upsertItem(
             AbstractCache::CONFIG,
-            $content,
+            [AbstractCache::WARMUP => true],
             0,
             [AbstractCache::CONFIG]
         );

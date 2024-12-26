@@ -66,7 +66,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::capRemediationLevel
  * @uses \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCountItem
  *
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::incrementRemediationOriginCount
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::handleIpV6RangeDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getIpType
