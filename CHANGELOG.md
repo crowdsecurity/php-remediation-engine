@@ -34,6 +34,7 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 - **Breaking change**: Store `clean` as origin in cache for `bypass` remediation even if 
   original retrieved remediation was not a bypass (unhandled or capped remediation ). If `bypass` is the result of 
   AppSec remediation, we continue to store `clean_appsec` as origin in cache.
+- Update `crowdsec/lapi-client` dependency to `v3.4.0`
 
 ### Removed
 
