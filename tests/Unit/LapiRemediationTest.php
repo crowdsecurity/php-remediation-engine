@@ -134,12 +134,9 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\Configuration\Lapi::validateAppSec
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::processCachedDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::retrieveRemediationFromCachedDecisions
- *
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::buildMetricsItems
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::pushUsageMetrics
  * @covers \CrowdSec\RemediationEngine\LapiRemediation::storeMetricsLastSent
- *
- *
  */
 final class LapiRemediationTest extends AbstractRemediation
 {
@@ -384,7 +381,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Uncached (clean) IP should return a bypass remediation'
         );
 
@@ -400,21 +397,21 @@ final class LapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Cached clean IP should return a bypass remediation'
         );
         // Test 3
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result,
+            $result['remediation'],
             'Remediations should be ordered by priority'
         );
         // Test 4
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Expired cached remediations should have been cleaned'
         );
     }
@@ -538,7 +535,7 @@ final class LapiRemediationTest extends AbstractRemediation
 
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Uncached (clean) and with no active decision should return a bypass remediation'
         );
 
@@ -597,7 +594,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Cached (clean) should return a bypass remediation'
         );
         $originsCount = $remediation->getOriginsCount();
@@ -637,7 +634,7 @@ final class LapiRemediationTest extends AbstractRemediation
         );
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result,
+            $result['remediation'],
             'Should return a ban remediation'
         );
         $item = $adapter->getItem(base64_encode(TestConstants::IP_V4_CACHE_KEY));
@@ -649,7 +646,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V6);
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result,
+            $result['remediation'],
             'Should return a ban remediation'
         );
         $item = $adapter->getItem(base64_encode(RemConstants::SCOPE_IP . AbstractCache::SEP . TestConstants::IP_V6_CACHE_KEY));
@@ -688,7 +685,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4_4);
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result,
+            $result['remediation'],
             'Should return a ban remediation'
         );
         $originsCount = $remediation->getOriginsCount();
@@ -1027,7 +1024,6 @@ final class LapiRemediationTest extends AbstractRemediation
             $result,
             'Should return an empty array'
         );
-
     }
 
     /**
@@ -1191,7 +1187,7 @@ final class LapiRemediationTest extends AbstractRemediation
 
         $this->assertEquals(
             Constants::REMEDIATION_CAPTCHA,
-            $result,
+            $result['remediation'],
             'Should return a captcha'
         );
 
@@ -1291,7 +1287,7 @@ final class LapiRemediationTest extends AbstractRemediation
 
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Uncached (clean) and with no active decision should return a bypass remediation'
         );
 
@@ -1307,7 +1303,7 @@ final class LapiRemediationTest extends AbstractRemediation
 
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result,
+            $result['remediation'],
             'Cached country ban should return ban'
         );
 
@@ -1316,7 +1312,7 @@ final class LapiRemediationTest extends AbstractRemediation
 
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result,
+            $result['remediation'],
             'Should return higshest priority'
         );
     }

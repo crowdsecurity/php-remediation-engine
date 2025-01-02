@@ -52,10 +52,13 @@ class LapiRemediation extends AbstractRemediation
      * @throws ClientException
      * @throws InvalidArgumentException
      */
-    public function getAppSecRemediation(array $headers, string $rawBody = ''): string
+    public function getAppSecRemediation(array $headers, string $rawBody = ''): array
     {
+        $default = ['remediation' => Constants::REMEDIATION_BYPASS, 'origin' => AbstractCache::CLEAN_APPSEC];
         if (!$this->validateAppSecHeaders($headers)) {
-            return Constants::REMEDIATION_BYPASS;
+            $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
+
+            return $default;
         }
         if (!$this->validateRawBody($rawBody)) {
             $action = $this->getConfig('appsec_body_size_exceeded_action') ?? Constants::APPSEC_ACTION_HEADERS_ONLY;
@@ -65,9 +68,21 @@ class LapiRemediation extends AbstractRemediation
             ]);
             switch ($action) {
                 case Constants::APPSEC_ACTION_BLOCK:
-                    return Constants::REMEDIATION_BAN;
+                    $origin = Constants::ORIGIN_APPSEC;
+                    $remediation = Constants::REMEDIATION_BAN;
+                    $this->updateRemediationOriginCount($origin, $remediation);
+
+                    return [
+                        'remediation' => $remediation,
+                        'origin' => $origin,
+                    ];
                 case Constants::APPSEC_ACTION_ALLOW:
-                    return Constants::REMEDIATION_BYPASS;
+                    $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
+
+                    return [
+                        'remediation' => $default['remediation'],
+                        'origin' => $default['origin'],
+                    ];
                     // Default to headers only action
                 default:
                     $rawBody = '';
@@ -83,13 +98,20 @@ class LapiRemediation extends AbstractRemediation
             ]);
 
             // Early return for AppSec fallback remediation
-            return $this->getConfig('appsec_fallback_remediation') ?? Constants::REMEDIATION_BYPASS;
+            $remediation = $this->getConfig('appsec_fallback_remediation') ?? Constants::REMEDIATION_BYPASS;
+            $origin = Constants::REMEDIATION_BYPASS === $remediation ? $default['origin'] : Constants::ORIGIN_APPSEC;
+            $this->updateRemediationOriginCount($origin, $remediation);
+
+            return [
+                'remediation' => $remediation,
+                'origin' => $origin,
+            ];
         }
         $rawRemediation = $this->parseAppSecDecision($rawAppSecDecision);
         if (Constants::REMEDIATION_BYPASS === $rawRemediation) {
-            $this->updateRemediationOriginCount(AbstractCache::CLEAN_APPSEC, $rawRemediation);
+            $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
 
-            return $rawRemediation;
+            return $default;
         }
         // We only set required indexes for the processCachedDecisions method
         $fakeCachedDecisions = [[
@@ -118,8 +140,9 @@ class LapiRemediation extends AbstractRemediation
      * @throws RemediationException
      * @throws CacheException|ClientException
      */
-    public function getIpRemediation(string $ip): string
+    public function getIpRemediation(string $ip): array
     {
+        $default = ['remediation' => Constants::REMEDIATION_BYPASS, 'origin' => AbstractCache::CLEAN];
         $country = $this->getCountryForIp($ip);
         $cachedDecisions = $this->getAllCachedDecisions($ip, $country);
         $this->logger->debug('Cache result', [
@@ -130,10 +153,9 @@ class LapiRemediation extends AbstractRemediation
         if (!$cachedDecisions) {
             // In stream_mode, we do not store this bypass, and we do not call LAPI directly
             if ($this->getConfig('stream_mode')) {
-                $remediation = Constants::REMEDIATION_BYPASS;
-                $this->updateRemediationOriginCount(AbstractCache::CLEAN, $remediation);
+                $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
 
-                return $remediation;
+                return $default;
             }
             // In live mode, ask LAPI (Retrieve Ip AND Range scoped decisions)
             $this->storeFirstCall(time());

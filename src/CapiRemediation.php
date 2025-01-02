@@ -46,20 +46,19 @@ class CapiRemediation extends AbstractRemediation
      * @throws InvalidArgumentException
      * @throws RemediationException|CacheException
      */
-    public function getIpRemediation(string $ip): string
+    public function getIpRemediation(string $ip): array
     {
+        $default = ['remediation' => Constants::REMEDIATION_BYPASS, 'origin' => AbstractCache::CLEAN];
         $cachedDecisions = $this->getAllCachedDecisions($ip, $this->getCountryForIp($ip));
-
         if (!$cachedDecisions) {
             $this->logger->debug('There is no cached decision', [
                 'type' => 'CAPI_REM_NO_CACHED_DECISIONS',
                 'ip' => $ip,
             ]);
-            $remediation = Constants::REMEDIATION_BYPASS;
-            $this->updateRemediationOriginCount(AbstractCache::CLEAN, $remediation);
-
             // As CAPI is always in stream_mode, we do not store this bypass
-            return $remediation;
+            $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
+
+            return $default;
         }
 
         return $this->processCachedDecisions($cachedDecisions);

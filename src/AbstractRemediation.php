@@ -84,8 +84,14 @@ abstract class AbstractRemediation
 
     /**
      * Retrieve remediation for some IP.
+     *
+     * @returns array
+     *              [
+     *              'remediation' => (string): the remediation to apply (ex: 'ban', 'captcha', 'bypass'),
+     *              'origin' => (string): the origin of the remediation (ex: 'CAPI', 'cscli')
+     *             ]
      */
-    abstract public function getIpRemediation(string $ip): string;
+    abstract public function getIpRemediation(string $ip): array;
 
     /**
      * @throws InvalidArgumentException
@@ -306,7 +312,7 @@ abstract class AbstractRemediation
      * @throws CacheException
      * @throws InvalidArgumentException
      */
-    protected function processCachedDecisions(array $cacheDecisions): string
+    protected function processCachedDecisions(array $cacheDecisions): array
     {
         $remediationData = $this->retrieveRemediationFromCachedDecisions($cacheDecisions);
         $origin = !empty($remediationData[self::INDEX_ORIGIN]) ? (string) $remediationData[self::INDEX_ORIGIN] : '';
@@ -316,7 +322,10 @@ abstract class AbstractRemediation
             $this->updateRemediationOriginCount($origin, $remediation);
         }
 
-        return $remediation;
+        return [
+            'remediation' => $remediation,
+            'origin' => $origin,
+        ];
     }
 
     /**

@@ -374,7 +374,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Uncached (clean) IP should return a bypass remediation'
         );
 
@@ -390,21 +390,21 @@ final class CapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Cached clean IP should return a bypass remediation'
         );
         // Test 3
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result,
+            $result['remediation'],
             'Remediations should be ordered by priority'
         );
         // Test 4
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Expired cached remediations should have been cleaned'
         );
     }

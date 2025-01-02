@@ -28,12 +28,13 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ### Changed
 
-- For `lists` origin, store also the list name (scenario) in origins count cache item
+- **Breaking change**: `getIpRemediation` method now returns an array with `remediation` and `origin` keys
 - **Breaking change**: Rename `AbstractRemediation::updateRemediationOriginCount` method to 
   `updateRemediationOriginCount` with new `$remediation` and `$delta` parameters.
 - **Breaking change**: Store `clean` as origin in cache for `bypass` remediation even if 
   original retrieved remediation was not a bypass (unhandled or capped remediation ). If `bypass` is the result of 
   AppSec remediation, we continue to store `clean_appsec` as origin in cache.
+- For `lists` origin, store also the list name (scenario) in origins count cache item
 - Update `crowdsec/lapi-client` dependency to `v3.4.0`
 
 ### Removed
