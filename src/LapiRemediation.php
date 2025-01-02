@@ -211,6 +211,12 @@ class LapiRemediation extends AbstractRemediation
             'window_size_seconds' => max(0, $now - $lastSent),
             'utc_now_timestamp' => $now,
         ];
+        $this->logger->debug('Metrics to build', [
+            'type' => 'LAPI_REM_METRICS',
+            'items' => $metricsItems,
+            'properties' => $properties,
+            'meta' => $meta,
+        ]);
 
         $metrics = $this->client->buildUsageMetrics($properties, $meta, $metricsItems);
 
