@@ -774,7 +774,43 @@ final class LapiRemediationTest extends AbstractRemediation
 
         $result = $remediation->pushUsageMetrics('test-remediation-php-unit', 'v0.0.0', 'crowdsec-php-bouncer-unit-test');
         $this->assertArrayHasKey('remediation_components', $result, 'Should return a remediation_components key');
+        $items = $result['remediation_components'][0]['metrics'][0]['items'];
 
+        $this->assertEquals(
+            $items[0],
+            [
+                'name' => 'dropped',
+                'value' => 1,
+                'unit' => 'request',
+                'labels' => [
+                    'origin' => 'CAPI',
+                    'remediation' => 'ban',
+                ],
+            ],
+            'Should have CAPI/ban metrics'. json_encode($items[0])
+        );
+        $this->assertEquals(
+            $items[1],
+            [
+                'name' => 'dropped',
+                'value' => 1,
+                'unit' => 'request',
+                'labels' => [
+                    'origin' => 'lists:tor',
+                    'remediation' => 'captcha',
+                ],
+            ],
+            'Should have lists:tor/captcha metrics'. json_encode($items[1])
+        );
+        $this->assertEquals(
+            $items[2],
+            [
+                'name' => 'processed',
+                'value' => 3,
+                'unit' => 'request',
+            ],
+            'Should have processed metrics'. json_encode($items[2])
+        );
         $firstPushTime = time();
         $item = $this->cacheStorage->getItem(AbstractCache::CONFIG);
         $configItem = $item->get();

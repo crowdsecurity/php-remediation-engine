@@ -245,6 +245,7 @@ class LapiRemediation extends AbstractRemediation
                 // We update the count of each origin/remediation, one by one
                 // because we want to handle the case where an origin/remediation/count has been updated
                 // between the time we get the count and the time we update it
+                // $delta is negative, so we decrement the count
                 $this->updateMetricsOriginsCount($origin, $remediation, $delta);
             }
         }
@@ -299,14 +300,14 @@ class LapiRemediation extends AbstractRemediation
                 if ($count <= 0) {
                     continue;
                 }
-                // Count all processed metrics, even clean ones
+                // Count all processed metrics, even bypass ones
                 $processed += $count;
                 // Prepare data to update origins count item after processing
                 $originsToUpdate[$origin][$remediation] = -$count;
                 if (Constants::REMEDIATION_BYPASS === $remediation) {
                     continue;
                 }
-                // Create "dropped" metrics
+                // Create "dropped" metrics (all that is not a bypass)
                 $metricsItems[] = [
                     'name' => 'dropped',
                     'value' => $count,
