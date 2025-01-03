@@ -48,7 +48,10 @@ class CapiRemediation extends AbstractRemediation
      */
     public function getIpRemediation(string $ip): array
     {
-        $default = ['remediation' => Constants::REMEDIATION_BYPASS, 'origin' => AbstractCache::CLEAN];
+        $clean = [
+            Constants::REMEDIATION_KEY => Constants::REMEDIATION_BYPASS,
+            Constants::ORIGIN_KEY => AbstractCache::CLEAN,
+        ];
         $cachedDecisions = $this->getAllCachedDecisions($ip, $this->getCountryForIp($ip));
         if (!$cachedDecisions) {
             $this->logger->debug('There is no cached decision', [
@@ -56,9 +59,8 @@ class CapiRemediation extends AbstractRemediation
                 'ip' => $ip,
             ]);
             // As CAPI is always in stream_mode, we do not store this bypass
-            $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
 
-            return $default;
+            return $clean;
         }
 
         return $this->processCachedDecisions($cachedDecisions);

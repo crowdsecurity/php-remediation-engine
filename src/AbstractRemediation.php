@@ -83,7 +83,7 @@ abstract class AbstractRemediation
     }
 
     /**
-     * Retrieve remediation for some IP.
+     * Retrieve remediation and its origin for a given IP.
      *
      * @returns array
      *              [
@@ -102,10 +102,29 @@ abstract class AbstractRemediation
     }
 
     /**
+     * Prune cache.
+     *
+     * @throws CacheStorageException
+     */
+    public function pruneCache(): bool
+    {
+        return $this->cacheStorage->prune();
+    }
+
+    /**
+     * Pull fresh decisions and update the cache.
+     * Return the total of added and removed records. // ['new' => x, 'deleted' => y].
+     */
+    abstract public function refreshDecisions(): array;
+
+    /**
+     * Updating the "origins count" metrics in cache is the responsibility of the bouncer.
+     * This method should be called by the bouncer after a remediation has been applied.
+     *
      * @throws CacheException
      * @throws InvalidArgumentException
      */
-    public function updateRemediationOriginCount(string $origin, string $remediation, int $delta = 1): int
+    public function updateMetricsOriginsCount(string $origin, string $remediation, int $delta = 1): int
     {
         $cacheOriginCount = $this->getOriginsCountItem();
         $count = isset($cacheOriginCount[$origin][$remediation]) ?
@@ -126,45 +145,6 @@ abstract class AbstractRemediation
         );
 
         return $finalCount;
-    }
-
-    /**
-     * Prune cache.
-     *
-     * @throws CacheStorageException
-     */
-    public function pruneCache(): bool
-    {
-        return $this->cacheStorage->prune();
-    }
-
-    /**
-     * Pull fresh decisions and update the cache.
-     * Return the total of added and removed records. // ['new' => x, 'deleted' => y].
-     */
-    abstract public function refreshDecisions(): array;
-
-    /**
-     * @throws CacheException
-     * @throws InvalidArgumentException
-     */
-    public function resetRemediationOriginCount(string $origin, string $remediation): bool
-    {
-        $cacheOriginCount = $this->getOriginsCountItem();
-        if (!isset($cacheOriginCount[$origin][$remediation])) {
-            return false;
-        }
-
-        return $this->cacheStorage->upsertItem(
-            AbstractCache::ORIGINS_COUNT,
-            [
-                $origin => [
-                    $remediation => 0,
-                ],
-            ],
-            0,
-            [AbstractCache::ORIGINS_COUNT]
-        );
     }
 
     protected function convertRawDecision(array $rawDecision): ?Decision
@@ -228,7 +208,6 @@ abstract class AbstractRemediation
      * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws RemediationException
-     * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
      */
     protected function getCountryForIp(string $ip): string
     {
@@ -303,14 +282,10 @@ abstract class AbstractRemediation
 
     /**
      * Retrieve only the remediation with the highest priority from decisions.
+     *
      * It will remove expired decisions.
      * It will use fallback for unknown remediation.
      * It will cap the remediation level if needed.
-     *
-     * It also updates the origin count if possible.
-     *
-     * @throws CacheException
-     * @throws InvalidArgumentException
      */
     protected function processCachedDecisions(array $cacheDecisions): array
     {
@@ -318,13 +293,10 @@ abstract class AbstractRemediation
         $origin = !empty($remediationData[self::INDEX_ORIGIN]) ? (string) $remediationData[self::INDEX_ORIGIN] : '';
         $remediation = !empty($remediationData[self::INDEX_REM]) ? (string) $remediationData[self::INDEX_REM] :
             Constants::REMEDIATION_BYPASS;
-        if ($origin) {
-            $this->updateRemediationOriginCount($origin, $remediation);
-        }
 
         return [
-            'remediation' => $remediation,
-            'origin' => $origin,
+            Constants::REMEDIATION_KEY => $remediation,
+            Constants::ORIGIN_KEY => $origin,
         ];
     }
 

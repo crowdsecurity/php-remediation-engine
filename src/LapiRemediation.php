@@ -54,11 +54,12 @@ class LapiRemediation extends AbstractRemediation
      */
     public function getAppSecRemediation(array $headers, string $rawBody = ''): array
     {
-        $default = ['remediation' => Constants::REMEDIATION_BYPASS, 'origin' => AbstractCache::CLEAN_APPSEC];
+        $clean = [
+            Constants::REMEDIATION_KEY => Constants::REMEDIATION_BYPASS,
+            Constants::ORIGIN_KEY => AbstractCache::CLEAN_APPSEC,
+        ];
         if (!$this->validateAppSecHeaders($headers)) {
-            $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
-
-            return $default;
+            return $clean;
         }
         if (!$this->validateRawBody($rawBody)) {
             $action = $this->getConfig('appsec_body_size_exceeded_action') ?? Constants::APPSEC_ACTION_HEADERS_ONLY;
@@ -68,20 +69,14 @@ class LapiRemediation extends AbstractRemediation
             ]);
             switch ($action) {
                 case Constants::APPSEC_ACTION_BLOCK:
-                    $origin = Constants::ORIGIN_APPSEC;
-                    $remediation = Constants::REMEDIATION_BAN;
-                    $this->updateRemediationOriginCount($origin, $remediation);
-
                     return [
-                        'remediation' => $remediation,
-                        'origin' => $origin,
+                        Constants::REMEDIATION_KEY => Constants::REMEDIATION_BAN,
+                        Constants::ORIGIN_KEY => Constants::ORIGIN_APPSEC,
                     ];
                 case Constants::APPSEC_ACTION_ALLOW:
-                    $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
-
                     return [
-                        'remediation' => $default['remediation'],
-                        'origin' => $default['origin'],
+                        Constants::REMEDIATION_KEY => $clean[Constants::REMEDIATION_KEY],
+                        Constants::ORIGIN_KEY => $clean[Constants::ORIGIN_KEY],
                     ];
                     // Default to headers only action
                 default:
@@ -99,19 +94,18 @@ class LapiRemediation extends AbstractRemediation
 
             // Early return for AppSec fallback remediation
             $remediation = $this->getConfig('appsec_fallback_remediation') ?? Constants::REMEDIATION_BYPASS;
-            $origin = Constants::REMEDIATION_BYPASS === $remediation ? $default['origin'] : Constants::ORIGIN_APPSEC;
-            $this->updateRemediationOriginCount($origin, $remediation);
+            $origin = Constants::REMEDIATION_BYPASS === $remediation ?
+                $clean[Constants::ORIGIN_KEY] :
+                Constants::ORIGIN_APPSEC;
 
             return [
-                'remediation' => $remediation,
-                'origin' => $origin,
+                Constants::REMEDIATION_KEY => $remediation,
+                Constants::ORIGIN_KEY => $origin,
             ];
         }
         $rawRemediation = $this->parseAppSecDecision($rawAppSecDecision);
         if (Constants::REMEDIATION_BYPASS === $rawRemediation) {
-            $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
-
-            return $default;
+            return $clean;
         }
         // We only set required indexes for the processCachedDecisions method
         $fakeCachedDecisions = [[
@@ -128,7 +122,7 @@ class LapiRemediation extends AbstractRemediation
     }
 
     /**
-     * Retrieve the remediation for a given IP.
+     * Retrieve the remediation and its origin for a given IP.
      *
      * It will first check the cache for the IP decisions.
      * If no decisions are found, it will call LAPI to get the decisions.
@@ -142,7 +136,10 @@ class LapiRemediation extends AbstractRemediation
      */
     public function getIpRemediation(string $ip): array
     {
-        $default = ['remediation' => Constants::REMEDIATION_BYPASS, 'origin' => AbstractCache::CLEAN];
+        $clean = [
+            Constants::REMEDIATION_KEY => Constants::REMEDIATION_BYPASS,
+            Constants::ORIGIN_KEY => AbstractCache::CLEAN,
+        ];
         $country = $this->getCountryForIp($ip);
         $cachedDecisions = $this->getAllCachedDecisions($ip, $country);
         $this->logger->debug('Cache result', [
@@ -153,9 +150,7 @@ class LapiRemediation extends AbstractRemediation
         if (!$cachedDecisions) {
             // In stream_mode, we do not store this bypass, and we do not call LAPI directly
             if ($this->getConfig('stream_mode')) {
-                $this->updateRemediationOriginCount($default['origin'], $default['remediation']);
-
-                return $default;
+                return $clean;
             }
             // In live mode, ask LAPI (Retrieve Ip AND Range scoped decisions)
             $this->storeFirstCall(time());
@@ -210,7 +205,7 @@ class LapiRemediation extends AbstractRemediation
         $start = $cacheConfig[AbstractCache::FIRST_LAPI_CALL] ?? 0;
         $now = time();
         $lastSent = $cacheConfig[AbstractCache::LAST_METRICS_SENT] ?? $start;
-
+        // Updating the "origins count" metrics in cache is the responsibility of the bouncer.
         $originsCount = $this->getOriginsCount();
         $build = $this->buildMetricsItems($originsCount);
         $metricsItems = $build['items'] ?? [];
@@ -250,7 +245,7 @@ class LapiRemediation extends AbstractRemediation
                 // We update the count of each origin/remediation, one by one
                 // because we want to handle the case where an origin/remediation/count has been updated
                 // between the time we get the count and the time we update it
-                $this->updateRemediationOriginCount($origin, $remediation, $delta);
+                $this->updateMetricsOriginsCount($origin, $remediation, $delta);
             }
         }
 

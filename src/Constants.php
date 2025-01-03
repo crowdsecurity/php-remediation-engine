@@ -71,6 +71,10 @@ class Constants extends CommonConstants
      */
     public const MAXMIND_COUNTRY = 'country';
     /**
+     * @var string The key to get the origin from getIpRemediation
+     */
+    public const ORIGIN_KEY = 'origin';
+    /**
      * @var string The separator between the origin and scenario for the stored origin
      */
     public const ORIGIN_LISTS_SEPARATOR = ':';
@@ -78,6 +82,10 @@ class Constants extends CommonConstants
      * @var int The default refresh frequency (in seconds)
      */
     public const REFRESH_FREQUENCY = 14400;
+    /**
+     * @var string The key to get the remediation from getIpRemediation
+     */
+    public const REMEDIATION_KEY = 'remediation';
     /**
      * @var string The current version of this library
      */
