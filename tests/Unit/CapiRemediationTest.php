@@ -54,11 +54,7 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @uses   \CrowdSec\RemediationEngine\Configuration\AbstractRemediation::addGeolocationNodes
  * @uses   \CrowdSec\RemediationEngine\AbstractRemediation::getCountryForIp
  * @uses \CrowdSec\RemediationEngine\Configuration\AbstractCache::addCommonNodes
- *
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::handleRemediationFromDecisions
- * @covers \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
- *
- * @uses \CrowdSec\RemediationEngine\AbstractRemediation::updateRemediationOriginCount
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::updateMetricsOriginsCount
  *
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getCacheStorage
  *
@@ -85,7 +81,6 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::getConfig
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::getIpRemediation
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::storeDecisions
- * @covers \CrowdSec\RemediationEngine\CapiRemediation::sortDecisionsByRemediationPriority
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::refreshDecisions
  * @covers \CrowdSec\RemediationEngine\Configuration\Capi::getConfigTreeBuilder
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::removeDecisions
@@ -126,6 +121,10 @@ use org\bovigo\vfs\vfsStreamDirectory;
  * @covers \CrowdSec\RemediationEngine\CapiRemediation::handleListResponse
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::processCachedDecisions
  * @covers \CrowdSec\RemediationEngine\AbstractRemediation::retrieveRemediationFromCachedDecisions
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::sortDecisionsByPriority
+ * @covers \CrowdSec\RemediationEngine\AbstractRemediation::capRemediationLevel
+ *
+ * @uses \CrowdSec\RemediationEngine\AbstractRemediation::getOriginsCountItem
  */
 final class CapiRemediationTest extends AbstractRemediation
 {
@@ -375,7 +374,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Uncached (clean) IP should return a bypass remediation'
         );
 
@@ -391,21 +390,21 @@ final class CapiRemediationTest extends AbstractRemediation
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Cached clean IP should return a bypass remediation'
         );
         // Test 3
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BAN,
-            $result,
+            $result['remediation'],
             'Remediations should be ordered by priority'
         );
         // Test 4
         $result = $remediation->getIpRemediation(TestConstants::IP_V4);
         $this->assertEquals(
             Constants::REMEDIATION_BYPASS,
-            $result,
+            $result['remediation'],
             'Expired cached remediations should have been cleaned'
         );
     }
@@ -455,7 +454,7 @@ final class CapiRemediationTest extends AbstractRemediation
             'Should have created a normalized scope'
         );
         $this->assertEquals(
-            'capi',
+            'CAPI',
             $decision->getOrigin(),
             'Should have created a normalized origin'
         );
@@ -493,7 +492,7 @@ final class CapiRemediationTest extends AbstractRemediation
             'Should have created a normalized scope'
         );
         $this->assertEquals(
-            'capi',
+            'CAPI',
             $decision->getOrigin(),
             'Should have created a normalized origin'
         );
@@ -600,7 +599,7 @@ final class CapiRemediationTest extends AbstractRemediation
             $result,
             'Should return 1'
         );
-        // sortDecisionsByRemediationPriority
+        // sortDecisionsByPriority
         // Test 1 : default
         $decisions = [
             [
@@ -616,7 +615,7 @@ final class CapiRemediationTest extends AbstractRemediation
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
-            'sortDecisionsByRemediationPriority',
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertEquals(
@@ -644,7 +643,7 @@ final class CapiRemediationTest extends AbstractRemediation
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
-            'sortDecisionsByRemediationPriority',
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertEquals(
@@ -667,7 +666,7 @@ final class CapiRemediationTest extends AbstractRemediation
         ];
         $result = PHPUnitUtil::callMethod(
             $remediation,
-            'sortDecisionsByRemediationPriority',
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertEquals(
@@ -679,7 +678,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $decisions = [];
         $result = PHPUnitUtil::callMethod(
             $remediation,
-            'sortDecisionsByRemediationPriority',
+            'sortDecisionsByPriority',
             [$decisions]
         );
         $this->assertCount(
@@ -894,7 +893,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'parseDurationToSeconds',
-            ['147h23m43000.5665ms']
+            ['147h23m43.0005665s']
         );
         $this->assertEquals(
             3600 * 147 + 23 * 60 + 43,
@@ -919,6 +918,16 @@ final class CapiRemediationTest extends AbstractRemediation
         );
         $this->assertEquals(
             -23 * 60 - 43,
+            $result,
+            'Should convert in seconds'
+        );
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'parseDurationToSeconds',
+            ['147h23m43000ms']
+        );
+        $this->assertEquals(
+            530623,
             $result,
             'Should convert in seconds'
         );
@@ -1039,6 +1048,37 @@ final class CapiRemediationTest extends AbstractRemediation
             ['If-Modified-Since' => 'Fri, 03 Mar 2023 00:00:00 GMT'],
             $result
         );
+
+        // capRemediationLevel
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'capRemediationLevel',
+            ['ban']
+        );
+        $this->assertEquals('ban', $result, 'Remediation should be capped as ban');
+
+        $remediationConfigs = ['bouncing_level' => Constants::BOUNCING_LEVEL_DISABLED];
+        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
+
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'capRemediationLevel',
+            ['ban']
+        );
+        $this->assertEquals('bypass', $result, 'Remediation should be capped as bypass');
+        // We need to add the captcha in ordered_remediations to test the cap
+        $remediationConfigs = [
+            'bouncing_level' => Constants::BOUNCING_LEVEL_FLEX,
+            'ordered_remediations' => ['ban', 'captcha', 'bypass'],
+        ];
+        $remediation = new CapiRemediation($remediationConfigs, $this->watcher, $this->cacheStorage, $this->logger);
+
+        $result = PHPUnitUtil::callMethod(
+            $remediation,
+            'capRemediationLevel',
+            ['ban']
+        );
+        $this->assertEquals('captcha', $result, 'Remediation should be capped as captcha');
     }
 
     /**
