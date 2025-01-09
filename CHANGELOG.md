@@ -15,10 +15,9 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ---
 
-## [4.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v4.0.0) - 2024-??-??
-[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.5.0...HEAD)
+## [4.0.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v4.0.0) - 2025-01-09
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v3.5.0...v4.0.0)
 
-**This release is not published yet.**
 
 ### Added
 
