@@ -43,11 +43,11 @@
     "require": {
         "php": "^7.2.5 || ^8.0",
         "ext-json": "*",
-        "symfony/config": "^4.4.27 || ^5.2 || ^6.0",
-        "symfony/cache": "^5.4.11|| ^6.0.11",
-        "crowdsec/common": "^2.3.2",
-        "crowdsec/capi-client": "^3.2.0",
-        "crowdsec/lapi-client": "^3.4.0",
+        "symfony/config": "^4.4.27 || ^5.2 || ^6.0 || ^7.2",
+        "symfony/cache": "^5.4.11 || ^6.0.11 || ^7.2.1",
+        "crowdsec/common": "^2.4.0",
+        "crowdsec/capi-client": "^3.3.0",
+        "crowdsec/lapi-client": "^3.5.0",
         "monolog/monolog": "^1.17 || ^2.1",
         "mlocati/ip-lib": "^1.18",
         "geoip2/geoip2": "^2.13.0"
