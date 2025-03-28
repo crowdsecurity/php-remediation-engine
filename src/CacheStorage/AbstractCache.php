@@ -48,6 +48,8 @@ abstract class AbstractCache
     public const LAST_PULL = 'last_pull';
     /** @var string Internal name for list */
     public const LIST = 'list';
+    /** @var string Internal name for allow list */
+    public const ALLOW_LIST = 'allow_list';
     /** @var string Internal name for cache remediation origin count item */
     public const ORIGINS_COUNT = 'origins_count';
     /** @var string Internal name for cache clean item */

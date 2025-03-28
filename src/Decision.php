@@ -92,6 +92,13 @@ class Decision
         return $this;
     }
 
+    public function setExpiresAt(int $expiresAt): Decision
+    {
+        $this->expiresAt = $expiresAt;
+
+        return $this;
+    }
+
     public function toArray(): array
     {
         return [

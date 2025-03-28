@@ -23,6 +23,10 @@ class Constants extends CommonConstants
      */
     public const APPSEC_ACTION_ALLOW = 'allow';
     /**
+     * @var string The remediation related to the allow list
+     */
+    public const ALLOW_LIST_REMEDIATION = 'allow';
+    /**
      * @var string The AppSec action name to block the request
      */
     public const APPSEC_ACTION_BLOCK = 'block';
@@ -82,6 +86,7 @@ class Constants extends CommonConstants
      * @var int The default refresh frequency (in seconds)
      */
     public const REFRESH_FREQUENCY = 14400;
+
     /**
      * @var string The key to get the remediation from getIpRemediation
      */

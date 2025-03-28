@@ -18,6 +18,8 @@ abstract class AbstractRemediation
 {
     /** @var string The CrowdSec name for blocklist */
     public const CS_BLOCK = 'blocklists';
+    /** @var string The CrowdSec name for allowlist */
+    public const CS_ALLOW = 'allowlists';
     /** @var string The CrowdSec name for deleted decisions */
     public const CS_DEL = 'deleted';
     /** @var string The CrowdSec name for links */
