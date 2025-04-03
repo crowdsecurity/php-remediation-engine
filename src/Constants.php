@@ -19,13 +19,13 @@ use CrowdSec\Common\Constants as CommonConstants;
 class Constants extends CommonConstants
 {
     /**
-     * @var string The AppSec action name to allow the request
-     */
-    public const APPSEC_ACTION_ALLOW = 'allow';
-    /**
      * @var string The remediation related to the allow list
      */
     public const ALLOW_LIST_REMEDIATION = 'allow';
+    /**
+     * @var string The AppSec action name to allow the request
+     */
+    public const APPSEC_ACTION_ALLOW = 'allow';
     /**
      * @var string The AppSec action name to block the request
      */

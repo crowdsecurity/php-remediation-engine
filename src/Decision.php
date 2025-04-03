@@ -53,6 +53,13 @@ class Decision
         return $this->expiresAt;
     }
 
+    public function setExpiresAt(int $expiresAt): Decision
+    {
+        $this->expiresAt = $expiresAt;
+
+        return $this;
+    }
+
     public function getIdentifier(): string
     {
         return $this->identifier;
@@ -88,13 +95,6 @@ class Decision
     public function setValue(string $value): Decision
     {
         $this->value = $value;
-
-        return $this;
-    }
-
-    public function setExpiresAt(int $expiresAt): Decision
-    {
-        $this->expiresAt = $expiresAt;
 
         return $this;
     }
