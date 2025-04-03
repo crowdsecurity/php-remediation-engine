@@ -75,6 +75,10 @@ class Constants extends CommonConstants
      */
     public const MAXMIND_COUNTRY = 'country';
     /**
+     * @var string The TTL to use to simulate an infinite TTL
+     */
+    public const MAX_TTL = 631152000; // 20 years
+    /**
      * @var string The key to get the origin from getIpRemediation
      */
     public const ORIGIN_KEY = 'origin';

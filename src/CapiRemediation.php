@@ -333,7 +333,7 @@ class CapiRemediation extends AbstractRemediation
 
                 $durationInSeconds = isset($decoded['expiration']) ?
                     time() + $this->getDurationInSeconds($decoded['expiration']):
-                    PHP_INT_MAX;
+                    Constants::MAX_TTL;
 
                 $decision->setExpiresAt($durationInSeconds);
                 $decisions[] = $decision;
@@ -396,7 +396,11 @@ class CapiRemediation extends AbstractRemediation
         // @TODO: use "allow_lists" config
         $allowListDecisions = $this->handleAllowListDecisions($rawDecisions[self::CS_LINK][self::CS_ALLOW] ?? []);
 
-        $stored = $this->storeDecisions(array_merge($newDecisions, $listDecisions));
+        $stored = $this->storeDecisions(array_merge(
+            $newDecisions,
+            $listDecisions,
+            $allowListDecisions
+        ));
         $removed = $this->removeDecisions($deletedDecisions);
 
         return [
