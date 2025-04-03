@@ -393,7 +393,6 @@ class CapiRemediation extends AbstractRemediation
         $newDecisions = $this->convertRawCapiDecisionsToDecisions($rawDecisions[self::CS_NEW] ?? []);
         $deletedDecisions = $this->convertRawCapiDecisionsToDecisions($rawDecisions[self::CS_DEL] ?? []);
         $listDecisions = $this->handleListDecisions($rawDecisions[self::CS_LINK][self::CS_BLOCK] ?? []);
-        // @TODO: use "allow_lists" config
         $allowListDecisions = $this->handleAllowListDecisions($rawDecisions[self::CS_LINK][self::CS_ALLOW] ?? []);
 
         $stored = $this->storeDecisions(array_merge(

@@ -1017,10 +1017,11 @@ final class CapiRemediationTest extends AbstractRemediation
             AbstractCache::INDEX_EXP => 1677888000,
             AbstractCache::LAST_PULL => 1677801600];
         $pullTime = 1677884400;
+        $frequency = 14400;
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'handleListPullHeaders',
-            [$headers, $lastPullContent, $pullTime]
+            [$headers, $lastPullContent, $pullTime, $frequency]
         );
 
         $this->assertEquals(
@@ -1041,7 +1042,7 @@ final class CapiRemediationTest extends AbstractRemediation
         $result = PHPUnitUtil::callMethod(
             $remediation,
             'handleListPullHeaders',
-            [$headers, $lastPullContent, $pullTime]
+            [$headers, $lastPullContent, $pullTime, $frequency]
         );
 
         $this->assertEquals(

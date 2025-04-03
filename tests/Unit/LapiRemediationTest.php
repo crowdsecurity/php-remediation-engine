@@ -1106,7 +1106,7 @@ final class LapiRemediationTest extends AbstractRemediation
         $this->assertEquals(
             true,
             $item->isHit(),
-            'Remediation for country should have not been cached'
+            'Remediation for country should have been cached'
         );
 
         $cachedItem = $item->get();
