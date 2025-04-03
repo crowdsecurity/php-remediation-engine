@@ -268,7 +268,7 @@ class CapiRemediation extends AbstractRemediation
             }
         } catch (\Exception $e) {
             $this->logger->info('Something went wrong during list decisions process', [
-                'type' => 'CAPI_REM_HANDLE_LIST_DECISIONS',
+                'type' => 'CAPI_REM_HANDLE_ALLOW_LIST_DECISIONS',
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
             ]);
