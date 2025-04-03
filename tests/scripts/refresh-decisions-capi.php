@@ -16,7 +16,7 @@ $logger = new ConsoleLog();
 $clientConfigs = [
     'machine_id_prefix' => 'capiclienttest',
     'scenarios' => ['crowdsecurity/http-backdoors-attempts', 'crowdsecurity/http-bad-user-agent'],
-    'env'=> getenv('ENV') ?: 'dev',
+    'env' => getenv('ENV') ?: 'dev',
 ];
 $capiClient = new Watcher($clientConfigs, new FileStorage(__DIR__, $clientConfigs['env']), null, $logger);
 // Init PhpFiles cache storage

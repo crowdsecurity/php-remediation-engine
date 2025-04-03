@@ -16,7 +16,7 @@ $logger = new FileLog(['debug_mode' => true], 'remediation-engine-logger');
 $clientConfigs = [
     'machine_id_prefix' => 'remediationtest',
     'scenarios' => ['crowdsecurity/http-sensitive-files'],
-    'env'=> getenv('ENV') ?: 'dev',
+    'env' => getenv('ENV') ?: 'dev',
 ];
 $capiClient = new Watcher($clientConfigs, new FileStorage(__DIR__, $clientConfigs['env']), null, $logger);
 

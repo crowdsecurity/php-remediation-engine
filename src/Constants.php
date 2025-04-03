@@ -75,7 +75,7 @@ class Constants extends CommonConstants
      */
     public const MAXMIND_COUNTRY = 'country';
     /**
-     * @var string The duration (in seconds) to use to simulate an infinite TTL
+     * @var int The duration (in seconds) to use to simulate an infinite TTL
      */
     public const MAX_DURATION = 631152000; // 20 years
     /**

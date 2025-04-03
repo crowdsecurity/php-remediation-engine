@@ -213,6 +213,7 @@ class CapiRemediation extends AbstractRemediation
 
         return $decisions;
     }
+
     /**
      * @throws InvalidArgumentException|CacheException
      */
@@ -313,7 +314,6 @@ class CapiRemediation extends AbstractRemediation
         }
     }
 
-
     private function handleAllowListResponse(string $listResponse, array $allowDecision): array
     {
         $decisions = [];
@@ -326,13 +326,12 @@ class CapiRemediation extends AbstractRemediation
             $decoded = json_decode($listedAllow, true);
             $allowDecision['value'] = $decoded['value'];
             $allowDecision['scope'] = $decoded['scope'];
-            $allowDecision['duration'] = '1s';// Will be overwritten by the duration in the allowlist
+            $allowDecision['duration'] = '1s'; // Will be overwritten by the duration in the allowlist
             $decision = $this->convertRawDecision($allowDecision);
 
             if ($decision) {
-
                 $durationInSeconds = isset($decoded['expiration']) ?
-                    $this->getDurationInSeconds($decoded['expiration']):
+                    $this->getDurationInSeconds($decoded['expiration']) :
                     Constants::MAX_DURATION;
 
                 $decision->setExpiresAt(time() + $durationInSeconds);
