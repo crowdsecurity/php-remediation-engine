@@ -332,10 +332,10 @@ class CapiRemediation extends AbstractRemediation
             if ($decision) {
 
                 $durationInSeconds = isset($decoded['expiration']) ?
-                    time() + $this->getDurationInSeconds($decoded['expiration']):
-                    Constants::MAX_TTL;
+                    $this->getDurationInSeconds($decoded['expiration']):
+                    Constants::MAX_DURATION;
 
-                $decision->setExpiresAt($durationInSeconds);
+                $decision->setExpiresAt(time() + $durationInSeconds);
                 $decisions[] = $decision;
             }
         }

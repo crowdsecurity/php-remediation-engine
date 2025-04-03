@@ -489,6 +489,15 @@ abstract class AbstractRemediation
     private function retrieveRemediationFromCachedDecisions(array $cacheDecisions): array
     {
         $cleanDecisions = $this->cacheStorage->cleanCachedValues($cacheDecisions);
+        // Early return for Allow list
+        foreach ($cleanDecisions as $decision) {
+            if (Constants::ALLOW_LIST_REMEDIATION === $decision[AbstractCache::INDEX_MAIN]) {
+                return [
+                    self::INDEX_REM => Constants::REMEDIATION_BYPASS,
+                    self::INDEX_ORIGIN => $decision[AbstractCache::INDEX_ORIGIN],
+                ];
+            }
+        }
         $sortedDecisions = $this->sortDecisionsByPriority($cleanDecisions);
         $this->logger->debug('Decisions have been sorted by priority', [
             'type' => 'REM_SORTED_DECISIONS',

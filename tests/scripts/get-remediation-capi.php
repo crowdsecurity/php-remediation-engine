@@ -49,5 +49,6 @@ $redisCache = new Redis($cacheRedisConfigs, $logger);
 $remediationConfigs = [];
 $remediationEngine = new CapiRemediation($remediationConfigs, $capiClient, $redisCache, $logger);
 // Determine the remediation for the given IP
-echo 'Remediation: ' . $remediationEngine->getIpRemediation($ip) . \PHP_EOL;
-echo 'Origins count: ' . json_encode($remediationEngine->getOriginsCount()) . \PHP_EOL;
+$remediationData = $remediationEngine->getIpRemediation($ip);
+echo 'Remediation: ' . $remediationData['remediation'] . \PHP_EOL;
+echo 'Remediation origin: ' . $remediationData['origin'] . \PHP_EOL;
