@@ -207,7 +207,7 @@ class CapiRemediation extends AbstractRemediation
                 }
             }
         } catch (\Exception $e) {
-            $this->logger->info('Something went wrong during list decisions process', [
+            $this->logger->info('Something went wrong during allowlists decisions process', [
                 'type' => 'CAPI_REM_HANDLE_ALLOW_LIST_DECISIONS',
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
@@ -232,7 +232,7 @@ class CapiRemediation extends AbstractRemediation
     {
         $decisions = [];
         $listedAllows = explode(\PHP_EOL, $listResponse);
-        $this->logger->debug('Handle allow list decisions', [
+        $this->logger->debug('Handle allowlists decisions', [
             'type' => 'CAPI_REM_HANDLE_ALLOW_LIST_DECISIONS',
             'list_count' => count($listedAllows),
         ]);
@@ -240,7 +240,11 @@ class CapiRemediation extends AbstractRemediation
             $decoded = json_decode($listedAllow, true);
             $allowDecision['value'] = $decoded['value'];
             $allowDecision['scope'] = $decoded['scope'];
-            $allowDecision['duration'] = '1s'; // Will be overwritten by the duration in the allowlist
+            /*
+             * This hardcoded value ill be overwritten below by the duration in the allowlist.
+             * We have to set it to avoid an exception from the convertRawDecision method.
+             */
+            $allowDecision['duration'] = '1s';
             $decision = $this->convertRawDecision($allowDecision);
 
             if ($decision) {
@@ -317,7 +321,7 @@ class CapiRemediation extends AbstractRemediation
                 }
             }
         } catch (\Exception $e) {
-            $this->logger->info('Something went wrong during list decisions process', [
+            $this->logger->info('Something went wrong during blocklists decisions process', [
                 'type' => 'CAPI_REM_HANDLE_LIST_DECISIONS',
                 'message' => $e->getMessage(),
                 'code' => $e->getCode(),
@@ -351,7 +355,7 @@ class CapiRemediation extends AbstractRemediation
     {
         $decisions = [];
         $listedIps = explode(\PHP_EOL, $listResponse);
-        $this->logger->debug('Handle list decisions', [
+        $this->logger->debug('Handle blocklist decisions', [
             'type' => 'CAPI_REM_HANDLE_LIST_DECISIONS',
             'list_count' => count($listedIps),
         ]);

@@ -561,7 +561,7 @@ abstract class AbstractRemediation
             && !empty($rawDecision['duration'])
         ) {
             $result = true;
-            // We don't want blocklists decisions without a scenario
+            // We don't want blocklists or allowlists decisions without a scenario
             if (
                 Constants::ORIGIN_LISTS === $rawDecision['origin']
                 && empty($rawDecision['scenario'])
