@@ -68,7 +68,6 @@ jobs:
 
     name: Unit and integration test
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, 'chore(') }}
     env:
       EXTENSION_PATH: "my-code/remediation-engine"
       DDEV_PROJECT: "remediation-engine"
@@ -145,34 +144,34 @@ jobs:
 
       - name: Clone Remediation Engine files
         if: inputs.is_call != true
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ${{env.EXTENSION_PATH}}
 
       - name: Clone Remediation Engine files
         if: inputs.is_call == true
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ env.REMEDIATION_REPO }}
           path: ${{env.EXTENSION_PATH}}
           ref: "main"
 
       - name: Clone PHP common files
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ steps.set-common-data.outputs.repo}}
           ref: ${{ steps.set-common-data.outputs.branch  }}
           path: ${{env.PHP_COMMON_PATH}}
 
       - name: Clone LAPI client
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ steps.set-lapi-client-data.outputs.repo }}
           ref: ${{ steps.set-lapi-client-data.outputs.branch }}
           path: ${{env.LAPI_CLIENT_PATH}}
 
       - name: Clone CAPI client
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ${{ steps.set-capi-client-data.outputs.repo }}
           ref: ${{ steps.set-capi-client-data.outputs.branch }}

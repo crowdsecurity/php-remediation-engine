@@ -387,7 +387,6 @@ class CapiRemediation extends AbstractRemediation
         if (
             !empty($allowlist['id'])
             && !empty($allowlist['name'])
-            && !empty($allowlist['description'])
             && !empty($allowlist['url'])
         ) {
             return true;
