@@ -25,7 +25,7 @@ jobs:
       php_common_json: '["main"]'
       lapi_client_json: '["main"]'
       capi_client_json: '["main"]'
-      remediation_engine_json: '["${{ github.ref_name }}"]'
+      remediation_engine_json: '["${{ github.head_ref || github.ref_name }}"]'
       bouncer_lib_json: '["main"]'
 
   test-bouncer-lib:
@@ -35,7 +35,7 @@ jobs:
       php_common_json: '["main"]'
       lapi_client_json: '["main"]'
       capi_client_json: '["main"]'
-      remediation_engine_json: '["${{ github.ref_name }}"]'
+      remediation_engine_json: '["${{ github.head_ref || github.ref_name }}"]'
 
   test-magento-engine:
     name: Run Magento 2 Engine module tests
@@ -44,7 +44,7 @@ jobs:
       php_common_json: '["main"]'
       lapi_client_json: '["main"]'
       capi_client_json: '["main"]'
-      remediation_engine_json: '["${{ github.ref_name }}"]'
+      remediation_engine_json: '["${{ github.head_ref || github.ref_name }}"]'
       bouncer_lib_json: '["main"]'
     secrets:
       MACHINE_ID: ${{ secrets.TEST_MACHINE_ID }}
