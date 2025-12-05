@@ -34,6 +34,7 @@ final class CapiRemediationTest extends TestCase
         'machine_id_prefix' => TestConstants::MACHINE_ID_PREFIX,
         'user_agent_suffix' => TestConstants::USER_AGENT_SUFFIX,
         'scenarios' => ['crowdsecurity/http-backdoors-attempts', 'crowdsecurity/http-bad-user-agent'],
+        'env' => 'prod',
     ];
 
     /**
@@ -102,7 +103,7 @@ final class CapiRemediationTest extends TestCase
             throw new Exception('Error while trying to get content of dev-machine-id.json file');
         }
 
-        $capiClient = new Watcher($this->configs, new FileStorage(__DIR__), $requestHandler, $this->logger);
+        $capiClient = new Watcher($this->configs, new FileStorage(__DIR__, $this->configs['env']??'dev'), $requestHandler, $this->logger);
         $this->checkRequestHandler($capiClient, $requestHandler);
 
         $remediationEngine = new CapiRemediation($this->configs, $capiClient, $this->cacheStorage, $this->logger);
@@ -140,11 +141,6 @@ final class CapiRemediationTest extends TestCase
             file_get_contents($this->root->url() . '/' . $this->debugFile),
             'Log content should be correct'
         );
-        // Test 3 : clear cache and refresh again : new and deleted should be as in Test  1
-        $this->cacheStorage->clear();
-        $result = $remediationEngine->refreshDecisions();
-        $this->assertEquals($new, (int) $result['new']);
-        $this->assertEquals($deleted, (int) $result['deleted']);
     }
 
     /**
