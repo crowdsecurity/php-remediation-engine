@@ -94,16 +94,17 @@ final class CapiRemediationTest extends TestCase
      */
     public function testRefreshDecisions($requestHandler)
     {
-        $password = file_get_contents(__DIR__ . '/dev-password.json');
+        $env = $this->configs['env'] ?? 'dev';
+        $password = file_get_contents(__DIR__ . "/$env-password.json");
         if (!$password) {
-            throw new Exception('Error while trying to get content of dev-password.json file');
+            throw new Exception("Error while trying to get content of $env-password.json file");
         }
-        $machineId = file_get_contents(__DIR__ . '/dev-machine-id.json');
+        $machineId = file_get_contents(__DIR__ . "/$env-machine-id.json");
         if (!$machineId) {
-            throw new Exception('Error while trying to get content of dev-machine-id.json file');
+            throw new Exception("Error while trying to get content of $env-machine-id.json file");
         }
 
-        $capiClient = new Watcher($this->configs, new FileStorage(__DIR__, $this->configs['env']??'dev'), $requestHandler, $this->logger);
+        $capiClient = new Watcher($this->configs, new FileStorage(__DIR__, $env), $requestHandler, $this->logger);
         $this->checkRequestHandler($capiClient, $requestHandler);
 
         $remediationEngine = new CapiRemediation($this->configs, $capiClient, $this->cacheStorage, $this->logger);
