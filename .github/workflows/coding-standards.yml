@@ -5,6 +5,11 @@ on:
       - main
     paths-ignore:
       - '**.md'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
   workflow_dispatch:
     inputs:
       coverage_report:
@@ -28,7 +33,6 @@ jobs:
 
     name: Coding standards test
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, 'chore(') }}
     env:
       EXTENSION_PATH: "my-code/remediation-engine"
 
@@ -48,11 +52,11 @@ jobs:
 
       - name: Add Redis, Memcached and Crowdsec
         run: |
-          ddev get ddev/ddev-redis
-          ddev get ddev/ddev-memcached
+          ddev add-on get ddev/ddev-redis
+          ddev add-on get ddev/ddev-memcached
           # override redis.conf
-          ddev get julienloizelet/ddev-tools
-          ddev get julienloizelet/ddev-crowdsec-php
+          ddev add-on get julienloizelet/ddev-tools
+          ddev add-on get julienloizelet/ddev-crowdsec-php
 
       - name: Start DDEV
         run: |
@@ -64,7 +68,7 @@ jobs:
           ddev exec php -v
 
       - name: Clone sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: ${{env.EXTENSION_PATH}}
 

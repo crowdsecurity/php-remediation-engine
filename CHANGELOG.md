@@ -15,6 +15,16 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ---
 
+## [4.3.1](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v4.3.1) - 2025-12-05
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v4.3.0...v4.3.1)
+
+
+### Fixed
+
+- Allow `Allowlists` with no description
+
+---
+
 ## [4.3.0](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v4.3.0) - 2025-04-11
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v4.2.0...v4.3.0)
 
