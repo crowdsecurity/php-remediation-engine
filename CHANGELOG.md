@@ -21,7 +21,7 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ### Fixed
 
-- - Fix deprecation warning in PHP 8.5
+- Fix deprecation warning in PHP 8.5
 
 ---
 
