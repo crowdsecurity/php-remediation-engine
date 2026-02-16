@@ -15,6 +15,16 @@ As far as possible, we try to adhere to [Symfony guidelines](https://symfony.com
 
 ---
 
+## [4.3.2](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v4.3.2) - 2026-02-16
+[_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v4.3.1...v4.3.2)
+
+
+### Fixed
+
+- - Fix deprecation warning in PHP 8.5
+
+---
+
 ## [4.3.1](https://github.com/crowdsecurity/php-remediation-engine/releases/tag/v4.3.1) - 2025-12-11
 [_Compare with previous release_](https://github.com/crowdsecurity/php-remediation-engine/compare/v4.3.0...v4.3.1)
 
