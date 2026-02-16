@@ -139,6 +139,9 @@ abstract class AbstractCache
         return $this->adapter->commit();
     }
 
+    /**
+     * @psalm-api
+     */
     public function getAdapter(): AdapterInterface
     {
         return $this->adapter;
@@ -156,7 +159,7 @@ abstract class AbstractCache
              *
              * @see https://symfony.com/doc/current/components/cache/cache_items.html#cache-item-keys-and-values
              */
-            $this->cacheKeys[$prefix][$value] = preg_replace('/[^A-Za-z0-9_.]/', self::SEP, $result);
+            $this->cacheKeys[$prefix][$value] = (string) preg_replace('/[^A-Za-z0-9_.]/', self::SEP, $result);
         }
 
         return $this->cacheKeys[$prefix][$value];
@@ -164,6 +167,7 @@ abstract class AbstractCache
 
     /**
      * Retrieve a config value by name. Return null if no set.
+     * @psalm-api
      */
     public function getConfig(string $name)
     {

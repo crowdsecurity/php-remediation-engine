@@ -27,6 +27,7 @@ class Memcached extends AbstractCache
         'memcached_dsn',
     ];
 
+    #[\Override]
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('config');

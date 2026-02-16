@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <psalm
     errorLevel="5"
+    findUnusedIssueHandlerSuppression="false"
     resolveFromConfigFile="true"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns="https://getpsalm.org/schema/config"
@@ -45,5 +46,12 @@
                 <referencedMethod name="Symfony\Component\Config\Definition\Builder\VariableNodeDefinition::arrayNode"/>
             </errorLevel>
         </PossiblyUndefinedMethod>
+        <UnusedProperty>
+            <errorLevel type="info">
+                <referencedProperty name="CrowdSec\RemediationEngine\Geolocation::$logger"/>
+            </errorLevel>
+        </UnusedProperty>
+        <UnusedMethodCall errorLevel="suppress"/>
+        <UnusedReturnValue errorLevel="suppress"/>
     </issueHandlers>
 </psalm>

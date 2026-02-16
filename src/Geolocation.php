@@ -49,6 +49,7 @@ class Geolocation
      * @throws CacheException
      * @throws InvalidArgumentException
      * @throws \Symfony\Component\Cache\Exception\InvalidArgumentException
+     * @psalm-api
      */
     public function clearGeolocationCache(string $ip): void
     {

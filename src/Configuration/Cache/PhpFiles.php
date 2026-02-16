@@ -28,6 +28,7 @@ class PhpFiles extends AbstractCache
         'use_cache_tags',
     ];
 
+    #[\Override]
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('config');

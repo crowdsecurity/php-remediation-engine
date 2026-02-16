@@ -34,6 +34,7 @@ class Capi extends AbstractRemediation
         'refresh_frequency_indicator',
     ];
 
+    #[\Override]
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('config');

@@ -10,6 +10,9 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\MemcachedAdapter;
 use Symfony\Component\Config\Definition\Processor;
 
+/**
+ * @psalm-api
+ */
 class Memcached extends AbstractCache
 {
     /**
@@ -41,6 +44,7 @@ class Memcached extends AbstractCache
     /**
      * @throws CacheStorageException
      */
+    #[\Override]
     public function clear(): bool
     {
         $this->setCustomErrorHandler();
@@ -56,6 +60,7 @@ class Memcached extends AbstractCache
     /**
      * @throws CacheStorageException
      */
+    #[\Override]
     public function commit(): bool
     {
         $this->setCustomErrorHandler();
@@ -81,6 +86,7 @@ class Memcached extends AbstractCache
     /**
      * @throws CacheStorageException
      */
+    #[\Override]
     public function getItem(string $cacheKey): CacheItemInterface
     {
         $this->setCustomErrorHandler();

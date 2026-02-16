@@ -36,6 +36,7 @@ class Lapi extends AbstractRemediation
         'appsec_body_size_exceeded_action',
     ];
 
+    #[\Override]
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('config');

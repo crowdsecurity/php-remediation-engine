@@ -63,6 +63,7 @@ abstract class AbstractRemediation
 
     /**
      * Clear cache.
+     * @psalm-api
      */
     public function clearCache(): bool
     {
@@ -92,6 +93,7 @@ abstract class AbstractRemediation
      *              'remediation' => (string): the remediation to apply (ex: 'ban', 'captcha', 'bypass'),
      *              'origin' => (string): the origin of the remediation (ex: 'CAPI', 'cscli')
      *             ]
+     * @psalm-api
      */
     abstract public function getIpRemediation(string $ip): array;
 
@@ -107,6 +109,7 @@ abstract class AbstractRemediation
      * Prune cache.
      *
      * @throws CacheStorageException
+     * @psalm-api
      */
     public function pruneCache(): bool
     {
@@ -116,6 +119,7 @@ abstract class AbstractRemediation
     /**
      * Pull fresh decisions and update the cache.
      * Return the total of added and removed records. // ['new' => x, 'deleted' => y].
+     * @psalm-api
      */
     abstract public function refreshDecisions(): array;
 
@@ -425,6 +429,7 @@ abstract class AbstractRemediation
      * @noinspection PhpUnusedPrivateMethodInspection
      *
      * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
+     * @psalm-suppress UnusedMethod
      */
     private static function comparePriorities(array $a, array $b): int
     {

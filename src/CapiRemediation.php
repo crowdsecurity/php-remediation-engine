@@ -23,6 +23,9 @@ class CapiRemediation extends AbstractRemediation
      */
     private $client;
 
+    /**
+     * @psalm-api
+     */
     public function __construct(
         array $configs,
         Watcher $client,
@@ -36,6 +39,9 @@ class CapiRemediation extends AbstractRemediation
         parent::__construct($this->configs, $cacheStorage, $logger);
     }
 
+    /**
+     * @psalm-api
+     */
     public function getClient(): Watcher
     {
         return $this->client;
@@ -45,7 +51,9 @@ class CapiRemediation extends AbstractRemediation
      * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws RemediationException|CacheException
+     * @psalm-api
      */
+    #[\Override]
     public function getIpRemediation(string $ip): array
     {
         $clean = [
@@ -70,7 +78,9 @@ class CapiRemediation extends AbstractRemediation
      * @throws CacheStorageException
      * @throws InvalidArgumentException
      * @throws CacheException|ClientException
+     * @psalm-api
      */
+    #[\Override]
     public function refreshDecisions(): array
     {
         $rawDecisions = $this->client->getStreamDecisions();

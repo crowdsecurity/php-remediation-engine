@@ -10,6 +10,9 @@ use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Cache\Adapter\RedisTagAwareAdapter;
 use Symfony\Component\Config\Definition\Processor;
 
+/**
+ * @psalm-api
+ */
 class Redis extends AbstractCache
 {
     /**

@@ -10,6 +10,9 @@ use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Config\Definition\Processor;
 
+/**
+ * @psalm-api
+ */
 class PhpFiles extends AbstractCache
 {
     /**

@@ -31,6 +31,9 @@ class LapiRemediation extends AbstractRemediation
      */
     private $scopes;
 
+    /**
+     * @psalm-api
+     */
     public function __construct(
         array $configs,
         Bouncer $client,
@@ -51,6 +54,7 @@ class LapiRemediation extends AbstractRemediation
      * @throws CacheException
      * @throws ClientException
      * @throws InvalidArgumentException
+     * @psalm-api
      */
     public function getAppSecRemediation(array $headers, string $rawBody = ''): array
     {
@@ -116,6 +120,10 @@ class LapiRemediation extends AbstractRemediation
         return $this->processCachedDecisions($fakeCachedDecisions);
     }
 
+
+    /**
+     * @psalm-api
+     */
     public function getClient(): Bouncer
     {
         return $this->client;
@@ -133,7 +141,9 @@ class LapiRemediation extends AbstractRemediation
      * @throws InvalidArgumentException
      * @throws RemediationException
      * @throws CacheException|ClientException
+     * @psalm-api
      */
+    #[\Override]
     public function getIpRemediation(string $ip): array
     {
         $clean = [
@@ -194,6 +204,7 @@ class LapiRemediation extends AbstractRemediation
      * @throws CacheException
      * @throws ClientException
      * @throws InvalidArgumentException
+     * @psalm-api
      */
     public function pushUsageMetrics(
         string $bouncerName,
@@ -267,7 +278,9 @@ class LapiRemediation extends AbstractRemediation
      * @throws CacheStorageException
      * @throws ClientException
      * @throws InvalidArgumentException
+     * @psalm-api
      */
+    #[\Override]
     public function refreshDecisions(): array
     {
         if (!$this->getConfig('stream_mode')) {
